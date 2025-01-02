@@ -1,101 +1,137 @@
+"use client";
 import Image from "next/image";
+import { useState } from "react";
+import { signInWithEmailAndPassword, getAuth } from "firebase/auth";
+import { app } from "@/app/firebase/config";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const router = useRouter();
+  const [error, setError] = useState("");
+  // const [loading, setLoading] = useState(false);
+  const auth = getAuth(app);
+  // const [userID] = useAuthState(auth);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    // setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      router.push("/Userpage");
+    } catch (err) {
+      setError("Invalid email or password. Please try again.");
+      console.log(err);
+    } finally {
+      // setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-login h-screen flex justify-center items-center relative">
+      <div className="h-[450px] w-[525px] bg-white rounded-[20px] flex flex-col items-center p-11 gap-7">
+        <div className="flex items-center gap-1">
+          <Image
+            src="./Logo.svg"
+            height={60}
+            width={60}
+            alt="Pet Care Logo"
+            className="object-contain"
+          />
+          <h1 className="font-montserrat font-bold text-3xl text-[#33413E]">
+            Login
+          </h1>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <form className="flex flex-col gap-6" onSubmit={handleLogin}>
+          <div className="flex flex-col gap-5">
+            <div className="relative">
+              <label
+                htmlFor="username"
+                className="absolute bottom-8 text-sm bg-white left-3 font-hind font-light tracking-wide"
+              >
+                Email Address
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border-[1px] border-solid border-black w-[423px] h-[45px] rounded-md outline-none px-2"
+              />
+            </div>
+            <div className="relative">
+              <label
+                htmlFor="password"
+                className="absolute bottom-9 left-3 bg-white px-1 text-sm "
+              >
+                Password
+              </label>
+              <input
+                type={showPassword ? `text` : `password`}
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="border border-solid border-black w-[423px] h-[45px] rounded-md outline-none px-3  text-base"
+              />
+              <div className="absolute right-4 bottom-4">
+                <Image
+                  src={
+                    showPassword ? `./Eyeopen.png` : `./icon _eye close_.svg`
+                  }
+                  height={33.53}
+                  width={19}
+                  alt="Show Password icon"
+                  className="object-contain cursor-pointer"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="w-[423px] h-[45px] flex flex-row items-center justify-between">
+            <div className="flex flex-row items-center gap-2">
+              <input
+                type="checkbox"
+                name="Remember Me"
+                id="rmlogin"
+                className="w-6 h-6 rounded-lg cursor-pointer"
+              />
+              <label
+                htmlFor="rmlogin"
+                className="font-hind text-base font-light cursor-pointer"
+              >
+                Remember me
+              </label>
+            </div>
+            <div>
+              <p className="font-hind text-base font-medium text-[#4ABEC5] cursor-pointer bg-gradient-to-r bg-left-bottom from-[#4ABEC5] to-[#4ABEC5] bg-[length:0%_2px] bg-no-repeat hover:bg-[length:100%_2px] ease-out transition-all duration-300">
+                Forgot Password?
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col justify-center items-center">
+            <a href="/Sign-Up" className="text-center text-[#13585c] font-hind">
+              Don&lsquo;t have an account?Sign Up Here.
+            </a>
+            <input
+              type="submit"
+              value="Submit"
+              className="cursor-pointer w-[230px] h-[50px] bg-[#6BE8DC] text-[22px] font-montserrat font-bold text-white rounded-lg hover:bg-blue-400"
+            />
+          </div>
+        </form>
+      </div>
+      <div
+        className={
+          error
+            ? `h-32 w-96 rounded-lg flex justify-center items-center absolute top-0 bg-red-500 font-hind text-white transition-all ease-in-out duration-300`
+            : `hidden`
+        }
+      >
+        <p>Invalid email or password, please try again.</p>
+      </div>
     </div>
   );
 }
