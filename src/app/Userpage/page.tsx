@@ -2,11 +2,11 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import Signout from "../SignedOut/page";
 import { app } from "../firebase/config";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter } from "next/navigation";
 import fetchProduct from "./fetchProducts";
-import Signout from "../SignedOut/page";
 
 import {
   faArrowUp,

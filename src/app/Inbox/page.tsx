@@ -289,7 +289,7 @@ export default function Messages() {
             <div className="flex items-center gap-16">
               {/* Logo */}
               <div className="flex items-center">
-                <Image src="./Logo.svg" height={54} width={54} alt="Logo" />
+                <Image src="/Logo.svg" height={54} width={54} alt="Logo" />
                 <h1 className="text-2xl font-sigmar font-normal text-[#006B95]">
                   Pet Care
                 </h1>
@@ -368,7 +368,7 @@ export default function Messages() {
                   My Inbox
                 </h1>
                 <Image
-                  src="./Create Message.svg"
+                  src="Create Message.svg"
                   width={36}
                   height={36}
                   alt="Create A Message Icon"
@@ -390,7 +390,7 @@ export default function Messages() {
                     return (
                       <ul
                         key={index}
-                        className="cursor-pointer grid grid-cols-[50px_100%] items-center gap-1 grid-rows-[70px] border-[1px] shadow-lg pl-4 rounded-2xl"
+                        className="cursor-pointer grid grid-cols-[50px_100%] items-center gap-1 grid-rows-[70px] border-[1px] border-black shadow-lg pl-4 rounded-2xl"
                         onClick={() => handleReceivedUser(chatted)}
                       >
                         <li className="">

@@ -1,9 +1,10 @@
 import { getApp, initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, } from "firebase/firestore"; // Import Firestore services
-import { getStorage,  } from "firebase/storage"; // Import Firebase Storage services
-import { getDatabase } from "firebase/database";
+import { getFirestore } from "firebase/firestore"; // Import Firestore services
+import { getStorage } from "firebase/storage"; // Import Firebase Storage services
+import { getDatabase } from "firebase/database"; // Import Firebase Realtime Database services
 
+// Firebase configuration from environment variables
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -14,10 +15,13 @@ const firebaseConfig = {
   databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
 };
 
+// Initialize Firebase only if it hasn't been initialized yet
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// Initialize Firebase services
 const auth = getAuth(app);
-const db = getFirestore(app);  // Initialize Firestore
-const storage = getStorage(app); // Initialize Firebase Storage
-const rtdb = getDatabase(app)
+const db = getFirestore(app);  // Firestore
+const storage = getStorage(app); // Firebase Storage
+const rtdb = getDatabase(app); // Firebase Realtime Database
 
 export { app, auth, db, storage, rtdb };
