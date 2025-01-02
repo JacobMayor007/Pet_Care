@@ -14,94 +14,6 @@ import {
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 export default function AddProduct() {
-  const [userId, setUserId] = useState<string | null>(null);
-  useEffect(() => {
-    const auth = getAuth(app);
-
-    // Listen for authentication state changes
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // Retrieve the user's unique ID
-        setUserId(user.email);
-      } else {
-        // No user is signed in
-        setUserId("");
-      }
-    });
-
-    // Cleanup the subscription when the component is unmounted
-    return () => unsubscribe();
-  }, []);
-
-  const router = useRouter();
-
-  const [, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string>("");
-
-  // Function to convert file to base64
-  const getBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
-  // Handle file change and save to localStorage
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-
-      const base64 = await getBase64(selectedFile);
-      localStorage.setItem("uploadedImage", base64);
-      setPreview(base64);
-      console.log("Image saved to localStorage:", base64);
-    }
-  };
-
-  useEffect(() => {
-    const savedImage = localStorage.getItem("uploadedImage");
-    if (savedImage) {
-      setPreview(savedImage);
-    }
-  }, []);
-
-  const [errorMessage, setErrorMessage] = useState(false);
-  const [typeOfPayment, setTypeOfPayment] = useState<string>(() => {
-    return localStorage.getItem("Type Of Payment:") || "";
-  });
-
-  const [productPrice, setProductPrice] = useState(() => {
-    return localStorage.getItem("Product Price:") || 0;
-  });
-
-  const [productName, setProductName] = useState(() => {
-    return localStorage.getItem("productName") || "";
-  });
-  useEffect(() => {
-    localStorage.setItem("productName", productName);
-  }, [productName]);
-  const [productDescription, setProductDescription] = useState(() => {
-    return localStorage.getItem("Product Description:") || "";
-  });
-
-  const [active, setActive] = useState(0);
-  interface Feature {
-    id: string;
-    name: string;
-    price: string;
-  }
-
-  const [productFeature, setProductFeatures] = useState<Feature[]>(() => {
-    const savedFeatures = localStorage.getItem("Product Features:");
-    // Check if savedFeatures exists and parse it to an array of product features
-    return savedFeatures
-      ? JSON.parse(savedFeatures) // Parse the saved string to an array of features
-      : [{ id: uuidv4(), name: "", price: "" }]; // Default value if no saved features
-  });
-  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const paymentMethods = [
     {
       id: 1,
@@ -119,6 +31,84 @@ export default function AddProduct() {
       img: "./Credit_Debit Card Image.svg",
     },
   ];
+
+  interface Feature {
+    id: string;
+    name: string;
+    price: string;
+  }
+
+  const [productDescription, setProductDescription] = useState<string>("");
+  const [typeOfPayment, setTypeOfPayment] = useState<string>("");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string>("");
+  const [productName, setProductName] = useState<string>("");
+  const [productPrice, setProductPrice] = useState<string | number>(0);
+  const [productFeature, setProductFeatures] = useState<Feature[]>([]);
+  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(false);
+  const [active, setActive] = useState(0);
+  const router = useRouter();
+
+  // Handle user authentication
+  useEffect(() => {
+    const auth = getAuth(app);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.email);
+      } else {
+        setUserId("");
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Load initial data from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedImage = localStorage.getItem("uploadedImage");
+      const savedPaymentType = localStorage.getItem("Type Of Payment:");
+      const savedDescription = localStorage.getItem("Product Description:");
+      const savedPrice = localStorage.getItem("Product Price:");
+      const savedName = localStorage.getItem("Product Name:");
+      const savedFeatures = localStorage.getItem("Product Features:");
+
+      if (savedImage) setPreview(savedImage);
+      if (savedPaymentType) setTypeOfPayment(savedPaymentType);
+      if (savedDescription) setProductDescription(savedDescription);
+      if (savedPrice) setProductPrice(savedPrice);
+      if (savedName) setProductName(savedName);
+      if (savedFeatures) setProductFeatures(JSON.parse(savedFeatures));
+    }
+  }, []);
+
+  // Save product details to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("Product Description:", productDescription);
+      localStorage.setItem("Type Of Payment:", typeOfPayment);
+      localStorage.setItem("Product Price:", productPrice.toString());
+      localStorage.setItem("Product Name:", productName);
+      localStorage.setItem("Product Features:", JSON.stringify(productFeature));
+    }
+  }, [
+    productDescription,
+    typeOfPayment,
+    productPrice,
+    productName,
+    productFeature,
+  ]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      const base64 = await getBase64(selectedFile);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("uploadedImage", base64);
+      }
+      setPreview(base64);
+    }
+  };
 
   const addFeatures = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -151,29 +141,15 @@ export default function AddProduct() {
     setProductFeatures(updatedFeatures);
   };
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    const productFeatures = JSON.stringify(productFeature);
-
-    if (!productName || productPrice == "0" || !productDescription) {
+    if (!productName || productPrice === "0" || !productDescription) {
       setErrorMessage(true);
       router.push("/AddProduct");
     } else {
       setErrorMessage(false);
-      localStorage.setItem("Product Name:", productName);
-      localStorage.setItem("Product Description:", productDescription);
-      localStorage.setItem("Product Features:", productFeatures);
-      localStorage.setItem("Product Price:", productPrice.toString());
-      localStorage.setItem("Type Of Payment:", typeOfPayment);
       router.push("/Review");
     }
-
-    console.log("Name of the Product: ", productName);
-    console.log("Product Description: ", productDescription);
-    console.log("Product Features:", productFeature);
-    console.log("Price of the Product: ", productPrice);
-    console.log("Payment Method", typeOfPayment);
   };
 
   return (
@@ -534,3 +510,12 @@ export default function AddProduct() {
     </div>
   );
 }
+
+const getBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};

@@ -524,7 +524,8 @@ export default function Messages() {
                         key={index}
                         className="p-2 border-b border-gray-200 grid grid-cols-[50px_auto] w-full items-center gap-4"
                         onClick={() => {
-                          handleReceivedUser(user), setSearchUser(false);
+                          handleReceivedUser(user);
+                          setSearchUser(false);
                         }}
                       >
                         <FontAwesomeIcon

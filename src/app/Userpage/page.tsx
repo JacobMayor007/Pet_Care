@@ -16,9 +16,20 @@ import {
   faPesoSign,
 } from "@fortawesome/free-solid-svg-icons";
 
+interface Product {
+  id: string;
+  PaymentMethod?: string;
+  ProductDescription?: string;
+  ProductFeatures?: string; // Assuming this is a string representation of an array or object
+  ProductName?: string;
+  ProductPrice?: string; // Assuming the price comes as a string from Firebase
+  TotalPrice?: number;
+  UserID?: string;
+}
+
 export default function Overview() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [logout, setLogout] = useState(false);
 
   useEffect(() => {

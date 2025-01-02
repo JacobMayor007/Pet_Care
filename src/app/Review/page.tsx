@@ -20,27 +20,48 @@ type Feature = {
 };
 
 const Review = () => {
-  let priceIndicator = 0;
-  const productName = localStorage.getItem("Product Name:");
-  const productFeature = localStorage.getItem("Product Features:");
-  const productDescription = localStorage.getItem("Product Description:");
-  const productPrice = Number(localStorage.getItem("Product Price:"));
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const router = useRouter();
   const [userId, setUserId] = useState("");
   const [confirm, setConfirm] = useState(false);
-  const router = useRouter();
+
+  let priceIndicator = 0;
+  const [productName, setProductName] = useState<string | null>(null);
+  const [productFeature, setProductFeature] = useState<string | null>(null);
+  const [productDescription, setProductDescription] = useState<string | null>(
+    null
+  );
+  const [productPrice, setProductPrice] = useState<number>(0);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [typeOfPayment, setTypeOfPayment] = useState<string | null>(null);
 
   useEffect(() => {
-    // Retrieve the image from localStorage
-    const storedImage = localStorage.getItem("uploadedImage");
-    if (storedImage) {
-      setImageBase64(storedImage); // Set the Base64 string to state
-    } else {
-      console.warn("No image found in localStorage");
+    // Ensure code runs only on the client-side (in the browser)
+    if (typeof window !== "undefined") {
+      const storedProductName = localStorage.getItem("Product Name:");
+      const storedProductFeature = localStorage.getItem("Product Features:");
+      const storedProductDescription = localStorage.getItem(
+        "Product Description:"
+      );
+      const storedProductPrice = Number(localStorage.getItem("Product Price:"));
+      const storedTypeOfPayment = localStorage.getItem("Type Of Payment:");
+
+      setProductName(storedProductName);
+      setProductFeature(storedProductFeature);
+      setProductDescription(storedProductDescription);
+      setProductPrice(storedProductPrice);
+      setTypeOfPayment(storedTypeOfPayment);
+
+      // Retrieve the image from localStorage
+      const storedImage = localStorage.getItem("uploadedImage");
+      if (storedImage) {
+        setImageBase64(storedImage); // Set the Base64 string to state
+      } else {
+        console.warn("No image found in localStorage");
+      }
     }
   }, []);
+
   let totalPrice = 0;
-  const typeOfPayment = localStorage.getItem("Type Of Payment:");
 
   // Initialize `feature` as an empty array to handle cases where `productFeature` is null
   const features: Feature[] = productFeature ? JSON.parse(productFeature) : [];
