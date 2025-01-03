@@ -6,13 +6,13 @@ import { getDatabase } from "firebase/database"; // Import Firebase Realtime Dat
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+  apiKey: "AIzaSyCsbskHSH4rdXCLJk4l3Ws4qnavO5LiLA4",
+  authDomain: "pet-care-pro-77695.firebaseapp.com",
+  projectId: "pet-care-pro-77695",
+  storageBucket: "pet-care-pro-77695.firebasestorage.app",
+  messagingSenderId: "281007959598",
+  appId: "1:281007959598:web:62dd86d4836643ea8b39b",
+  databaseURL: "https://pet-care-pro-77695-default-rtdb.asia-southeast1.firebasedatabase.app/",
 };
 
 // Initialize Firebase only if it hasn't been initialized yet
