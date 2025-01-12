@@ -5,7 +5,7 @@
 @tailwind components;
 @tailwind utilities;
 
-body{
+body {
   padding: 0;
   margin: 0;
 }
@@ -27,4 +27,36 @@ input:-webkit-autofill:focus {
 }
 input[data-autocompleted] {
   background-color: transparent !important;
+}
+
+textarea::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background-color: #4a7c7e; /* Scrollbar thumb color */
+  border-radius: 10px; /* Rounded corners */
+}
+
+textarea::-webkit-scrollbar-track {
+  background-color: #86b2b4; /* Scrollbar track color */
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+  background-color: #345a5b; /* Thumb color on hover */
+}
+
+/* For Firefox (fallback styles) */
+textarea {
+  scrollbar-width: thin; /* Thin scrollbar */
+  scrollbar-color: #4a7c7e #86b2b4; /* Thumb and track colors */
+}
+
+.bg-dashboard {
+  background-image: url("/bg-ashboard.png");
+}
+
+.custom-datepicker-wrapper .ant-picker {
+  border: none !important;
+  box-shadow: none !important;
 }

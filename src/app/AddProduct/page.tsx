@@ -6,31 +6,35 @@ import { app } from "../firebase/config";
 import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Select } from "antd";
+import Signout from "../SignedOut/page";
+import "@ant-design/v5-patch-for-react-19";
 import {
   faXmark,
   faCircleChevronDown,
   faCircleUser,
+  faCircleArrowDown,
 } from "@fortawesome/free-solid-svg-icons";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 export default function AddProduct() {
-  const paymentMethods = [
-    {
-      id: 1,
-      label: "Cash On Hand",
-      img: "./Cash On Hand Image.svg",
-    },
-    {
-      id: 2,
-      label: "GCash",
-      img: "./GCash Image.svg",
-    },
-    {
-      id: 3,
-      label: "Debit / Credit",
-      img: "./Credit_Debit Card Image.svg",
-    },
-  ];
+  // const paymentMethods = [
+  //   {
+  //     id: 1,
+  //     label: "Cash On Hand",
+  //     img: "./Cash On Hand Image.svg",
+  //   },
+  //   {
+  //     id: 2,
+  //     label: "GCash",
+  //     img: "./GCash Image.svg",
+  //   },
+  //   {
+  //     id: 3,
+  //     label: "Debit / Credit",
+  //     img: "./Credit_Debit Card Image.svg",
+  //   },
+  // ];
 
   interface Feature {
     id: string;
@@ -38,17 +42,38 @@ export default function AddProduct() {
     price: string;
   }
 
+  type OptionValue = string;
+
+  const [typeOfPayment, setTypeOfPayment] = useState<OptionValue[]>([]);
+
+  const handleChange = (value: OptionValue[]) => {
+    console.log(`selected ${value}`);
+    setTypeOfPayment(value); // Update selected values state
+  };
+
+  const [logout, setLogout] = useState(false);
   const [productDescription, setProductDescription] = useState<string>("");
-  const [typeOfPayment, setTypeOfPayment] = useState<string>("");
+  // const [typeOfPayment, setTypeOfPayment] = useState<string>("");
   const [userId, setUserId] = useState<string | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [productName, setProductName] = useState<string>("");
   const [productPrice, setProductPrice] = useState<string | number>(0);
   const [productFeature, setProductFeatures] = useState<Feature[]>([]);
-  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
+  const [typeOfProduct, setTypeOfProduct] = useState<string>("");
+  const [stock, setStock] = useState<string | number>(0);
   const [errorMessage, setErrorMessage] = useState(false);
-  const [active, setActive] = useState(0);
   const router = useRouter();
+  const [dropDown, setDropDown] = useState(false);
+  const itemType = [
+    {
+      key: 1,
+      label: "Item",
+    },
+    {
+      key: 2,
+      label: "Food",
+    },
+  ];
 
   // Handle user authentication
   useEffect(() => {
@@ -72,9 +97,20 @@ export default function AddProduct() {
       const savedPrice = localStorage.getItem("Product Price:");
       const savedName = localStorage.getItem("Product Name:");
       const savedFeatures = localStorage.getItem("Product Features:");
+      const savedStock = localStorage.getItem("Stock:");
+      const savedType = localStorage.getItem("Type of Product:");
 
+      if (savedType) setTypeOfProduct(savedType);
+      if (savedStock) setStock(savedStock);
       if (savedImage) setPreview(savedImage);
-      if (savedPaymentType) setTypeOfPayment(savedPaymentType);
+      if (savedPaymentType) {
+        try {
+          setTypeOfPayment(JSON.parse(savedPaymentType)); // Try parsing as JSON
+        } catch (error) {
+          setTypeOfPayment([savedPaymentType]); // If not JSON, store as a string array
+          console.error("Error", error);
+        }
+      }
       if (savedDescription) setProductDescription(savedDescription);
       if (savedPrice) setProductPrice(savedPrice);
       if (savedName) setProductName(savedName);
@@ -86,10 +122,12 @@ export default function AddProduct() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("Product Description:", productDescription);
-      localStorage.setItem("Type Of Payment:", typeOfPayment);
+      localStorage.setItem("Type Of Payment:", JSON.stringify(typeOfPayment));
       localStorage.setItem("Product Price:", productPrice.toString());
       localStorage.setItem("Product Name:", productName);
       localStorage.setItem("Product Features:", JSON.stringify(productFeature));
+      localStorage.setItem("Stock:", stock.toString());
+      localStorage.setItem("Type of Product:", typeOfProduct);
     }
   }, [
     productDescription,
@@ -97,6 +135,8 @@ export default function AddProduct() {
     productPrice,
     productName,
     productFeature,
+    stock,
+    typeOfProduct,
   ]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,7 +183,13 @@ export default function AddProduct() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!productName || productPrice === "0" || !productDescription) {
+    if (
+      !productName ||
+      productPrice === "0" ||
+      !productDescription ||
+      stock === "0" ||
+      !typeOfProduct
+    ) {
       setErrorMessage(true);
       router.push("/AddProduct");
     } else {
@@ -152,12 +198,36 @@ export default function AddProduct() {
     }
   };
 
+  const options = [
+    {
+      id: 1,
+      label: "Cash On Hand",
+      img: "./Cash On Hand Image.svg",
+    },
+    {
+      id: 2,
+      label: "GCash",
+      img: "./GCash Image.svg",
+    },
+    {
+      id: 3,
+      label: "Debit / Credit",
+      img: "./Credit_Debit Card Image.svg",
+    },
+  ];
+
   return (
     <div className=" h-full pb-5 relative">
       <nav className="h-20 flex flex-row justify-center items-center">
         <div className="flex items-center gap-16">
           <div className="flex items-center">
-            <Image src="./Logo.svg" height={54} width={54} alt="Logo" />
+            <Image
+              src="./Logo.svg"
+              height={54}
+              width={54}
+              alt="Logo"
+              className="object-contain"
+            />
             <h1 className="text-2xl font-sigmar font-normal text-[#006B95]">
               Pet Care
             </h1>
@@ -165,7 +235,7 @@ export default function AddProduct() {
           <ul className="list-type-none flex items-center gap-3">
             <li className="w-28 h-14 flex items-center justify-center">
               <a
-                href="/Userpage"
+                href="/Provider"
                 className="font-montserrat text-base text-[#006B95]"
               >
                 Dashboard
@@ -195,6 +265,14 @@ export default function AddProduct() {
                 Add New Product
               </a>
             </li>
+            <li className="w-36 h-14 flex items-center justify-center">
+              <a
+                className="font-montserrat text-base text-[#006B95]"
+                href="/AddRoom"
+              >
+                Add New Board
+              </a>
+            </li>
           </ul>
           <div className="flex items-center gap-4">
             <div className="relative cursor-pointer">
@@ -206,6 +284,12 @@ export default function AddProduct() {
                 icon={faCircleChevronDown}
                 className="absolute left-5 top-5 text-blue-950"
               />
+              <div
+                className={logout ? `flex absolute top-9 -left-6` : `hidden`}
+                onClick={() => setLogout((prev) => !prev)}
+              >
+                <Signout />
+              </div>
             </div>
 
             <h1 className="font-montserrat text-base text-[#006B95]">
@@ -214,7 +298,7 @@ export default function AddProduct() {
           </div>
         </div>
       </nav>
-      <div className="h-full bg-white py-7 mr-4 pr-8 flex flex-row gap-5 ml-32 my-10 rounded-lg">
+      <div className="h-full bg-white py-7 mr-4 pr-8 flex flex-row gap-5 ml-32 my-10 rounded-lg 2xl:px-36">
         <div className="h-full w-1/3 flex flex-col pt-16 px-8 gap-10 ">
           <div className="flex flex-col justify-start items-start">
             <h1 className="font-hind text-xl text-[#06005B] pb-2 flex flex-col">
@@ -291,6 +375,62 @@ export default function AddProduct() {
                   onChange={(e) => setProductDescription(e.target.value)}
                 />
               </div>
+              <div className="mt-2">
+                <h1 className="text-base text-white font-hind font-medium">
+                  Stock
+                </h1>
+                <input
+                  type="number"
+                  name="stock"
+                  id="stock"
+                  value={stock == 0 ? "" : stock}
+                  className="border-[1px] border-white rounded-lg w-full h-10 px-3 outline-none bg-[#86B2B4] text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder:text-slate-500 placeholder:font-hind placeholder:font-medium placeholder:text-sm"
+                  onChange={(e) => setStock(Number(e.target.value))}
+                  placeholder="Quantity of Units Ex. 100"
+                />
+              </div>
+              <div className="mt-3">
+                <h1 className="text-base text-white font-hind font-medium flex justify-between mb-2">
+                  Type
+                  <span>
+                    <FontAwesomeIcon
+                      icon={faCircleArrowDown}
+                      className="cursor-pointer"
+                      onClick={() => setDropDown((prev) => !prev)}
+                    />
+                  </span>
+                </h1>
+                <input
+                  type="text"
+                  name="type"
+                  id="product-type"
+                  className="border-[1px] cursor-pointer border-white rounded-lg w-full h-10 px-3 outline-none bg-[#86B2B4] text-white placeholder:text-slate-500 placeholder:font-hind placeholder:font-medium placeholder:text-sm"
+                  disabled
+                  value={typeOfProduct}
+                  onChange={(e) => setTypeOfProduct(e.target.value)}
+                  placeholder="Food or Item"
+                />
+              </div>
+              {dropDown ? (
+                <div>
+                  {itemType.map((data) => {
+                    return (
+                      <li
+                        key={data?.key}
+                        className=" flex flex-col drop-shadow-lg cursor-pointer font-hind font-medium text-base bg-transparent text-white px-4 my-2 py-2 rounded-xl hover:bg-blue-300"
+                        onClick={() => {
+                          setTypeOfProduct(data?.label);
+                          setDropDown(false);
+                        }}
+                      >
+                        {data?.label}
+                      </li>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div></div>
+              )}
             </div>
             <div className="flex flex-col gap-2 bg-[#86B2B4] py-8 px-8 rounded-xl ">
               <div
@@ -303,10 +443,11 @@ export default function AddProduct() {
                 {productFeature.map((feature) => (
                   <div key={feature.id} className="">
                     <div className="xl:grid xl:grid-cols-[100px_200px_150px_200px_50px] xl:gap-3 items-center">
-                      <label htmlFor="feature">
-                        <h1 className="text-base font-hind font-medium text-white">
-                          Feature:
-                        </h1>
+                      <label
+                        htmlFor="name"
+                        className="text-base font-hind font-medium text-white"
+                      >
+                        Feature:
                       </label>
                       <input
                         className="h-10 border-white border-[1px] rounded-md text-base font-hind font-normal px-2 bg-[#86B2B4] outline-none text-white"
@@ -316,10 +457,11 @@ export default function AddProduct() {
                         value={feature.name}
                         onChange={(e) => handleInputChange(e, feature.id)}
                       />
-                      <label htmlFor="">
-                        <h1 className="text-base font-hind font-medium text-white">
-                          Price on Feature:
-                        </h1>
+                      <label
+                        htmlFor="price"
+                        className="text-base font-hind font-medium text-white"
+                      >
+                        Price on Feature:
                       </label>
                       <input
                         className="h-10 outline-none text-white border-white border-[1px] rounded-md text-base font-hind font-normal px-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-[#86B2B4]"
@@ -357,13 +499,13 @@ export default function AddProduct() {
                 <input
                   className="w-full bg-[#86B2B4] h-10 rounded-md px-2 outline-none text-base font-hind font-medium border-[1px] border-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-white"
                   name="productPrice"
-                  value={productPrice === 0 ? "" : productPrice}
+                  value={productPrice == 0 ? "" : productPrice}
                   onChange={(e) => setProductPrice(Number(e.target.value))}
                   type="number"
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <h1 className="text-white font-hind text-lg tracking-wide font-medium">
                   Type Of Payment
                 </h1>
@@ -451,26 +593,43 @@ export default function AddProduct() {
                     })}
                   </div>
                 ) : null}
+                
+              </div> */}
+              <div>
+                <h1 className="text-white font-hind text-lg tracking-wide font-medium">
+                  Type Of Payment
+                </h1>
+                <Select
+                  mode="multiple"
+                  allowClear
+                  style={{
+                    width: "100%",
+                    backgroundColor: "#86B2B4",
+                  }}
+                  placeholder="Please select"
+                  onChange={handleChange}
+                  value={typeOfPayment}
+                  options={options.map((option) => ({
+                    value: option.label,
+                    label: option.label,
+                  }))}
+                />
               </div>
             </div>
 
             <div className="flex flex-row items-center justify-between">
               <Link
                 className="p-2 w-24 font-hind text-base border-[1px] border-black shadow-sm shadow-slate-500 flex items-center justify-center rounded-lg"
-                href="/Userpage"
+                href="/Provider"
               >
                 Cancel
               </Link>
-              <button
-                type="submit"
+
+              <input
                 className="cursor-pointer border-[1px] border-black p-2 w-24 rounded-lg text-base font-hind tracking-wide shadow-md shadow-gray-700 text-white bg-[#06005b] flex items-center justify-center"
-              >
-                <input
-                  className="cursor-pointer"
-                  type="submit"
-                  value="Submit"
-                />
-              </button>
+                type="submit"
+                value="Submit"
+              />
             </div>
           </form>
         </div>

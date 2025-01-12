@@ -1,8 +1,9 @@
 "use client";
-import { getAuth, User } from "firebase/auth";
+import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { app } from "../firebase/config";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useRouter } from "next/navigation";
 import {
   faCircleUser,
   faCircleChevronDown,
@@ -38,6 +39,7 @@ interface Message {
 }
 
 export default function Messages() {
+  const router = useRouter();
   const [logout, setLogout] = useState(false);
   const auth = getAuth(app);
   const [user] = useAuthState(auth);
@@ -53,7 +55,6 @@ export default function Messages() {
   const [newMessage, setNewMessage] = useState("");
   const dummy = useRef<HTMLDivElement | null>(null); // Ref for the scroll position
 
-  // Scroll to the bottom whenever the messages change
   useEffect(() => {
     // Only scroll if dummy.current is defined
     if (dummy.current) {
@@ -281,6 +282,15 @@ export default function Messages() {
     setReceiveUser(userObj);
   };
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push("/Login");
+      }
+    });
+    return () => unsubscribe();
+  });
+
   return (
     <div>
       {user ? (
@@ -299,7 +309,7 @@ export default function Messages() {
               <ul className="list-type-none flex items-center gap-3">
                 <li className="w-28 h-14 flex items-center justify-center">
                   <a
-                    href="/Userpage"
+                    href="/Provider"
                     className="font-montserrat text-base text-[#006B95]"
                   >
                     Dashboard
@@ -390,7 +400,7 @@ export default function Messages() {
                     return (
                       <ul
                         key={index}
-                        className="cursor-pointer grid grid-cols-[50px_100%] items-center gap-1 grid-rows-[70px] border-[1px] border-black shadow-lg pl-4 rounded-2xl"
+                        className="cursor-pointer grid grid-cols-[50px_80%] items-center gap-1 grid-rows-[70px] border-[1px] bg-white drop-shadow-lg pl-4 rounded-2xl text-wrap"
                         onClick={() => handleReceivedUser(chatted)}
                       >
                         <li className="">
@@ -399,9 +409,13 @@ export default function Messages() {
                             className="text-4xl text-blue-950"
                           />{" "}
                         </li>
-                        <div>
-                          <li>{chatted.email}</li>
-                          <li>{chatted.lastMessage}</li>
+                        <div className="w-full">
+                          <li className="text-lg font-hind font-medium text-[#292828] text-wrap overflow-hidden text-ellipsis whitespace-nowrap">
+                            {chatted.email}
+                          </li>
+                          <li className="text-sm font-hind font-semibold text-[#9b9b9b]">
+                            {chatted.lastMessage}
+                          </li>
                         </div>
                       </ul>
                     );
@@ -427,8 +441,8 @@ export default function Messages() {
                           key={index}
                           className={`p-3 rounded-lg mb-2 max-w-[70%] ${
                             msg.senderId === user?.email
-                              ? "bg-blue-500 text-white ml-auto text-right"
-                              : "bg-gray-300 text-black mr-auto text-left"
+                              ? "bg-blue-500 text-white ml-auto text-right font-hind font-medium text-base"
+                              : "bg-gray-300 text-black mr-auto text-left font-hind font-medium text-base"
                           }`}
                         >
                           {msg.content}

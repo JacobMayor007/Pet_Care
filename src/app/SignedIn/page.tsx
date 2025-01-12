@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 export default function SignedIn() {
   return (
@@ -7,7 +6,7 @@ export default function SignedIn() {
       <nav className="h-20 flex flex-row justify-center items-center">
         <div className="flex items-center gap-16">
           <div className="flex items-center">
-            <Image src="./Logo.svg" height={54} width={54} alt="Logo" />
+            <Image src="/Logo.svg" height={54} width={54} alt="Logo" />
             <h1 className="text-2xl font-sigmar font-normal text-[#006B95]">
               Pet Care
             </h1>
@@ -40,9 +39,17 @@ export default function SignedIn() {
           </ul>
           <div className="flex items-center gap-4">
             <div className="relative cursor-pointer"></div>
-            <h1 className="font-montserrat text-base text-[#006B95]">
-              <Link href="/">Sign In</Link>
-            </h1>
+
+            <a
+              className="font-montserrat text-base text-[#006B95]"
+              href="/Login"
+            >
+              Sign In
+            </a>
+
+            <a className="font-montserrat text-base text-[#006B95]" href="">
+              Sign up
+            </a>
           </div>
         </div>
       </nav>

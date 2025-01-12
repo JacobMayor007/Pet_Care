@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, Timestamp } from "firebase/firestore";
 import Link from "next/link";
 
 export default function SignUp() {
@@ -15,6 +15,7 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fName, setFName] = useState("");
   const [lName, setLName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false); // Prevent duplicate submissions
 
   const [createUserWithEmailAndPassword, loading] =
     useCreateUserWithEmailAndPassword(auth);
@@ -22,52 +23,71 @@ export default function SignUp() {
   const db = getFirestore();
 
   const handleSignUp = async () => {
+    // Check if the form is already submitting
+    if (isSubmitting) return;
+
+    setIsSubmitting(true); // Prevent further clicks
+
     // Basic Validation
     if (!fName || !lName || !email || !password || !confirmPassword) {
       alert("All fields are required.");
+      setIsSubmitting(false); // Re-enable the button
       return;
     }
 
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
+      setIsSubmitting(false); // Re-enable the button
       return;
-    } else
-      try {
-        // Create user with Firebase Authentication
-        const res = await createUserWithEmailAndPassword(email, password);
-        if (!res || !res.user) {
-          throw new Error("Failed to create user. Please try again.");
-        }
+    }
 
-        // Add user data to Firestore
-        const userRef = doc(db, "Users", res.user.uid);
-        await setDoc(userRef, {
-          User_FName: fName,
-          User_LName: lName,
-          User_Email: email,
-          User_UID: res.user.uid,
-        });
-
-        // Clear input fields
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-        setFName("");
-        setLName("");
-
-        // Redirect to login page or home page
-        router.push("/");
-      } catch (error) {
-        console.error("Error during sign-up:", error);
+    try {
+      // Create user with Firebase Authentication
+      const res = await createUserWithEmailAndPassword(email, password);
+      if (!res || !res.user) {
+        throw new Error("Failed to create user. Please try again.");
       }
+
+      // Add user data to Firestore
+      const userRef = doc(db, "Users", res.user.uid);
+      await setDoc(userRef, {
+        User_FName: fName,
+        User_LName: lName,
+        User_Email: email,
+        User_UID: res.user.uid,
+        CreatedAt: Timestamp.now(),
+      });
+
+      // Clear input fields
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setFName("");
+      setLName("");
+
+      // Redirect to login page or home page
+      router.push("/Login");
+    } catch (error) {
+      console.error("Error during sign-up:", error);
+    } finally {
+      setIsSubmitting(false); // Re-enable the button after completion
+    }
   };
+
   return (
-    <div className="bg-[#9FE1DB] bg-signUp">
+    <div className="bg-[#9FE1DB] bg-signUp h-screen">
       <div className="xl:h-full 2xl:h-screen flex flex-row">
         <div className="w-[30%]">
           <h1 className="text-5xl font-sigmar font-normal text-white mt-20 text-center">
             Pet Care Pro
           </h1>
+          <Image
+            src="/Logo.svg"
+            width={626}
+            height={650}
+            alt="Logo Icon"
+            className="object-contain mt-8"
+          />
         </div>
         <div className="w-[70%] rounded-[25px_0px_0px_25px] z-[2] bg-white flex flex-col px-20 gap-7">
           <div className="mt-14 flex flex-row items-center gap-2">
@@ -89,7 +109,7 @@ export default function SignUp() {
             <div className="grid grid-cols-2 gap-10">
               <div className="relative">
                 <label
-                  className="absolute left-7 -top-3 bg-white text-sm  font-hind"
+                  className="absolute left-7 -top-2 bg-white text-sm  font-hind"
                   htmlFor="fName"
                 >
                   First Name
@@ -105,7 +125,7 @@ export default function SignUp() {
               </div>
               <div className="relative">
                 <label
-                  className="absolute left-7 -top-3 bg-white text-sm  font-hind"
+                  className="absolute left-7 -top-2 bg-white text-sm  font-hind"
                   htmlFor="lName"
                 >
                   Last Name
@@ -123,7 +143,7 @@ export default function SignUp() {
             <div className="relative">
               <label
                 htmlFor="emailsignup"
-                className="absolute left-7 -top-3 bg-white text-sm  font-hind"
+                className="absolute left-7 -top-2 bg-white text-sm  font-hind"
               >
                 Email Address
               </label>
@@ -139,7 +159,7 @@ export default function SignUp() {
             <div className="relative">
               <label
                 htmlFor="password"
-                className="absolute left-7 -top-3 bg-white text-sm  font-hind"
+                className="absolute left-7 -top-2 bg-white text-sm  font-hind"
               >
                 Password
               </label>
@@ -165,7 +185,7 @@ export default function SignUp() {
             <div className="relative">
               <label
                 htmlFor="confirmPassword"
-                className="absolute left-7 -top-3 bg-white text-sm font-hind"
+                className="absolute left-7 -top-2 bg-white text-sm font-hind"
               >
                 Confirm Password
               </label>
@@ -209,7 +229,13 @@ export default function SignUp() {
             <div>
               <button
                 type="submit"
-                className="w-[200px] h-[50px] bg-[#6BE8DC] text-[22px] font-montserrat font-bold text-white rounded-lg hover:bg-blue-400"
+                id="signup-button"
+                className={`w-[200px] h-[50px] ${
+                  isSubmitting
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-[#6BE8DC] hover:bg-blue-400"
+                } text-[22px] font-montserrat font-bold text-white rounded-lg`}
+                disabled={Boolean(isSubmitting || loading)}
               >
                 {loading ? "Signing Up..." : "Sign Up"}
               </button>
@@ -219,29 +245,9 @@ export default function SignUp() {
             <p>
               Already have an account?{" "}
               <span className="text-base font-hind text-[#4ABEC5]">
-                <Link href="/">Log in here</Link>
+                <Link href="/Login">Log in here</Link>
               </span>
             </p>
-            <div className="flex flex-row items-center gap-14 mb-4">
-              <button className="flex flex-row  items-center justify-center gap-4 border-[1px] border-solid border-black py-2 px-6 rounded-3xl hover:bg-gray-500 hover:text-white">
-                <Image
-                  src="Google-Icon.svg"
-                  height={30}
-                  width={30}
-                  alt="Google Icon"
-                />
-                <p className="text-base font-hind">Google</p>
-              </button>
-              <button className="flex flex-row  items-center justify-center gap-4 border-[1px] border-solid border-black py-2 px-6 rounded-3xl hover:bg-gray-500 hover:text-white">
-                <Image
-                  src="Facebook-Icon.svg"
-                  height={30}
-                  width={30}
-                  alt="Facebook Icon"
-                />
-                <p className="text-base font-hind">Facebook</p>
-              </button>
-            </div>
           </div>
         </div>
       </div>

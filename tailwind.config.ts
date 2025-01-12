@@ -12,7 +12,10 @@ export default {
         montserrat: ["Montserrat"],
         hind:["Hind"],
         sigmar:["Sigmar"],
-      }
+      },
+       animation: {
+        bounce: 'bounce 1s infinite',
+      },
     },
   },
   plugins: [],

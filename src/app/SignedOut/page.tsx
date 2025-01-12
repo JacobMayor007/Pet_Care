@@ -10,6 +10,7 @@ export default function Signout() {
           auth
             .signOut()
             .then(() => {
+              localStorage.clear();
               console.log("Signed out successfully.");
             })
             .catch((error) => {
@@ -17,7 +18,7 @@ export default function Signout() {
             });
         }}
       >
-        <Link href="/">Sign Out</Link>
+        <Link href="/Login">Sign Out</Link>
       </button>
     )
   );
