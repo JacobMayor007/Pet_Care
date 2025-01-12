@@ -1,7 +1,7 @@
 "use client";
 import { Suspense } from "react";
 import ClientNavbar from "@/app/ClientNavbar/page";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import "@ant-design/v5-patch-for-react-19";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -38,32 +38,35 @@ export default function Room() {
   console.log(userEmail);
   console.log(typeOfPaymentArray);
 
-  // State to store search parameters after the component mounts
-  const [params, setParams] = useState<{
-    RoomID: string | null;
-    CheckIn: string | null;
-    CheckOut: string | null;
-    Guests: string | null;
-    Days: string | null;
-  }>({
-    RoomID: null,
-    CheckIn: null,
-    CheckOut: null,
-    Guests: null,
-    Days: null,
-  });
+  const params = useParams();
+  const RoomID = params.RoomID as string;
+  const CheckIn = params.CheckIn as string;
+  const CheckOut = params.CheckOut as string;
 
-  const searchParams = useSearchParams();
+  // // State to store search parameters after the component mounts
+  // const [params, setParams] = useState<{
+  //   RoomID: string | null;
+  //   CheckIn: string | null;
+  //   CheckOut: string | null;
+  //   Guests: string | null;
+  //   Days: string | null;
+  // }>({
+  //   RoomID: null,
+  //   CheckIn: null,
+  //   CheckOut: null,
+  //   Guests: null,
+  //   Days: null,
+  // });
 
-  useEffect(() => {
-    setParams({
-      RoomID: searchParams.get("RoomID"),
-      CheckIn: searchParams.get("CheckIn"),
-      CheckOut: searchParams.get("CheckOut"),
-      Guests: searchParams.get("Guest"),
-      Days: searchParams.get("Days"),
-    });
-  }, [searchParams]);
+  // useEffect(() => {
+  //   setParams({
+  //     RoomID: params.("RoomID"),
+  //     CheckIn: params.get("CheckIn"),
+  //     CheckOut: params.get("CheckOut"),
+  //     Guests: params.get("Guest"),
+  //     Days: params.get("Days"),
+  //   });
+  // }, [params]);
 
   const router = useRouter();
   useEffect(() => {
@@ -89,8 +92,8 @@ export default function Room() {
     return `${month} ${day}, ${year}`;
   };
 
-  const formattedCheckIn = formatDate(params.CheckIn);
-  const formattedCheckOut = formatDate(params.CheckOut);
+  const formattedCheckIn = formatDate(CheckIn);
+  const formattedCheckOut = formatDate(CheckOut);
 
   const fetchRoomById = async (id: string) => {
     try {
@@ -120,10 +123,10 @@ export default function Room() {
   };
 
   useEffect(() => {
-    if (params.RoomID) {
-      fetchRoomById(params.RoomID); // Fetch product based on the ID from the link
+    if (RoomID) {
+      fetchRoomById(RoomID); // Fetch room based on the ID from the link
     }
-  });
+  }, [RoomID]);
 
   return (
     <Suspense fallback={<Loading />}>

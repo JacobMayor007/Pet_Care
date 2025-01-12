@@ -18,7 +18,7 @@ import { faFileShield } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MinusOutlined, PlusOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import ClientNavbar from "../ClientNavbar/page";
 import Link from "next/link";
 import Loading from "../Loading/page";
@@ -47,19 +47,9 @@ const Product = () => {
   const [quantity, setQuantity] = useState(1);
   const router = useRouter();
   const auth = getAuth();
-  const searchParams = useSearchParams();
-  const [params, setParams] = useState<{
-    ProductID: string | null;
-  }>({
-    ProductID: null,
-  });
+  const searchParams = useParams();
+  const ProductID = searchParams.ProductID as string;
 
-  // Update the state with search params after the component mounts
-  useEffect(() => {
-    setParams({
-      ProductID: searchParams.get("ProductID"),
-    });
-  }, [searchParams]);
   const [addToCart, setAddToCart] = useState(false);
 
   useEffect(() => {
@@ -198,8 +188,8 @@ const Product = () => {
   };
 
   useEffect(() => {
-    if (params.ProductID) {
-      fetchProductById(params.ProductID); // Fetch product based on the ID from the link
+    if (ProductID) {
+      fetchProductById(ProductID); // Fetch product based on the ID from the link
     }
   });
 
@@ -316,7 +306,7 @@ const Product = () => {
                   href={{
                     pathname: "Product/PlaceToOrder",
                     query: {
-                      ProductID: params.ProductID,
+                      ProductID: ProductID,
                       Stock: quantity,
                       ShippingFee: "100",
                     },

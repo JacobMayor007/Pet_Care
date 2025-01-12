@@ -1,5 +1,5 @@
 "use client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import "@ant-design/v5-patch-for-react-19";
@@ -38,26 +38,16 @@ export default function PlaceToOrder() {
   const [userData, setUserData] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(false);
   const [userUID, setUserID] = useState("");
-  const searchParams = useSearchParams();
-  const [params, setParams] = useState<{
-    ProductID: string | null;
-  }>({
-    ProductID: null,
-  });
+  const searchParams = useParams();
 
-  // Update the state with search params after the component mounts
-  useEffect(() => {
-    setParams({
-      ProductID: searchParams.get("ProductID"),
-    });
-  }, [searchParams]);
   const [typeOfPayment, setTypeOfPayment] = useState<string | null>("");
   const [typeOfPaymentArray, setTypeOfPaymentArray] = useState<string[] | null>(
     null
   );
-  const ProductQuantity = searchParams.get("Stock");
+  const ProductID = searchParams.ProductID as string;
+  const ProductQuantity = searchParams.Stock as string;
   const [address, setAddress] = useState("");
-  const ShippingFee = Number(searchParams.get("ShippingFee"));
+  const ShippingFee = Number(searchParams.ShippingFee);
   const [deliverTo, setDeliverTo] = useState("");
   const [buyerCNumber, setBuyerCNumber] = useState<string | null>("");
   const router = useRouter();
@@ -119,8 +109,8 @@ export default function PlaceToOrder() {
   };
 
   useEffect(() => {
-    if (params.ProductID) {
-      fetchProductById(params.ProductID); // Fetch product based on the ID from the link
+    if (ProductID) {
+      fetchProductById(ProductID); // Fetch product based on the ID from the link
     }
   });
 
