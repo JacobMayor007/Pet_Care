@@ -290,8 +290,10 @@ export default function Messages() {
     <div>
       {user ? (
         <section className="relative">
-          <ClientNavbar />
-          <div className="grid grid-cols-[35%_70%] h-screen px-32 py-5 gap-4">
+          <div className="relative z-10">
+            <ClientNavbar />
+          </div>
+          <div className="grid grid-cols-[35%_70%] h-screen px-32 py-5 gap-4 z-[1]">
             <div className="pt-5 bg-white drop-shadow-xl rounded-xl px-5 flex flex-col gap-4 overflow-y-scroll relative">
               <div className="flex flex-row justify-between ">
                 <h1 className="text-3xl font-montserrat font-bold text-[#393939]">
