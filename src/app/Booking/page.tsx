@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import ClientNavbar from "../ClientNavbar/page";
 import { Carousel } from "antd";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import "@ant-design/v5-patch-for-react-19";
 import { TimePicker } from "antd";
@@ -17,22 +16,22 @@ import { Dayjs } from "dayjs";
 
 interface Room {
   id?: string;
-  Boarder_CreatedAt?: string;
-  Boarder_Location?: string;
-  Boarder_PaymentMethod?: string;
-  Boarder_RoomDescription?: string;
-  Boarder_RoomFeatures?: string;
-  Boarder_RoomName?: string;
-  Boarder_RoomPrice?: number;
-  Boarder_TotalPrice?: number;
-  Boarder_TypeOfRoom?: string;
-  Boarder_UserFullName?: string;
-  Boarder_UserID?: string;
+  Renter_CreatedAt?: string;
+  Renter_Location?: string;
+  Renter_PaymentMethod?: string;
+  Renter_RoomDescription?: string;
+  Renter_RoomFeatures?: string;
+  Renter_RoomName?: string;
+  Renter_RoomPrice?: number;
+  Renter_TotalPrice?: number;
+  Renter_TypeOfRoom?: string;
+  Renter_UserFullName?: string;
+  Renter_UserID?: string;
 }
 
 export default function Booking() {
   const [room, setRoom] = useState<Room[]>([]);
-
+  const [roomID, setRooomID] = useState<string | null>("");
   const [select, setSelect] = useState(false);
   const router = useRouter();
 
@@ -119,6 +118,23 @@ export default function Booking() {
     if (!checkIn || !checkOut) return 0;
     return checkOut.diff(checkIn, "day");
   };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("Check In Date", JSON.stringify(checkInDate));
+      localStorage.setItem("Check Out Date", JSON.stringify(checkOutDate));
+      localStorage.setItem("Check In Time", JSON.stringify(checkInTime));
+      localStorage.setItem("Check Out Time", JSON.stringify(checkOutTime));
+      localStorage.setItem("RoomID", roomID || "");
+
+      // Make sure guests is a number before saving
+      localStorage.setItem("Guest", guests.toString() || "");
+
+      // Calculate and store the number of days
+      const countedDays = calculateDays(checkInDate, checkOutDate);
+      localStorage.setItem("Days", countedDays.toString());
+    }
+  }, [checkInDate, checkOutDate, checkInTime, checkOutTime, guests, roomID]);
 
   return (
     <div className="h-full">
@@ -270,110 +286,103 @@ export default function Booking() {
             </div>
           </div>
         </div>
-
-        {room.map((data) => {
-          return (
-            <div key={data?.id} className="h-full grid grid-cols-8 gap-10 p-4 ">
-              <div className="col-span-2 pt-32 pl-16">
-                <h1 className="font-hind text-base italic text-gray-400">
-                  Image of {data?.Boarder_RoomName}
-                </h1>
-              </div>
-              <div className="col-span-6 bg-[#86B2B4] py-8 px-14 rounded-3xl">
-                <div className="flex flex-col gap-3">
-                  <h1 className="font-montserrat text-xs text-gray-100 font-bold">
-                    Room Name / Number: {data.Boarder_RoomName}
-                  </h1>
-                  <h1 className="font-montserrat text-3xl text-white font-bold ">
-                    {data?.Boarder_TypeOfRoom}
-                  </h1>
-                  <p className="font-montserrat text-base leading-7 font-medium text-white">
-                    {data?.Boarder_RoomDescription
-                      ? data.Boarder_RoomDescription.split(".")[0] + "."
-                      : ""}
-                  </p>
-                  <Link
-                    href={{
-                      pathname: "/Booking/Room",
-                      query: {
-                        RoomID: data?.id,
-                        CheckIn: checkInDate ? checkInDate.toISOString() : "",
-                        CheckOut: checkOutDate
-                          ? checkOutDate.toISOString()
-                          : "",
-                        CheckInTime: checkInTime
-                          ? checkInTime.toISOString()
-                          : "",
-                        CheckOutTime: checkOutTime
-                          ? checkOutTime.toISOString()
-                          : "",
-                        Days: calculateDays(
-                          checkInDate,
-                          checkOutDate
-                        ).toString(),
-                        Guest: guests,
-                      },
-                    }}
-                    className="text-white italic underline font-montserrat text-base"
-                  >
-                    View Room Details
-                  </Link>
-                  <div className="border-b-2 border-gray-300 mb-4" />
-                  <div className="grid grid-cols-7">
-                    <div className="col-span-2">
-                      <h1 className="font-montserrat text-xl text-white font-bold">
-                        Features:
+        {!guests ||
+        !checkInDate ||
+        !checkInTime ||
+        !checkOutDate ||
+        !checkOutTime ? (
+          <div></div>
+        ) : (
+          <div>
+            {room.map((data) => {
+              return (
+                <div
+                  key={data?.id}
+                  className="h-full grid grid-cols-8 gap-10 p-4 "
+                >
+                  <div className="col-span-2 pt-32 pl-16">
+                    <h1 className="font-hind text-base italic text-gray-400">
+                      Image of {data?.Renter_RoomName}
+                    </h1>
+                  </div>
+                  <div className="col-span-6 bg-[#86B2B4] py-8 px-14 rounded-3xl">
+                    <div className="flex flex-col gap-3">
+                      <h1 className="font-montserrat text-xs text-gray-100 font-bold">
+                        Room Name / Number: {data.Renter_RoomName}
                       </h1>
-                      {room.map((data) => {
-                        const features = data?.Boarder_RoomFeatures
-                          ? JSON.parse(data.Boarder_RoomFeatures)
-                          : [];
-                        return (
-                          <ul key={data?.id} className="">
-                            {Array.isArray(features) &&
-                              features.map(
-                                (feature: {
-                                  id: string;
-                                  name: string;
-                                  price: string;
-                                }) => (
-                                  <li
-                                    key={feature.id}
-                                    className="font-montserrat text-white text-base font-medium "
-                                  >
-                                    {feature.name} - Php {feature.price}
-                                  </li>
-                                )
-                              )}{" "}
-                          </ul>
-                        );
-                      })}
-                    </div>
-                    <div className="col-span-5 flex justify-end">
-                      <div>
-                        <h1 className="font-montserrat text-white font-bold text-2xl">
-                          Php {data?.Boarder_RoomPrice}
-                        </h1>
-                        <p className="font-montserrat text-white text-lg">
-                          Per night / day
-                        </p>
-                        <p className="font-montserrat text-white text-base">
-                          Excluding taxes, and fees
-                        </p>
-                        <button
-                          type="button"
-                          className="w-full h-10 bg-[#77D8DD] font-montserrat text-base rounded-3xl text-white"
-                        >
-                          Book Now
-                        </button>
+                      <h1 className="font-montserrat text-3xl text-white font-bold ">
+                        {data?.Renter_TypeOfRoom}
+                      </h1>
+                      <p className="font-montserrat text-base leading-7 font-medium text-white">
+                        {data?.Renter_RoomDescription
+                          ? data.Renter_RoomDescription.split(".")[0] + "."
+                          : ""}
+                      </p>
+                      <a
+                        href="/Booking/Room"
+                        onClick={() => setRooomID(data?.id || "")}
+                        className="text-white italic underline font-montserrat text-base"
+                      >
+                        View Room Details
+                      </a>
+                      <div className="border-b-2 border-gray-300 mb-4" />
+                      <div className="grid grid-cols-7">
+                        <div className="col-span-2">
+                          <h1 className="font-montserrat text-xl text-white font-bold">
+                            Features:
+                          </h1>
+                          {room.map((data) => {
+                            const features = data?.Renter_RoomFeatures
+                              ? JSON.parse(data.Renter_RoomFeatures)
+                              : [];
+                            return (
+                              <ul key={data?.id} className="">
+                                {Array.isArray(features) &&
+                                  features.map(
+                                    (feature: {
+                                      id: string;
+                                      name: string;
+                                      price: string;
+                                    }) => (
+                                      <li
+                                        key={feature.id}
+                                        className="font-montserrat text-white text-base font-medium "
+                                      >
+                                        {feature.name} - Php {feature.price}
+                                      </li>
+                                    )
+                                  )}{" "}
+                              </ul>
+                            );
+                          })}
+                        </div>
+                        <div className="col-span-5 flex justify-end">
+                          <div>
+                            <h1 className="font-montserrat text-white font-bold text-2xl">
+                              Php {data?.Renter_RoomPrice}
+                            </h1>
+                            <p className="font-montserrat text-white text-lg">
+                              Per night / day
+                            </p>
+                            <p className="font-montserrat text-white text-base">
+                              Excluding taxes, and fees
+                            </p>
+                            <button
+                              type="button"
+                              className="w-full h-10 bg-[#77D8DD] font-montserrat text-base rounded-3xl text-white"
+                            >
+                              Book Now
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

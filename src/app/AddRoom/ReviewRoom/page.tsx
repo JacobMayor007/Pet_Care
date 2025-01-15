@@ -174,19 +174,20 @@ const Review = () => {
       const querySnapshot = await getDocs(q);
       if (querySnapshot.empty) {
         const roomData = {
-          Boarder_RoomName: roomName,
-          Boarder_RoomDescription: roomDescription,
-          Boarder_RoomFeatures: roomFeature,
-          Boarder_RoomPrice: roomPrice.toString(),
-          Boarder_PaymentMethod: Array.isArray(typeOfPayment)
+          Renter_RoomName: roomName,
+          Renter_RoomDescription: roomDescription,
+          Renter_RoomFeatures: roomFeature,
+          Renter_RoomPrice: roomPrice.toString(),
+          Renter_PaymentMethod: Array.isArray(typeOfPayment)
             ? typeOfPayment.join(", ")
             : typeOfPayment,
-          Boarder_TotalPrice: totalPrice,
-          Boarder_UserID: userId,
-          Boarder_Location: location,
-          Boarder_UserFullName: fullName,
-          Boarder_TypeOfRoom: typeOfRoom,
-          Boarder_CreatedAt: Timestamp.now(),
+          Renter_TotalPrice: totalPrice,
+          Renter_UserID: userId,
+          Renter_Location: location,
+          Renter_UserFullName: fullName,
+          Renter_TypeOfRoom: typeOfRoom,
+          Renter_CreatedAt: Timestamp.now(),
+          Renter_UserEmail: userEmail,
         };
 
         const docRef = await addDoc(collection(db, "board"), roomData);

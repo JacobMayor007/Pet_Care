@@ -312,7 +312,7 @@ export default function PlaceToOrder() {
           <h1 className="col-span-3 font-montserrat text-xl">
             Type Of Payment
           </h1>
-          <div className="col-span-7 border-b border-gray-300 my-4 mr-4" />
+          <div className="col-span-3 border-b border-gray-300 my-4 mr-4" />
 
           {typeOfPaymentArray?.map((data, index) => {
             return (

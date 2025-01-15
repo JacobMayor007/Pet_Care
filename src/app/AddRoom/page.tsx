@@ -398,7 +398,7 @@ export default function AddProduct() {
                   value={location}
                   className="border-[1px] border-white rounded-lg w-full h-10 px-3 outline-none bg-[#86B2B4] text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder:text-slate-500 placeholder:font-hind placeholder:font-medium placeholder:text-sm"
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Quantity of Units Ex. 100"
+                  placeholder="J & G Building, H Abellana, Canduman, Mandaue City, 6014 Cebu"
                 />
               </div>
             </div>
@@ -415,12 +415,12 @@ export default function AddProduct() {
                     <div className="xl:grid xl:grid-cols-[100px_200px_150px_200px_50px] xl:gap-3 items-center">
                       <label
                         htmlFor="name"
-                        className="text-base font-hind font-medium text-white"
+                        className="text-base font-hind font-medium text-white "
                       >
                         Feature:
                       </label>
                       <input
-                        className="h-10 border-white border-[1px] rounded-md text-base font-hind font-normal px-2 bg-[#86B2B4] outline-none text-white"
+                        className="h-10 border-white border-[1px] rounded-md text-base font-hind font-normal px-2 bg-[#86B2B4] outline-none text-white placeholder:text-slate-500 placeholder:font-hind placeholder:font-medium placeholder:text-sm"
                         type="text"
                         name="name"
                         id="feature-name"
@@ -430,12 +430,12 @@ export default function AddProduct() {
                       />
                       <label
                         htmlFor="price"
-                        className="text-base font-hind font-medium text-white"
+                        className="text-base font-hind font-medium text-white "
                       >
                         Price on Feature:
                       </label>
                       <input
-                        className="h-10 outline-none text-white border-white border-[1px] rounded-md text-base font-hind font-normal px-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-[#86B2B4]"
+                        className="h-10 outline-none text-white border-white border-[1px] rounded-md text-base font-hind font-normal px-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-[#86B2B4] placeholder:text-slate-500 placeholder:font-hind placeholder:font-medium placeholder:text-sm"
                         type="number"
                         name="price"
                         id="feature-price"
