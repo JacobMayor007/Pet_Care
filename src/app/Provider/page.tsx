@@ -94,7 +94,7 @@ export default function Overview() {
       }
     };
     myProducts();
-  }, []);
+  }, [userProduct]);
 
   useEffect(() => {
     const fetchOrders = async () => {
