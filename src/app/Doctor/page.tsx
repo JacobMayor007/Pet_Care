@@ -27,7 +27,11 @@ export default function Doctor() {
   return (
     <div className="">
       <DoctorNavigation />
-      <h1 className="">Hello Dr. {fullName}</h1>
+      <div className="mx-56 py-10">
+        <h1 className="text-4xl font-bold font-montserrat text-[#393939]">
+          Hello, Dr. {fullName}
+        </h1>
+      </div>
     </div>
   );
 }

@@ -11,7 +11,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-
+  const [loading, setLoading] = useState(false);
   const auth = getAuth(app);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -19,11 +19,14 @@ export default function Login() {
     setError("");
 
     try {
+      setLoading(true);
       await signInWithEmailAndPassword(auth, email, password);
-      router.push("/"); // Redirect to the home page upon successful login
+      router.push("/");
     } catch (err) {
-      console.error(err); // Log the actual error for debugging
+      console.error(err);
       setError("Invalid email or password. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -119,7 +122,7 @@ export default function Login() {
           <div className="w-full flex justify-center">
             <input
               type="submit"
-              value="Submit"
+              value={loading ? `Signing In...` : `Submit`}
               className="cursor-pointer w-[230px] h-[50px] bg-[#6BE8DC] text-[22px] font-montserrat font-bold text-white rounded-lg hover:bg-blue-400 text-center"
             />
           </div>

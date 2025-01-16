@@ -56,7 +56,7 @@ export default function AddProduct() {
     },
     {
       id: 3,
-      label: "Debit / Credit",
+      label: "Debit Or Credit",
       img: "./Credit_Debit Card Image.svg",
     },
   ];

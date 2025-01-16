@@ -18,9 +18,8 @@ import { faFileShield } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MinusOutlined, PlusOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import ClientNavbar from "../ClientNavbar/page";
-import Link from "next/link";
 import Loading from "../Loading/page";
 
 interface Product {
@@ -38,19 +37,19 @@ interface Product {
 }
 
 const Product = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [userUID, setUserUID] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>("");
   const [userData, setUserData] = useState<DocumentData[]>([]);
   const [product, setProduct] = useState<Product | null>(null);
   const [similarProducts, setSimilarProducts] = useState<Product[]>([]); // Store similar products
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(0);
+  const [warning, setWarning] = useState(false);
   const router = useRouter();
   const auth = getAuth();
-  const searchParams = useParams();
-  const ProductID = searchParams.ProductID as string;
-
+  const [productID, setProductID] = useState<string | null>("");
   const [addToCart, setAddToCart] = useState(false);
+  const shippingFee = 100;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -64,7 +63,6 @@ const Product = () => {
     return () => unsubscribe();
   }, [auth, router]);
 
-  // Function to fetch product data by ID
   const fetchProductById = async (id: string) => {
     try {
       setLoading(true); // Start loading
@@ -91,6 +89,8 @@ const Product = () => {
       setLoading(false); // Stop loading
     }
   };
+
+  // Function to fetch product data by ID
 
   const fetchSimilarProducts = async (typeOfProduct: string) => {
     try {
@@ -188,10 +188,24 @@ const Product = () => {
   };
 
   useEffect(() => {
-    if (ProductID) {
-      fetchProductById(ProductID); // Fetch product based on the ID from the link
+    if (productID) {
+      fetchProductById(productID);
     }
   });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedProductID = localStorage.getItem("Product ID");
+      if (storedProductID) setProductID(storedProductID);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("Stock", quantity.toString());
+      localStorage.setItem("Shipping Fee", shippingFee.toString());
+    }
+  }, [productID, quantity, shippingFee]);
 
   // Display loading screen
   if (loading) {
@@ -202,10 +216,31 @@ const Product = () => {
     );
   }
 
+  if (productID === "") {
+    router.push("/");
+  }
+
+  function warningFunction() {
+    if (quantity < 1) {
+      setWarning(true);
+    } else {
+      setWarning(false);
+      router.push("/Product/PlaceToOrder");
+    }
+  }
+
   return (
     <div className="w-full pt-4 pb-8 px-8 ">
       <ClientNavbar />
-
+      <Modal
+        open={warning}
+        onOk={() => setWarning(false)}
+        centered={true}
+        onCancel={() => setWarning(false)}
+        onClose={() => setWarning(false)}
+      >
+        Please select how many items you want to buy
+      </Modal>
       <div className="h-full mt-2 z-[1]">
         <div className="grid grid-cols-2 gap-2 py-4 h-full justify-items-center mt-4 px-28">
           <div className="w-full">
@@ -302,19 +337,16 @@ const Product = () => {
                   <p>Do you wish to add this product to your Cart?</p>
                 </Modal>
 
-                <Link
-                  href={{
-                    pathname: "Product/PlaceToOrder",
-                    query: {
-                      ProductID: ProductID,
-                      Stock: quantity,
-                      ShippingFee: "100",
-                    },
+                <button
+                  onClick={() => {
+                    {
+                      warningFunction();
+                    }
                   }}
                   className="bg-[#006B95] font-hind font-semibold text-white text-lg rounded-lg flex items-center justify-center"
                 >
                   <span>Buy Now</span>
-                </Link>
+                </button>
               </div>
             </div>
           </div>
@@ -324,12 +356,10 @@ const Product = () => {
         <div className="px-28 grid grid-cols-4 gap-5 justify-items-center w-full">
           {similarProducts.map((data, index) => {
             return (
-              <Link
-                href={{
-                  pathname: "Product",
-                  query: {
-                    ProductID: data?.id,
-                  },
+              <a
+                href="/Product"
+                onClick={() => {
+                  setProductID(data?.id);
                 }}
                 key={index}
                 className=" list-none grid grid-rows-[120px_20px_40px_20px] p-3 bg-white drop-shadow-lg rounded-lg"
@@ -346,7 +376,7 @@ const Product = () => {
                 <li className="w-[230px] font-hind text-sm font-semibold text-[#565656]">
                   Php {data?.Seller_ProductPrice}
                 </li>
-              </Link>
+              </a>
             );
           })}
         </div>

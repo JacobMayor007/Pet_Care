@@ -3,10 +3,12 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import Signout from "../SignedOut/page";
-import { app } from "../firebase/config";
+import { app, db } from "../firebase/config";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter } from "next/navigation";
-import fetchProduct from "../fetchData/fetchProducts";
+// import fetchProduct from "../fetchData/fetchProducts";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { totalOrder } from "../fetchData/Provider/fetchTotalOrder";
 
 import {
   faArrowUp,
@@ -17,38 +19,101 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 interface Product {
-  id: string;
-  PaymentMethod?: string;
-  ProductDescription?: string;
-  ProductFeatures?: string; // Assuming this is a string representation of an array or object
-  ProductName?: string;
-  ProductPrice?: string; // Assuming the price comes as a string from Firebase
-  TotalPrice?: number;
-  UserID?: string;
+  id?: string;
+  Seller_PaymentMethod?: string;
+  Seller_ProductDescription?: string;
+  Seller_ProductFeatures?: string; // Assuming this is a string representation of an array or object
+  Seller_ProductName?: string;
+  Seller_ProductPrice?: string; // Assuming the price comes as a string from Firebase
+  Seller_StockQuantity?: string;
+  Seller_TotalPrice?: number;
+  Seller_TypeOfProduct?: string;
+  Seller_UserFullName?: string;
+  Seller_UserID?: string;
+}
+
+interface Orders {
+  id?: string;
+  OC_BuyerID?: string;
+  OC_ContactNumber?: string;
+  OC_DeliverAddress?: string;
+  OC_DeliverTo?: string;
+  OC_OrderAt?: string;
+  OC_PaymentMethod?: string;
+  OC_Products?: {
+    OC_ProductID?: string;
+    OC_ProductName?: string;
+    OC_ProductPrice?: string;
+    OC_ProductQuantity?: number;
+    OC_ShippingFee?: number;
+  };
+  OC_SellerFullName?: string;
+  OC_SellerID?: string;
+  OC_TotalPrice?: number;
 }
 
 export default function Overview() {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [userId, setUserId] = useState("");
+  // const [products, setProducts] = useState<Product[]>([]);
+  const [userProduct, setUserProduct] = useState<Product[]>([]);
+  const [userEmail, setUserEmail] = useState<string | null>("");
+  const [order, setOrder] = useState<Orders[]>([]);
+  const [userTotalProduct, setUserTotalProduct] = useState(0);
   const [logout, setLogout] = useState(false);
+  const [totalOrders, setTotalOrders] = useState<number | null>(0);
+
+  // useEffect(() => {
+  //   const getProducts = async () => {
+  //     const fetchedProducts = await fetchProduct();
+  //     setProducts(fetchedProducts);
+  //   };
+  //   getProducts();
+  // }, []);
 
   useEffect(() => {
-    const getProducts = async () => {
-      const fetchedProducts = await fetchProduct();
-      setProducts(fetchedProducts);
+    const myProducts = async () => {
+      try {
+        const productsRef = collection(db, "products");
+        const myProductsQuery = query(
+          productsRef,
+          where("Seller_UserID", "==", userId)
+        );
+
+        const myProductsSnapshot = await getDocs(myProductsQuery);
+        const myProducts = myProductsSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        console.log("Successfully fetched User's Products", myProducts);
+        setUserProduct(myProducts);
+        setUserTotalProduct(myProducts.length);
+        console.log("This is the user's Product: ", userProduct);
+      } catch (error) {
+        console.error("Error fetching on your products", error);
+        return [];
+      }
     };
-    getProducts();
+    myProducts();
   }, []);
 
-  console.log(products);
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!userId) return; // Check if userId is valid
+      const orders = await totalOrder(userId);
+      setOrder(orders || []);
+      setTotalOrders(orders?.length || 0);
+    };
+
+    fetchOrders();
+  }, [userId]);
 
   const router = useRouter();
-  const units: number = 240;
-  const pendingUnits = 24;
+  const units: number = totalOrders || 0;
+  const pendingUnits = totalOrders || 0;
   const pending: number = (pendingUnits / units) * 100;
-  const shippedUnits = 96;
+  const shippedUnits = totalOrders || 0;
   const shipped: number = (shippedUnits / units) * 100;
-  const deliveredUnits = 120;
+  const deliveredUnits = totalOrders || 0;
   const delivered: number = (deliveredUnits / units) * 100;
 
   console.log(`${shipped} \n${delivered}\n${pending}`);
@@ -60,7 +125,8 @@ export default function Overview() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         // Retrieve the user's unique ID
-        setUserId(user.email);
+        setUserId(user.uid);
+        setUserEmail(user.email);
       } else {
         // No user is signed in
         setUserId("");
@@ -71,6 +137,12 @@ export default function Overview() {
     // Cleanup the subscription when the component is unmounted
     return () => unsubscribe();
   });
+
+  const totalPrice = order.reduce((accumulator, currentValue) => {
+    return accumulator + Number(currentValue?.OC_Products?.OC_ProductPrice);
+  }, 0);
+
+  console.log(totalPrice);
 
   return (
     <div className={userId ? `bg-[#FEFEFE] pb-5` : `hidden`}>
@@ -144,7 +216,7 @@ export default function Overview() {
             </div>
 
             <h1 className="font-montserrat text-base text-[#006B95]">
-              {userId}
+              {userEmail}
             </h1>
           </div>
         </div>
@@ -156,7 +228,7 @@ export default function Overview() {
           </h1>
           <div className="flex items-center justify-center flex-col bg-white drop-shadow-xl  shadow-black rounded-xl">
             <h1 className="text-[#26A2AB] text-3xl font-montserrat font-semibold">
-              240
+              {totalOrders}
               <span className="ml-4">
                 <FontAwesomeIcon
                   icon={faArrowUp}
@@ -175,7 +247,7 @@ export default function Overview() {
                 className="text-3xl font-semibold font-montserrat text-[#26A2AB]"
               />{" "}
               <h1 className="text-3xl font-semibold font-montserrat text-[#26A2AB] tracking-widest">
-                95460
+                {totalPrice}
               </h1>
               <FontAwesomeIcon
                 icon={faArrowUp}
@@ -188,7 +260,7 @@ export default function Overview() {
           </div>
           <div className="flex flex-col items-center justify-center bg-white drop-shadow-xl  shadow-black rounded-xl">
             <h1 className="text-3xl font-semibold font-montserrat text-[#26A2AB] tracking-widest">
-              20
+              {userTotalProduct}
             </h1>
             <p className="font-montserrat font-semibold text-lg text-[#565656] ">
               Products Listed
@@ -201,7 +273,7 @@ export default function Overview() {
           </h1>
           <div className="flex items-center justify-center flex-col bg-white drop-shadow-xl  shadow-black rounded-xl">
             <h1 className="text-[#26A2AB] text-3xl font-montserrat font-semibold">
-              225
+              {totalOrders}
             </h1>
             <p className="font-montserrat font-semibold text-lg text-[#565656]">
               Total Orders
@@ -214,7 +286,7 @@ export default function Overview() {
                 className="text-3xl font-semibold font-montserrat text-[#26A2AB]"
               />
               <h1 className="text-3xl font-semibold font-montserrat text-[#26A2AB] tracking-widest">
-                89460
+                {totalPrice}
               </h1>
               <FontAwesomeIcon
                 icon={faArrowUp}
@@ -227,7 +299,7 @@ export default function Overview() {
           </div>
           <div className="flex items-center justify-center flex-col bg-white drop-shadow-xl  shadow-black rounded-xl">
             <h1 className="text-3xl font-semibold font-montserrat text-[#26A2AB] tracking-widest">
-              20
+              {userTotalProduct}
             </h1>
             <p className="font-montserrat font-semibold text-lg text-[#565656]">
               Products Listed
@@ -246,8 +318,14 @@ export default function Overview() {
                   Pending Orders
                 </p>
                 <div className="flex flex-row items-center justify-between ">
-                  <h1 className="text-3xl font-hind font-semibold">
-                    {pending}%
+                  <h1
+                    className={
+                      totalOrders === 0
+                        ? `text-xl font-semibold`
+                        : `text-3xl font-hind font-semibold`
+                    }
+                  >
+                    {totalOrders === 0 ? `You have no orders` : `${pending}%`}
                   </h1>
                   <p className="font-montserrat font-bold text-lg text-[#565656]">
                     {pendingUnits} / {units}
@@ -265,8 +343,14 @@ export default function Overview() {
                   Shipped Orders
                 </p>
                 <div className="flex items-center justify-between">
-                  <h1 className="text-3xl font-hind font-semibold">
-                    {shipped}%
+                  <h1
+                    className={
+                      totalOrders === 0
+                        ? `text-xl font-semibold`
+                        : `text-3xl font-hind font-semibold`
+                    }
+                  >
+                    {totalOrders === 0 ? `You have no orders` : `${shipped}%`}
                   </h1>
 
                   <p className="font-montserrat font-bold text-lg text-[#565656]">
@@ -285,8 +369,14 @@ export default function Overview() {
                   Delivered Orders
                 </p>
                 <div className="flex items-center justify-between">
-                  <h1 className="text-3xl font-hind font-semibold">
-                    {delivered}
+                  <h1
+                    className={
+                      totalOrders === 0
+                        ? `text-xl font-semibold`
+                        : `text-3xl font-hind font-semibold`
+                    }
+                  >
+                    {totalOrders === 0 ? `You have no orders` : `${delivered}`}
                   </h1>
                   <p className="font-montserrat font-bold text-lg text-[#565656]">
                     {deliveredUnits} / {units}
@@ -307,10 +397,10 @@ export default function Overview() {
         </div>
         <div className="pb-5">
           <div className="grid grid-cols-4 gap-6 grid-rows-[300px]">
-            {products.map((data) => {
+            {userProduct.map((data, index) => {
               return (
                 <div
-                  key={data?.id}
+                  key={index}
                   className="bg-white drop-shadow-xl shadow-black rounded-xl p-4 grid grid-rows-[110px_auto_auto_auto_auto]"
                 >
                   <div className="flex justify-center ">
@@ -320,13 +410,13 @@ export default function Overview() {
                     37 Orders {`(This month)`}
                   </h1>
                   <p className="text-[#565656] font-hind font-semibold text-sm">
-                    {data?.ProductName}
+                    {data?.Seller_ProductName}
                   </p>
                   <p className="text-sm font-hind font-semibold text-[#565656]">
                     <span>
                       <FontAwesomeIcon icon={faPesoSign} />
                     </span>
-                    {data?.ProductPrice}
+                    {data?.Seller_ProductPrice}
                   </p>
                   <button className="bg-[#006B95] text-white p-1 rounded-md">
                     Edit Item

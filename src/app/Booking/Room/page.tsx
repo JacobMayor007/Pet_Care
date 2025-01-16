@@ -6,8 +6,10 @@ import "@ant-design/v5-patch-for-react-19";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "@/app/firebase/config";
 import { format } from "date-fns";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import Image from "next/image";
+
+import { DatePicker, TimePicker } from "antd";
 import {
   doc,
   DocumentData,
@@ -66,10 +68,10 @@ export default function Room() {
   const [userEmail, setUserEmail] = useState<string | null>();
   const [typeOfPayment, setTypeOfPayment] = useState("");
   const [userData, setUserData] = useState<DocumentData[]>([]);
-  const [checkInDate, setCheckInDate] = useState<string | null>("");
-  const [checkOutDate, setCheckOutDate] = useState<string | null>("");
-  const [checkInTime, setCheckInTime] = useState<string | null>("");
-  const [checkOutTime, setCheckOutTime] = useState<string | null>("");
+  const [checkInDate, setCheckInDate] = useState<string | null>(null);
+  const [checkOutDate, setCheckOutDate] = useState<string | null>(null);
+  const [checkInTime, setCheckInTime] = useState<string | null>(null);
+  const [checkOutTime, setCheckOutTime] = useState<string | null>(null);
   const [guest, setGuest] = useState<number | null>(0);
   const [days, setDays] = useState<number | null>(0);
   const [roomID, setRoomID] = useState<string | null>("");
@@ -143,13 +145,21 @@ export default function Room() {
     return () => unsubscribe();
   });
 
+  const calculateDays = (
+    checkIn: Dayjs | null,
+    checkOut: Dayjs | null
+  ): number => {
+    if (!checkIn || !checkOut) return 0;
+    return checkOut.diff(checkIn, "day");
+  };
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedCheckInDate = localStorage.getItem("Check In Date");
       const storedCheckOutDate = localStorage.getItem("Check Out Date");
       const storedCheckInTime = localStorage.getItem("Check In Time");
       const storedCheckOutTime = localStorage.getItem("Check Out Time");
-      const storedRoomID = localStorage.getItem("RoomID");
+      const storedRoomID = localStorage.getItem("Room ID");
       const storedDays = Number(localStorage.getItem("Days"));
       const storedGuests = Number(localStorage.getItem("Guest"));
 
@@ -181,8 +191,29 @@ export default function Room() {
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("Check In Date", JSON.stringify(checkInDate));
+      localStorage.setItem("Check Out Date", JSON.stringify(checkOutDate));
+      localStorage.setItem("Check In Time", JSON.stringify(checkInTime));
+      localStorage.setItem("Check Out Time", JSON.stringify(checkOutTime));
+      localStorage.setItem("Room ID", roomID || "");
+
+      // Make sure guests is a number before saving
+      localStorage.setItem("Guest", guest?.toString() || "");
+
+      // Calculate and store the number of days
+      const countedDays = calculateDays(
+        checkInDate ? dayjs(checkInDate) : null,
+        checkOutDate ? dayjs(checkOutDate) : null
+      );
+
+      localStorage.setItem("Days", countedDays.toString());
+    }
+  }, [checkInDate, checkOutDate, checkInTime, checkOutTime, guest, roomID]);
+
   const formatDate = (date: string | null): string => {
-    if (!date) return "Invalid Date";
+    if (!date) return "";
     const dayjsDate = dayjs(date);
     if (!dayjsDate.isValid()) {
       console.error("Invalid date", date);
@@ -199,7 +230,7 @@ export default function Room() {
   const formattedCheckOut = formatDate(checkOutDate || "");
 
   const formatTime = (date: string | null): string => {
-    if (!date) return "Invalid Time";
+    if (!date) return "";
 
     const dayjsDate = dayjs(date);
 
@@ -325,6 +356,22 @@ export default function Room() {
   if (loadingPage) {
     return <LoadingPage />;
   }
+
+  const checkInChange = (date: Dayjs | null) => {
+    setCheckInDate(date ? date.format("YYYY-MM-DD") : null); // Format as desired
+  };
+
+  const checkOutChange = (date: Dayjs | null) => {
+    setCheckOutDate(date ? date.format("YYYY-MM-DD") : null); // Format as desired
+  };
+
+  const checkInTimeChange = (time: Dayjs | null) => {
+    setCheckInTime(time ? time.toISOString() : null); // Format as desired
+  };
+
+  const checkOutTimeChange = (time: Dayjs | null) => {
+    setCheckOutTime(time ? time.toISOString() : null); // Format as desired
+  };
 
   return (
     <div className={loadingPage ? `invisible` : `visible`}>
@@ -454,25 +501,59 @@ export default function Room() {
                 </span>
               </h1>
               <div className="bg-[#DEE9E9] grid grid-cols-2 mx-4 rounded-xl">
-                <div className="border-r-2 border-[#787E7E] pt-3 ml-3">
+                <div className="border-r-2 border-[#787E7E] py-3 pr-2 ml-3">
                   <p className="font-bold font-hind text-[#4E5656]">Check In</p>
-                  <h1 className="font-hind text-[#4E5656]">
-                    {formattedCheckIn}
-                  </h1>
-                  <p className="font-hind text-[#4E5656] text-sm font-medium">
-                    {formattedCheckInTime}
-                  </p>
+                  {formattedCheckIn !== "" ? (
+                    <h1 className="font-hind text-[#4E5656]">
+                      {formattedCheckIn}
+                    </h1>
+                  ) : (
+                    <DatePicker
+                      needConfirm
+                      onChange={checkInChange}
+                      className="border-none outline-none drop-shadow-none bg-transparent hover:bg-transparent "
+                    />
+                  )}
+                  {formattedCheckInTime !== "" ? (
+                    <p className="font-hind text-[#4E5656] text-sm font-medium">
+                      {formattedCheckInTime}
+                    </p>
+                  ) : (
+                    <TimePicker
+                      use12Hours
+                      onChange={checkInTimeChange}
+                      format="h:mm a"
+                      className="border-none outline-none drop-shadow-none bg-transparent hover:bg-transparent"
+                    />
+                  )}
                 </div>
                 <div className="py-3 ml-3">
                   <p className="font-bold font-hind text-[#4E5656]">
                     Check Out
                   </p>
-                  <h1 className="font-hind text-[#4E5656]">
-                    {formattedCheckOut}
-                  </h1>
-                  <p className="font-hind text-[#4E5656] text-sm font-medium">
-                    {formattedCheckOutTime}
-                  </p>
+                  {formattedCheckOut !== "" ? (
+                    <h1 className="font-hind text-[#4E5656]">
+                      {formattedCheckOut}
+                    </h1>
+                  ) : (
+                    <DatePicker
+                      needConfirm
+                      onChange={checkOutChange}
+                      className="border-none outline-none drop-shadow-none bg-transparent hover:bg-transparent "
+                    />
+                  )}
+                  {formattedCheckOutTime !== "" ? (
+                    <p className="font-hind text-[#4E5656] text-sm font-medium">
+                      {formattedCheckOutTime}
+                    </p>
+                  ) : (
+                    <TimePicker
+                      use12Hours
+                      format="h:mm a"
+                      onChange={checkOutTimeChange}
+                      className="border-none outline-none drop-shadow-none bg-transparent hover:bg-transparent"
+                    />
+                  )}
                 </div>
                 <div className="border-b-2 col-span-2 border-[#787E7E]" />
                 <div className="col-span-2 ml-3 py-2">

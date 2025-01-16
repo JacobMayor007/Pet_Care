@@ -1,5 +1,5 @@
 "use client";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import "@ant-design/v5-patch-for-react-19";
@@ -38,16 +38,14 @@ export default function PlaceToOrder() {
   const [userData, setUserData] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(false);
   const [userUID, setUserID] = useState("");
-  const searchParams = useParams();
-
   const [typeOfPayment, setTypeOfPayment] = useState<string | null>("");
   const [typeOfPaymentArray, setTypeOfPaymentArray] = useState<string[] | null>(
     null
   );
-  const ProductID = searchParams.ProductID as string;
-  const ProductQuantity = searchParams.Stock as string;
+  const [quantity, setQuantity] = useState<number | null>(0);
+  const [shippingFee, setShippingFee] = useState<number | null>(0);
+  const [productID, setProductID] = useState("");
   const [address, setAddress] = useState("");
-  const ShippingFee = Number(searchParams.ShippingFee);
   const [deliverTo, setDeliverTo] = useState("");
   const [buyerCNumber, setBuyerCNumber] = useState<string | null>("");
   const router = useRouter();
@@ -58,7 +56,13 @@ export default function PlaceToOrder() {
       const storedDeliverTo = localStorage.getItem("Deliver To:");
       const storedAddress = localStorage.getItem("Address:");
       const storedBuyerCNumber = localStorage.getItem("Buyer Contact Number:");
+      const storedQuantity = Number(localStorage.getItem("Stock"));
+      const storedShippingFee = Number(localStorage.getItem("Shipping Fee"));
+      const storedProductID = localStorage.getItem("Product ID");
 
+      if (storedProductID) setProductID(storedProductID);
+      if (storedQuantity) setQuantity(storedQuantity);
+      if (storedShippingFee) setShippingFee(storedShippingFee);
       setTypeOfPayment(storedTypeOfPayment || "");
       setAddress(storedAddress || "");
       setDeliverTo(storedDeliverTo || "");
@@ -109,10 +113,10 @@ export default function PlaceToOrder() {
   };
 
   useEffect(() => {
-    if (ProductID) {
-      fetchProductById(ProductID); // Fetch product based on the ID from the link
+    if (productID) {
+      fetchProductById(productID); // Fetch product based on the ID from the link
     }
-  });
+  }, [productID]);
 
   console.log(typeOfPaymentArray);
 
@@ -197,21 +201,23 @@ export default function PlaceToOrder() {
           OC_ProductID: product.id,
           OC_ProductName: product.Seller_ProductName,
           OC_ProductPrice: product.Seller_ProductPrice,
-          OC_ProductQuantity: ProductQuantity,
-          OC_ShippingFee: ShippingFee,
+          OC_ProductQuantity: quantity,
+          OC_ShippingFee: shippingFee,
         },
         OC_SellerID: product.Seller_UserID,
         OC_SellerFullName: product.Seller_UserFullName,
         OC_TotalPrice:
-          Number(product.Seller_ProductPrice) * Number(ProductQuantity) +
-          ShippingFee,
+          Number(product.Seller_ProductPrice) * Number(quantity) +
+          Number(shippingFee),
       });
 
       console.log("Product added to order successfully with ID:", docRef.id);
-      setLoading(false);
       router.push("/");
     } catch (error) {
       console.error("Failed to add order collection", error);
+    } finally {
+      setLoading(false);
+      localStorage.clear();
     }
   };
 
@@ -241,11 +247,9 @@ export default function PlaceToOrder() {
               Php {product?.Seller_ProductPrice}
             </h1>
           </div>
+          <div className=" text-center font-hind text-lg">{quantity}</div>
           <div className=" text-center font-hind text-lg">
-            {ProductQuantity}
-          </div>
-          <div className=" text-center font-hind text-lg">
-            Php {Number(ProductQuantity) * Number(product?.Seller_ProductPrice)}
+            Php {Number(quantity) * Number(product?.Seller_ProductPrice)}
           </div>
         </div>
         <div className="grid grid-cols-7 gap-5 mt-10 mx-8 bg-white drop-shadow-lg pl-5 py-10 rounded-xl">
@@ -355,18 +359,18 @@ export default function PlaceToOrder() {
               Type Of Payment: {typeOfPayment}
             </p>
             <p className="text-[#232323] font-hind text-lg">
-              Quantity: {ProductQuantity}
+              Quantity: {quantity}
             </p>
             <p className="text-[#232323] font-hind text-lg">
               Product Price: {product?.Seller_ProductPrice}
             </p>
             <p className="text-[#232323] font-hind text-lg">
-              Shipping Fee: Php {ShippingFee}
+              Shipping Fee: Php {shippingFee?.toString()}
             </p>
             <p className="text-[#232323] font-hind text-lg font-bold">
               Total Price: Php{" "}
-              {Number(product?.Seller_ProductPrice) * Number(ProductQuantity) +
-                ShippingFee}
+              {Number(product?.Seller_ProductPrice) * Number(quantity) +
+                Number(shippingFee)}
             </p>
             <div className="flex justify-end">
               <button

@@ -53,10 +53,8 @@ textarea {
 }
 
 .bg-dashboard {
-  background-image: url("/bg-ashboard.png");
-}
-
-.custom-datepicker-wrapper .ant-picker {
-  border: none !important;
-  box-shadow: none !important;
+  background-image: url("/Frame 15.png");
+  background-repeat: no-repeat;
+  background-position: right;
+  background-size: cover;
 }

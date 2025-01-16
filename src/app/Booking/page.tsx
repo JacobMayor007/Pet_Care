@@ -125,7 +125,7 @@ export default function Booking() {
       localStorage.setItem("Check Out Date", JSON.stringify(checkOutDate));
       localStorage.setItem("Check In Time", JSON.stringify(checkInTime));
       localStorage.setItem("Check Out Time", JSON.stringify(checkOutTime));
-      localStorage.setItem("RoomID", roomID || "");
+      localStorage.setItem("Room ID", roomID || "");
 
       // Make sure guests is a number before saving
       localStorage.setItem("Guest", guests.toString() || "");
