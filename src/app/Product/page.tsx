@@ -191,7 +191,7 @@ const Product = () => {
     if (productID) {
       fetchProductById(productID);
     }
-  });
+  }, [productID]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
