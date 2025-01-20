@@ -12,6 +12,7 @@ import Loading from "./Loading/page";
 import ClientNavbar from "./ClientNavbar/page";
 import Image from "next/image";
 import fetchRoom from "./fetchData/fetchRoom";
+import fetchDoctor from "./fetchData/fetchDoctor";
 
 interface Product {
   id: string;
@@ -64,26 +65,33 @@ interface Room {
   Renter_UserID?: string;
 }
 
+interface Doctor {
+  id?: string;
+  User_Email?: string;
+  User_FName?: string;
+  User_LName?: string;
+  User_UID?: string;
+  User_UserType?: string;
+}
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [userID, setUserID] = useState("");
   const [room, setRoom] = useState<Room[]>([]);
-  const [userEmail, setUserEmail] = useState<string | null>("");
   const [productID, setProductID] = useState("");
   const [roomID, setRoomID] = useState("");
   const [item, setItem] = useState<Item[]>([]);
   const [food, setFood] = useState<Food[]>([]);
+  const [doctor, setDoctor] = useState<Doctor[]>([]);
+  const [doctorID, setDoctorID] = useState("");
 
   const router = useRouter();
-  console.log(userEmail);
 
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserID(user.uid);
-        setUserEmail(user.email);
       } else {
         router.push("/Login");
       }
@@ -128,12 +136,22 @@ export default function Home() {
   });
 
   useEffect(() => {
+    const getDoctors = async () => {
+      const fetchedDoctors = await fetchDoctor();
+      setDoctor(fetchedDoctors);
+    };
+    getDoctors();
+  }, []);
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const storedProductID = localStorage.getItem("Product ID");
       const storedRoomID = localStorage.getItem("Room ID");
+      const storedDoctorID = localStorage.getItem("Doctor ID");
 
       if (storedProductID) setProductID(storedProductID);
       if (storedRoomID) setRoomID(storedRoomID);
+      if (storedDoctorID) setDoctorID(storedDoctorID);
     }
   }, []);
 
@@ -141,8 +159,9 @@ export default function Home() {
     if (typeof window !== "undefined") {
       localStorage.setItem("Product ID", productID);
       localStorage.setItem("Room ID", roomID);
+      localStorage.setItem("Doctor ID", doctorID);
     }
-  }, [productID, roomID]);
+  }, [productID, roomID, doctorID]);
 
   return (
     <div className={userID ? `block` : `hidden`}>
@@ -350,6 +369,52 @@ export default function Home() {
               <button className="row-span-2 bg-blue-500 text-white font-hind rounded-md">
                 View Room
               </button>
+            </a>
+          );
+        })}
+      </div>
+
+      <div className="w-full grid grid-cols-3 gap-5 px-32 my-8 ">
+        <div className="col-span-3 flex flex-row justify-between items-center">
+          <h1 className="font-montserrat text-3xl text-[#393939] font-bold my-4">
+            Doctors
+          </h1>
+          <a
+            href="/Appointments"
+            className="text-sm font-montserrat font-bold italic text-[#4ABEC5] flex flex-col gap-1"
+          >
+            View List Of Doctors
+            <span className="w-full h-1 rounded-full bg-[#4ABEC5]" />
+          </a>
+        </div>
+        {doctor.slice(0, 5).map((data) => {
+          return (
+            <a
+              href="/Appointments"
+              onClick={() => {
+                setLoading(true);
+                setDoctorID(data?.id || "");
+              }}
+              key={data?.id}
+              className="grid relative grid-rows-11 z-[1] gap-2 bg-[#006B95] rounded-lg px-3 py-4 drop-shadow-2xl cursor-pointer h-64 w-72  select-none"
+            >
+              <div className="flex justify-center absolute -top-12 left-24 rounded-full bg-white drop-shadow-2xl p-0.5 h-28 w-28">
+                <h1 className="h-full w-full bg-blue-500 rounded-full flex justify-center items-center text-center font-montserrat font-medium text-xs">
+                  Image of the doctor
+                </h1>
+              </div>
+              <div className="row-span-11 flex flex-col gap-7 mt-16">
+                <div className="font-hind text-xs text-white">
+                  {data?.User_FName}
+                </div>
+                <div className="row-span-2 text-ellipsis font-hind text-sm text-white font-semibold">
+                  {data?.User_LName || "Room Name"}{" "}
+                </div>
+
+                <button className="row-span-2 bg-blue-500 text-white font-hind rounded-md h-10 transform transition-all active:scale-95 ease-out duration-50">
+                  View Doctor
+                </button>
+              </div>
             </a>
           );
         })}

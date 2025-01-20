@@ -11,7 +11,6 @@ const fetchRoom = async()=>{
             ...doc.data(),
         }));
 
-        console.log(room);
         return room;
 
     }catch(error){
@@ -20,4 +19,4 @@ const fetchRoom = async()=>{
     }
 }
 
-export default fetchRoom
+export default fetchRoom;

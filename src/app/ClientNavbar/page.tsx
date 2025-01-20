@@ -27,7 +27,7 @@ export default function ClientNavbar() {
   });
 
   return (
-    <nav className="h-20 flex flex-row justify-center items-center z-[2]">
+    <nav className="h-20 flex flex-row justify-center items-center">
       <div className="flex items-center justify-center gap-16 px-14 w-full">
         <div className="flex items-center">
           <Image src="/Logo.svg" height={54} width={54} alt="Logo" />

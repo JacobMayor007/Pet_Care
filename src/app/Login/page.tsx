@@ -1,9 +1,10 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signInWithEmailAndPassword, getAuth } from "firebase/auth";
 import { app } from "@/app/firebase/config";
 import { useRouter } from "next/navigation";
+import isAuthenticate from "../fetchData/User/isAuthenticate";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,6 +14,17 @@ export default function Login() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const auth = getAuth(app);
+
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      const login = await isAuthenticate();
+      if (login) {
+        router.push("/");
+      }
+    };
+
+    checkAuthentication();
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
