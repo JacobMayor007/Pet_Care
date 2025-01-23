@@ -12,7 +12,7 @@ import Loading from "./Loading/page";
 import ClientNavbar from "./ClientNavbar/page";
 import Image from "next/image";
 import fetchRoom from "./fetchData/fetchRoom";
-import fetchDoctor from "./fetchData/fetchDoctor";
+import fetchDoctor from "./fetchData/Doctor/fetchDoctor";
 
 interface Product {
   id: string;
