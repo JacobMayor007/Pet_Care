@@ -2,16 +2,21 @@
 
 import ClientNavbar from "../ClientNavbar/page";
 import Image from "next/image";
-import { DatePicker, TimePicker } from "antd";
+import { DatePicker } from "antd";
 import "@ant-design/v5-patch-for-react-19";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCaretDown, faXmark } from "@fortawesome/free-solid-svg-icons";
-import { useState, useEffect } from "react";
+import {
+  faCaretDown,
+  faCheck,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import isAuthenticate from "../fetchData/User/isAuthenticate";
 import { Dayjs } from "dayjs";
-import { collection, doc, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase/config";
+import Loading from "../Loading/page";
 // import fetchDoctor from "../fetchData/Doctor/fetchDoctor";
 // import { log } from "console";
 
@@ -25,10 +30,13 @@ interface Doctor {
   User_LName?: string;
   User_UID?: string;
   User_UserType?: string;
+  User_Location?: string;
+  User_PNumber?: string;
 }
 
 export default function Doctors() {
   const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [seeMore, setSeeMore] = useState(false);
   const [showAppointments, setShowAppointments] = useState(false);
@@ -38,11 +46,43 @@ export default function Doctors() {
   const [userAppointmentDate, setUserAppointmentDate] = useState<Dayjs | null>(
     null
   );
+  const [other, setOther] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [userWeek, setUserWeek] = useState("");
-  const [userAppointmentTime, setUserAppointmentTime] = useState<Dayjs | null>(
-    null
-  );
+  const [userWeek, setUserWeek] = useState(0);
+  // const [userAppointmentTime, setUserAppointmentTime] = useState<Dayjs | null>(
+  //   null
+  // );
+
+  const weeks = [
+    {
+      key: 0,
+      label: "Sunday",
+    },
+    {
+      key: 1,
+      label: "Monday",
+    },
+    {
+      key: 2,
+      label: "Tuesday",
+    },
+    {
+      key: 3,
+      label: "Wednesday",
+    },
+    {
+      key: 4,
+      label: "Thursday",
+    },
+    {
+      key: 5,
+      label: "Friday",
+    },
+    {
+      key: 6,
+      label: "Saturday",
+    },
+  ];
 
   const appointments = [
     {
@@ -99,16 +139,23 @@ export default function Doctors() {
   //   getDoctors();
   // }, []);
 
-  const searchDoctor = async (day: number) => {
+  const searchDoctor = async () => {
     try {
       setLoading(true);
+      console.log(loading);
+
       console.log(
-        `Searching for doctors available on day: ${day} (${typeof day})`
+        `Searching for doctors available on day: ${userWeek} (${typeof userWeek})`
       );
+
+      if (!userAppointmentDate || !userAppointment) {
+        setLoading(false);
+        return alert("Please input date, time, and type of service");
+      }
 
       const doctorQuery = query(
         collection(db, "doctor"),
-        where("User_AvailableHours.Days", "array-contains", day)
+        where("User_AvailableHours.Days", "array-contains", userWeek)
       );
       const querySnapshot = await getDocs(doctorQuery);
 
@@ -127,18 +174,6 @@ export default function Doctors() {
   };
 
   useEffect(() => {
-    const appointmentDate = userAppointmentDate; // Ensure this is properly retrieved
-    if (appointmentDate) {
-      console.log("userAppointmentDate:", appointmentDate);
-      const day = appointmentDate.day(); // Adjust method to get the day correctly
-      console.log("Searching for day:", day);
-      searchDoctor(day);
-    } else {
-      console.log("userAppointmentDate is null or undefined.");
-    }
-  }, [userAppointmentDate]);
-
-  useEffect(() => {
     const checkAuthentication = async () => {
       const login = await isAuthenticate();
       if (!login) {
@@ -155,9 +190,13 @@ export default function Doctors() {
     setUserAppointmentDate(date);
   };
 
-  const timeChange = (time: Dayjs | null) => {
-    setUserAppointmentTime(time);
-  };
+  // const timeChange = (time: Dayjs | null) => {
+  //   setUserAppointmentTime(time);
+  // };
+
+  useEffect(() => {
+    setUserWeek(Number(userAppointmentDate?.get("d")));
+  }, [userAppointmentDate]);
 
   if (!isLoggedIn) {
     return (
@@ -168,7 +207,7 @@ export default function Doctors() {
   }
 
   return (
-    <div className="h-full">
+    <div className="h-full mb-6 flex flex-col gap-2">
       <div className="relative z-[3]">
         <ClientNavbar />
       </div>
@@ -210,25 +249,26 @@ export default function Doctors() {
         </div>
       </div>
       <div className="-mt-8 relative w-full h-fit z-[2] ">
-        <div className="mx-auto bg-white w-[85%] grid grid-cols-4 rounded-2xl drop-shadow-xl h-fit py-2 px-6 items-center gap-2">
-          <div className="flex h-12 bg-[#D6EBEC] p-2 gap-1 rounded-xl w-full">
+        <div className="mx-auto bg-white w-[85%] grid grid-cols-3 rounded-2xl drop-shadow-xl h-fit py-4 px-6 items-center gap-4">
+          <div
+            className={` h-12 w-full ${
+              userAppointmentDate ? `bg-white drop-shadow-lg` : `bg-[#D6EBEC]`
+            } p-2 gap-1 rounded-xl w-full`}
+          >
             <DatePicker
               needConfirm
               format="MMMM - DD - YYYY"
-              className="  outline-none border-none font-montserrat text-lg bg-transparent active:bg-transparent"
+              className={`outline-none border-none font-montserrat text-lg w-full  ${
+                userAppointmentDate
+                  ? `bg-white active:bg-white `
+                  : `bg-transparent active:bg-transparent`
+              }`}
               onChange={dateChange}
-            />
-            <TimePicker
-              use12Hours={true}
-              format="h:mm a"
-              needConfirm
-              className=" outline-none border-none font-montserrat text-lg bg-transparent active:bg-transparent"
-              onChange={timeChange}
             />
           </div>
           <div
             className={`h-12 ${
-              !userAppointment ? `bg-[#D6EBEC]` : `bg-white`
+              !userAppointment ? `bg-[#D6EBEC]` : `bg-white drop-shadow-lg`
             } w-full rounded-xl flex justify-around items-center px-2`}
           >
             <div className="h-full w-full flex justify-between items-center relative gap-2">
@@ -239,7 +279,25 @@ export default function Doctors() {
                     : `text-slate-400 font-hind text-base`
                 }`}
               >
-                {userAppointment ? userAppointment : `Select type of service `}
+                {other ? (
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    id="userAppointment"
+                    name="user-appointment"
+                    className={`h-full w-full outline-none font-hind font-medium ${
+                      userAppointment
+                        ? `bg-white`
+                        : `bg-[#D6EBEC] focus:outline-none focus:text-black `
+                    }`}
+                    value={userAppointment}
+                    onChange={(e) => setUserAppointment(e.target.value)}
+                  />
+                ) : userAppointment ? (
+                  userAppointment
+                ) : (
+                  `Select type of service `
+                )}
               </div>
               <div
                 onMouseOver={() => setShowXMark(userAppointment ? true : false)}
@@ -249,7 +307,7 @@ export default function Doctors() {
                   <div className="h-6 w-6 hover:bg-slate-300 rounded-full flex items-center justify-center">
                     <FontAwesomeIcon
                       icon={faXmark}
-                      className="text-lg cursor-pointer bg-slate-300 rounded-full "
+                      className="text-lg cursor-pointer bg-slate-300 rounded-full"
                       onClick={() => {
                         setUserAppointment("");
                       }}
@@ -293,7 +351,18 @@ export default function Doctors() {
                       className="mt-2 font-montserrat text-sm font-bold"
                       onClick={() => setSeeMore((prev) => !prev)}
                     >
-                      {seeMore ? `See Less..` : `See More...`}
+                      {seeMore ? `See Less..` : <h1>See More...</h1>}
+                    </button>
+                    <button
+                      type="button"
+                      className="mt-2 font-montserrat text-sm font-bold italic"
+                      onClick={() => {
+                        setOther(true);
+                        inputRef.current?.focus();
+                        setShowAppointments(false);
+                      }}
+                    >
+                      Others
                     </button>
                   </div>
                 ) : (
@@ -302,24 +371,120 @@ export default function Doctors() {
               </div>
             </div>
           </div>
-          <div className="h-full ">
-            <input
-              type="text"
-              name=""
-              id=""
-              className="bg-[#D6EBEC] h-full w-full rounded-xl outline-none placeholder:text-slate-400 px-4"
-              placeholder="Ex. J & G Building, H Abellana, Canduman, Mandaue City, 6014 Cebu"
-            />
-          </div>
+
           <button
             type="button"
             className="h-full w-full rounded-md bg-[#77D8DD] hover:bg-[#62c9cf]  font-montserrat text-xl font-bold text-white hover:text-[#eaefec]"
+            onClick={searchDoctor}
           >
-            Search
+            <a href="#doctorAvailable">Search</a>
           </button>
         </div>
       </div>
-      <div></div>
+      <div className="h-full px-32 ">
+        <div className="flex justify-center items-center flex-col mt-16 mb-8">
+          <h1 className="text-4xl font-montserrat font-bold">Meet Our Vets</h1>
+          <p className="text-xl font-montserrat">
+            Meet our capable team who will be taking the best Care of your pets.
+          </p>
+
+          {doctor.length > 0 ? (
+            <div className="flex flex-row items-center mt-8 gap-10">
+              <div className="relative flex items-center justify-center">
+                {/* Outer pulsing circle */}
+                <div className="h-12 w-12 rounded-full bg-slate-300 animate-ping"></div>
+
+                {/* Static white background with check mark */}
+                <div className="absolute h-10 w-10 bg-white rounded-full flex items-center justify-center p-1">
+                  <div className="h-full w-full rounded-full bg-[#25CA85] flex items-center justify-center flex-row">
+                    <FontAwesomeIcon icon={faCheck} className="text-white" />{" "}
+                  </div>
+                </div>
+              </div>{" "}
+              <h1 className="text-3xl font-montserrat text-[#25CA85] font-bold">
+                Doctors Available Now!
+              </h1>
+            </div>
+          ) : (
+            <div></div>
+          )}
+        </div>
+        <div id="doctorAvailable">
+          {loading ? (
+            <Loading />
+          ) : (
+            <div className="pt-28 grid grid-cols-4 gap-4 w-full">
+              {doctor.length > 0 &&
+                doctor.map((data, index) => {
+                  return (
+                    <div
+                      key={data?.id || index}
+                      className="relative w-72 h-full bg-[#006B95] flex justify-center rounded-2xl pb-4"
+                    >
+                      {/* <h1>
+                  {data?.User_AvailableHours?.Days?.length ? (
+                    data.User_AvailableHours.Days.map((day, dayIndex) => {
+                      const weekDay = weeks.find(
+                        (week) => week.key === day
+                      )?.label;
+                      return <span key={dayIndex}>{weekDay}</span>;
+                    })
+                  ) : (
+                    <span>No available days</span>
+                  )}
+                </h1> */}
+                      <div className="h-40 w-40 rounded-full bg-white p-1 drop-shadow-xl  absolute -top-24 flex flex-col">
+                        <div className="h-full w-full rounded-full bg-blue-500 text-center flex items-center p-1">
+                          Image of {data?.User_FName} {data?.User_LName}
+                        </div>
+                      </div>
+                      <div className="flex flex-col mt-20 items-center">
+                        <h1 className="font-hind font-bold text-3xl text-white">
+                          Dr. {data?.User_FName} {data?.User_LName}
+                        </h1>
+                        <div className="grid grid-rows-8 items-center px-4 mt-8 h-full">
+                          <h1 className="text-center font-hind text-lg text-white font-medium row-span-3">
+                            {data?.User_Location}
+                          </h1>
+                          <h1 className="text-center font-hind text-lg text-white font-medium">
+                            {data?.User_PNumber}
+                          </h1>
+                          <h1 className="text-center font-hind text-lg text-white font-medium row-span-5">
+                            Available Hours: <br />
+                            <span className="grid grid-cols-3 items-start">
+                              {data?.User_AvailableHours?.Days?.length ? (
+                                data.User_AvailableHours.Days.map(
+                                  (day, dayIndex) => {
+                                    const weekDay = weeks.find(
+                                      (week) => week.key === day
+                                    )?.label;
+                                    return (
+                                      <span key={dayIndex} className="">
+                                        {weekDay}
+                                      </span>
+                                    );
+                                  }
+                                )
+                              ) : (
+                                <span>No available days</span>
+                              )}
+                            </span>
+                          </h1>
+                        </div>
+                        <button
+                          type="button"
+                          className="text-xl font-montserrat font-bold row-span-3 h-full bg-white px-6 py-2 rounded-md text-[#006B95]"
+                        >
+                          Book Now
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
