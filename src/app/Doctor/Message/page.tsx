@@ -374,7 +374,7 @@ export default function Messages() {
                   My Inbox
                 </h1>
                 <Image
-                  src="Create Message.svg"
+                  src="/Create Message.svg"
                   width={36}
                   height={36}
                   alt="Create A Message Icon"
@@ -526,13 +526,13 @@ export default function Messages() {
                   onChange={handleInputChange}
                 />
               </div>
-              <div>
+              <div className="h-[500px]">
                 {filteredUsers.length > 0 && searchValue ? (
-                  <ul>
+                  <ul className=" overflow-y-scroll h-full">
                     {filteredUsers.map((user, index) => (
                       <li
                         key={index}
-                        className="p-2 border-b border-gray-200 grid grid-cols-[50px_auto] w-full items-center gap-4"
+                        className="p-2 border-b border-gray-200 grid grid-cols-[50px_auto] w-full items-center gap-4 "
                         onClick={() => {
                           handleReceivedUser(user);
                           setSearchUser(false);

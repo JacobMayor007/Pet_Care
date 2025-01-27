@@ -29,6 +29,7 @@ const fetchUserData = async (): Promise<DocumentData[]> => {
               ...doc.data(),
             }));
             resolve(userData);
+            return userData;
           } else {
             console.log("No matching user found.");
             resolve([]);

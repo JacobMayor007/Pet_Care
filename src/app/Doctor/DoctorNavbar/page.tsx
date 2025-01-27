@@ -38,7 +38,7 @@ export default function DoctorNavigation() {
         <ul className="list-type-none flex items-center gap-3">
           <li className="w-28 h-14 flex items-center justify-center">
             <Link
-              href="/"
+              href="/Doctor"
               className="font-montserrat text-base text-[#006B95] font-bold"
             >
               Dashboard
@@ -72,7 +72,7 @@ export default function DoctorNavigation() {
           <li className="w-28 h-14 flex items-center justify-center">
             <a
               className="font-montserrat text-base text-[#006B95] font-bold"
-              href="/Message"
+              href="/Doctor/Message"
             >
               Inbox
             </a>

@@ -2,7 +2,7 @@
 
 import ClientNavbar from "../ClientNavbar/page";
 import Image from "next/image";
-import { DatePicker } from "antd";
+import { DatePicker, Modal } from "antd";
 import "@ant-design/v5-patch-for-react-19";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -13,10 +13,20 @@ import {
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import isAuthenticate from "../fetchData/User/isAuthenticate";
-import { Dayjs } from "dayjs";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import dayjs, { Dayjs } from "dayjs"; // Ensure dayjs is imported
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  DocumentData,
+  addDoc,
+  Timestamp,
+} from "firebase/firestore";
 import { db } from "../firebase/config";
 import Loading from "../Loading/page";
+import fetchUserData from "../fetchData/fetchUserData";
+
 // import fetchDoctor from "../fetchData/Doctor/fetchDoctor";
 // import { log } from "console";
 
@@ -25,6 +35,7 @@ interface Doctor {
   User_AvailableHours?: {
     Days?: number[];
   };
+  User_TypeOfAppointment?: string[];
   User_Email?: string;
   User_FName?: string;
   User_LName?: string;
@@ -46,6 +57,8 @@ export default function Doctors() {
   const [userAppointmentDate, setUserAppointmentDate] = useState<Dayjs | null>(
     null
   );
+  const [modal, setModal] = useState(false);
+  const [userData, setUserData] = useState<DocumentData[]>([]);
   const [other, setOther] = useState(false);
   const [loading, setLoading] = useState(false);
   const [userWeek, setUserWeek] = useState(0);
@@ -139,33 +152,48 @@ export default function Doctors() {
   //   getDoctors();
   // }, []);
 
+  useEffect(() => {
+    const getUserData = async () => {
+      const fetchedUserData = await fetchUserData();
+      setUserData(fetchedUserData);
+    };
+    getUserData();
+  }, []);
+
   const searchDoctor = async () => {
+    if (!userAppointmentDate || !userAppointment) {
+      return alert("Please input date, time, and type of service");
+    }
+
     try {
       setLoading(true);
-      console.log(loading);
-
       console.log(
         `Searching for doctors available on day: ${userWeek} (${typeof userWeek})`
       );
 
-      if (!userAppointmentDate || !userAppointment) {
-        setLoading(false);
-        return alert("Please input date, time, and type of service");
-      }
-
+      // Query the database for doctors available on the given day
       const doctorQuery = query(
         collection(db, "doctor"),
         where("User_AvailableHours.Days", "array-contains", userWeek)
       );
+
       const querySnapshot = await getDocs(doctorQuery);
 
-      const availableDoctors = querySnapshot.docs.map((doc) => ({
+      // Map the documents to the Doctor interface
+      const availableDoctors: Doctor[] = querySnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data(),
+        ...(doc.data() as Doctor),
       }));
 
-      console.log("Available Doctors", availableDoctors);
-      setDoctor(availableDoctors);
+      // Filter the results manually to match the second condition
+      const filteredDoctors = availableDoctors.filter((doctor) =>
+        doctor.User_TypeOfAppointment?.includes(userAppointment)
+      );
+
+      console.log("Available Doctors", filteredDoctors);
+
+      // Update the state with the filtered list of doctors
+      setDoctor(filteredDoctors);
     } catch (err) {
       console.error("Error fetching the week data", err);
     } finally {
@@ -193,6 +221,71 @@ export default function Doctors() {
   // const timeChange = (time: Dayjs | null) => {
   //   setUserAppointmentTime(time);
   // };
+  const fullName = userData
+    .map((user) => `${user?.User_FName} ${user?.User_LName}`)
+    .join(",");
+  console.log(fullName);
+
+  const onSubmit = async (id: string) => {
+    try {
+      setLoading(true);
+
+      if (!userAppointmentDate) {
+        throw new Error("Appointment date is required.");
+      }
+
+      const appointmentDate = Timestamp.fromDate(
+        dayjs.isDayjs(userAppointmentDate)
+          ? userAppointmentDate.toDate() // Convert Dayjs to Date
+          : new Date(userAppointmentDate) // Convert to Date if it's a string
+      );
+
+      const matchingDoctor = doctor.find((data) => data.User_UID === id);
+
+      if (!matchingDoctor) {
+        throw new Error("Matching doctor not found.");
+      }
+
+      const patientUserUID = userData[0]?.User_UID || "";
+      const docRef = collection(db, "appointments");
+
+      // Check if the patient is new or old
+      const q = query(
+        docRef,
+        where("Appointment_DoctorUID", "==", matchingDoctor.User_UID),
+        where("Appointment_PatientUserUID", "==", patientUserUID)
+      );
+      const querySnapshot = await getDocs(q);
+
+      const isNewPatient = querySnapshot.empty; // If no prior appointments, the patient is new
+
+      // Add the appointment to Firestore
+      const addAppointments = await addDoc(docRef, {
+        Appointment_PatientFullName: fullName,
+        Appointment_PatientUserUID: patientUserUID,
+        Appointment_DoctorEmail: matchingDoctor?.User_Email,
+        Appointment_DoctorName: `${matchingDoctor.User_FName} ${matchingDoctor.User_LName}`,
+        Appointment_TypeOfAppointment: userAppointment,
+        Appointment_Date: appointmentDate,
+        Appointment_DoctorUID: matchingDoctor.User_UID,
+        Appointment_Location: matchingDoctor.User_Location,
+        Appointment_DoctorPNumber: matchingDoctor.User_PNumber,
+        Appointment_Status: "isPending",
+        Appointment_IsNewPatient: isNewPatient, // Add this field to indicate if the patient is new
+      });
+
+      console.log("Appointment added:", addAppointments.id);
+
+      // Log whether the patient is new or old
+      console.log(
+        isNewPatient ? "New patient added." : "Old patient appointment added."
+      );
+    } catch (error) {
+      console.log("Error adding data to Firebase:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     setUserWeek(Number(userAppointmentDate?.get("d")));
@@ -285,10 +378,13 @@ export default function Doctors() {
                     type="text"
                     id="userAppointment"
                     name="user-appointment"
-                    className={`h-full w-full outline-none font-hind font-medium ${
+                    onClick={() =>
+                      setShowAppointments(userAppointment ? true : false)
+                    }
+                    className={`h-full w-full outline-none font-hind font-medium autofill:bg-white ${
                       userAppointment
-                        ? `bg-white`
-                        : `bg-[#D6EBEC] focus:outline-none focus:text-black `
+                        ? `bg-white cursor-pointer`
+                        : `bg-[#D6EBEC] focus:outline-none focus:text-black`
                     }`}
                     value={userAppointment}
                     onChange={(e) => setUserAppointment(e.target.value)}
@@ -372,13 +468,13 @@ export default function Doctors() {
             </div>
           </div>
 
-          <button
-            type="button"
-            className="h-full w-full rounded-md bg-[#77D8DD] hover:bg-[#62c9cf]  font-montserrat text-xl font-bold text-white hover:text-[#eaefec]"
+          <a
+            href="#doctorAvailable"
+            className="h-full w-full rounded-md bg-[#77D8DD] hover:bg-[#62c9cf] flex items-center justify-center font-montserrat text-xl font-bold text-white hover:text-[#eaefec]"
             onClick={searchDoctor}
           >
-            <a href="#doctorAvailable">Search</a>
-          </button>
+            Search
+          </a>
         </div>
       </div>
       <div className="h-full px-32 ">
@@ -421,18 +517,6 @@ export default function Doctors() {
                       key={data?.id || index}
                       className="relative w-72 h-full bg-[#006B95] flex justify-center rounded-2xl pb-4"
                     >
-                      {/* <h1>
-                  {data?.User_AvailableHours?.Days?.length ? (
-                    data.User_AvailableHours.Days.map((day, dayIndex) => {
-                      const weekDay = weeks.find(
-                        (week) => week.key === day
-                      )?.label;
-                      return <span key={dayIndex}>{weekDay}</span>;
-                    })
-                  ) : (
-                    <span>No available days</span>
-                  )}
-                </h1> */}
                       <div className="h-40 w-40 rounded-full bg-white p-1 drop-shadow-xl  absolute -top-24 flex flex-col">
                         <div className="h-full w-full rounded-full bg-blue-500 text-center flex items-center p-1">
                           Image of {data?.User_FName} {data?.User_LName}
@@ -442,7 +526,7 @@ export default function Doctors() {
                         <h1 className="font-hind font-bold text-3xl text-white">
                           Dr. {data?.User_FName} {data?.User_LName}
                         </h1>
-                        <div className="grid grid-rows-8 items-center px-4 mt-8 h-full">
+                        <div className="grid grid-rows-6 items-center px-4 mt-8 h-full">
                           <h1 className="text-center font-hind text-lg text-white font-medium row-span-3">
                             {data?.User_Location}
                           </h1>
@@ -470,13 +554,43 @@ export default function Doctors() {
                               )}
                             </span>
                           </h1>
+                          <h1 className="text-center font-hind text-lg text-white font-medium row-span-5 grid grid-cols-2 gap-2 mt-4">
+                            <span className="col-span-2">
+                              Appointment Type:
+                            </span>
+                            {data?.User_TypeOfAppointment?.map(
+                              (data, index) => {
+                                return (
+                                  <span
+                                    key={index}
+                                    className="overflow-hidden text-ellipsis whitespace-nowrap"
+                                  >
+                                    {data}
+                                  </span>
+                                );
+                              }
+                            )}
+                          </h1>
                         </div>
                         <button
                           type="button"
-                          className="text-xl font-montserrat font-bold row-span-3 h-full bg-white px-6 py-2 rounded-md text-[#006B95]"
+                          className="text-xl font-montserrat font-bold row-span-1 h-14 bg-white mt-4 px-6 rounded-full text-[#006B95]"
+                          onClick={() => setModal(true)}
                         >
                           Book Now
                         </button>
+                        <Modal
+                          open={modal}
+                          onOk={() => {
+                            setModal(false);
+                            onSubmit(data?.User_UID || "");
+                          }}
+                          onCancel={() => setModal(false)}
+                          centered
+                        >
+                          Do you wish to have an appointment with{" "}
+                          {data?.User_FName} {data?.User_LName}
+                        </Modal>
                       </div>
                     </div>
                   );

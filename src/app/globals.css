@@ -59,3 +59,14 @@ textarea {
   background-position: right;
   background-size: cover;
 }
+
+/* This will ensure the calendar container has no scroll */
+.calendar-no-scroll .ant-calendar {
+  overflow: hidden; /* Prevents scroll */
+  height: auto; /* Adjusts height automatically */
+}
+
+/* Optional: If you want to ensure individual cells don't have scroll */
+.calendar-no-scroll .ant-calendar-cell {
+  overflow: hidden; /* Prevents scroll in individual cells */
+}

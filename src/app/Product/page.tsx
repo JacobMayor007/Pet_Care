@@ -176,6 +176,8 @@ const Product = () => {
           ATC_ProductName: product?.Seller_ProductName,
           ATC_ProductPrice: product?.Seller_ProductPrice,
         },
+        ATC_SellerFullName: product?.Seller_UserFullName,
+        ATC_SellerID: product?.Seller_UserID,
       });
 
       console.log("Add to Cart product has been succesful", addToCartItem);
