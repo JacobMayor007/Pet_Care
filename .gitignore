@@ -41,4 +41,6 @@ next-env.d.ts
 
 /fetchData/
 /firebase/
+/firebase/config.ts
+
 
