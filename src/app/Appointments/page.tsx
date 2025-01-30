@@ -227,6 +227,8 @@ export default function Doctors() {
   console.log(fullName);
 
   const onSubmit = async (id: string) => {
+    const fName = userData[0]?.User_FName;
+
     try {
       setLoading(true);
 
@@ -263,6 +265,7 @@ export default function Doctors() {
       const addAppointments = await addDoc(docRef, {
         Appointment_PatientFullName: fullName,
         Appointment_PatientUserUID: patientUserUID,
+        Appointmetn_PatientFName: fName,
         Appointment_DoctorEmail: matchingDoctor?.User_Email,
         Appointment_DoctorName: `${matchingDoctor.User_FName} ${matchingDoctor.User_LName}`,
         Appointment_TypeOfAppointment: userAppointment,

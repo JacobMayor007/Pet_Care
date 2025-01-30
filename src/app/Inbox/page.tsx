@@ -230,6 +230,7 @@ export default function Messages() {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    setNewMessage("");
     // Check if newMessage, user, and receiveUser are valid
     if (newMessage.trim() === "" || !receiveUser || !user) {
       console.error("Invalid data: ", { newMessage, user, receiveUser });
@@ -270,7 +271,6 @@ export default function Messages() {
       });
 
       // Reset the message input
-      setNewMessage("");
     } catch (error) {
       console.error("Error sending message or updating chat: ", error);
     }

@@ -1,7 +1,6 @@
 import { db } from "@/app/firebase/config";
-import { getDocs, collection, where, query, onSnapshot, QuerySnapshot } from "firebase/firestore";
+import { getDocs, collection, where, query } from "firebase/firestore";
 import fetchUserData from "../fetchUserData";
-import { useState } from "react";
 
 const fetchAppointment = async () =>{
     try{

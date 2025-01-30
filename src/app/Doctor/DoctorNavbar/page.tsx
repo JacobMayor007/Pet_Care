@@ -46,7 +46,7 @@ export default function DoctorNavigation() {
           </li>
           <li className="w-28 h-14 flex items-center justify-center">
             <a
-              href="/Patients"
+              href="/Doctor/Patients"
               className="font-montserrat text-base text-[#006B95] font-bold"
             >
               Patients
@@ -54,7 +54,7 @@ export default function DoctorNavigation() {
           </li>
           <li className="w-32 h-14 flex items-center justify-center px-2">
             <a
-              href="/Appointments"
+              href="/Doctor/Appointments"
               className="font-montserrat text-base text-[#006B95] font-bold"
             >
               Appointments
@@ -74,7 +74,7 @@ export default function DoctorNavigation() {
               className="font-montserrat text-base text-[#006B95] font-bold"
               href="/Doctor/Message"
             >
-              Inbox
+              Messages
             </a>
           </li>
         </ul>

@@ -15,7 +15,7 @@ import "@ant-design/v5-patch-for-react-19";
 
 interface MyAppointment {
   id?: string;
-  Appointment_Status?: boolean;
+  Appointment_Status?: string;
   Appointment_Date?: Dayjs | null;
   Appointment_DoctorName?: string;
   Appointment_DoctorPNumber?: string;
@@ -39,7 +39,6 @@ export default function Doctor() {
   >([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [oldPatient, setOldPatient] = useState(0);
-  var now = dayjs();
 
   useEffect(() => {
     const getUserData = async () => {
@@ -129,12 +128,12 @@ export default function Doctor() {
     const firstAppointment = appointmentsForDay[0];
 
     return (
-      <div className="text-sm" onClick={() => setIsModalOpen(true)}>
+      <div
+        className="text-sm h-full flex justify-end"
+        onClick={() => setIsModalOpen(true)}
+      >
         {firstAppointment && (
-          <div className="text-blue-500 overflow-x-hidden overflow-y-hidden">
-            {firstAppointment.Appointment_PatientFullName}
-            {firstAppointment.Appointment_TypeOfAppointment}
-          </div>
+          <div className="h-3 w-3 rounded-full bg-[#FF0000] " />
         )}
       </div>
     );

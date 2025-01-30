@@ -251,6 +251,7 @@ export default function PlaceToOrder() {
           <div className=" text-center font-hind text-lg">
             Php {Number(quantity) * Number(product?.Seller_ProductPrice)}
           </div>
+          <div></div>
         </div>
         <div className="grid grid-cols-7 gap-5 mt-10 mx-8 bg-white drop-shadow-lg pl-5 py-10 rounded-xl">
           <h1 className="col-span-7 font-montserrat text-xl">
