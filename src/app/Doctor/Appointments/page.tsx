@@ -280,7 +280,7 @@ export default function Appointments() {
           </div>
         </div>
       ) : (
-        <h1>There is no appointment that is booked yet.</h1>
+        <h1></h1>
       )}
     </div>
   );
