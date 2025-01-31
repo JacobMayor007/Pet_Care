@@ -76,16 +76,6 @@ export default function Room() {
   const [days, setDays] = useState<number | null>(0);
   const [roomID, setRoomID] = useState<string | null>("");
 
-  // const roomID = useRoomSearchParams().RoomID;
-  // console.log("room ID on search Params", roomID);
-  // const checkInDate = useRoomSearchParams().CheckInDate;
-  // console.log("checkInDate on search Params", checkInDate);
-  // const checkOutDate = useRoomSearchParams().CheckOutDate;
-  // const checkInTime = useRoomSearchParams().CheckInTime;
-  // const checkOutTime = useRoomSearchParams().CheckOutTime;
-  // const guest = useRoomSearchParams().Guest;
-  // const days = useRoomSearchParams().Days;
-
   const [typeOfPaymentArray, setTypeOfPaymentArray] = useState<string[] | null>(
     null
   );

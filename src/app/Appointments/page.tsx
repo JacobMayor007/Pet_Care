@@ -2,12 +2,13 @@
 
 import ClientNavbar from "../ClientNavbar/page";
 import Image from "next/image";
-import { DatePicker, Modal } from "antd";
+import { DatePicker, Modal, Input } from "antd";
 import "@ant-design/v5-patch-for-react-19";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCaretDown,
   faCheck,
+  faL,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect, useRef } from "react";
@@ -58,10 +59,19 @@ export default function Doctors() {
     null
   );
   const [modal, setModal] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(false);
   const [userData, setUserData] = useState<DocumentData[]>([]);
   const [other, setOther] = useState(false);
   const [loading, setLoading] = useState(false);
   const [userWeek, setUserWeek] = useState(0);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [typeOfPayment, setTypeOfPayment] = useState("");
+  const [petName, setPetName] = useState("");
+  const [petBreed, setPetBreed] = useState("");
+  const [petYear, setPetYear] = useState(0);
+  const [petMonth, setPetMonth] = useState(0);
+  const [petMM, setPetMM] = useState(0);
+  const [petHg, setPetHg] = useState(0);
   // const [userAppointmentTime, setUserAppointmentTime] = useState<Dayjs | null>(
   //   null
   // );
@@ -221,13 +231,31 @@ export default function Doctors() {
   // const timeChange = (time: Dayjs | null) => {
   //   setUserAppointmentTime(time);
   // };
+
+  const options = [
+    {
+      id: 1,
+      label: "Cash On Hand",
+      img: "./Cash On Hand Image.svg",
+    },
+    {
+      id: 2,
+      label: "GCash",
+      img: "./GCash Image.svg",
+    },
+    {
+      id: 3,
+      label: "Debit Or Credit",
+      img: "./Debit Or Credit Image.svg",
+    },
+  ];
+
   const fullName = userData
     .map((user) => `${user?.User_FName} ${user?.User_LName}`)
     .join(",");
-  console.log(fullName);
 
   const onSubmit = async (id: string) => {
-    const fName = userData[0]?.User_FName;
+    const fName: string = userData[0]?.User_FName;
 
     try {
       setLoading(true);
@@ -264,8 +292,9 @@ export default function Doctors() {
       // Add the appointment to Firestore
       const addAppointments = await addDoc(docRef, {
         Appointment_PatientFullName: fullName,
+        Appointment_CreatedAt: Timestamp.now(),
         Appointment_PatientUserUID: patientUserUID,
-        Appointmetn_PatientFName: fName,
+        Appointment_PatientFName: fName,
         Appointment_DoctorEmail: matchingDoctor?.User_Email,
         Appointment_DoctorName: `${matchingDoctor.User_FName} ${matchingDoctor.User_LName}`,
         Appointment_TypeOfAppointment: userAppointment,
@@ -273,7 +302,18 @@ export default function Doctors() {
         Appointment_DoctorUID: matchingDoctor.User_UID,
         Appointment_Location: matchingDoctor.User_Location,
         Appointment_DoctorPNumber: matchingDoctor.User_PNumber,
+        Appointment_PatientPetAge: {
+          Year: petYear,
+          Month: petMonth,
+        },
+        Appointment_PatientPetBreed: petBreed,
+        Appointment_PatientPetName: petName,
+        Appointment_PatientPetBP: {
+          Hg: petHg,
+          mm: petMM,
+        },
         Appointment_Status: "isPending",
+        Appointment_PatientTypeOfPayment: typeOfPayment,
         Appointment_IsNewPatient: isNewPatient, // Add this field to indicate if the patient is new
       });
 
@@ -308,7 +348,7 @@ export default function Doctors() {
         <ClientNavbar />
       </div>
       <div className="h-2/3 bg-[#006B95] relative z-[2] flex flex-row justify-between px-14">
-        <div className="flex flex-col z-[2] gap-10 mt-14">
+        <div className="flex flex-col z-[2] gap-10 mt-14 ml-20">
           <div className="flex flex-col ">
             <h1 className="text-5xl text-white font-montserrat tracking-wider font-bold leading-[60px] w-96">
               Schedule an appointment with vet now
@@ -335,7 +375,7 @@ export default function Doctors() {
           alt="Paw Print Group"
           className="absolute object-contain right-1"
         />
-        <div className="relative z-[2] h-[420px] w-[500px]">
+        <div className="relative z-[2] h-[420px] w-[600px] mr-44">
           <Image
             src="/Doctor Pet Check.svg"
             layout="fill"
@@ -493,7 +533,6 @@ export default function Doctors() {
                 {/* Outer pulsing circle */}
                 <div className="h-12 w-12 rounded-full bg-slate-300 animate-ping"></div>
 
-                {/* Static white background with check mark */}
                 <div className="absolute h-10 w-10 bg-white rounded-full flex items-center justify-center p-1">
                   <div className="h-full w-full rounded-full bg-[#25CA85] flex items-center justify-center flex-row">
                     <FontAwesomeIcon icon={faCheck} className="text-white" />{" "}
@@ -513,91 +552,248 @@ export default function Doctors() {
             <Loading />
           ) : (
             <div className="pt-28 grid grid-cols-4 gap-4 w-full">
-              {doctor.length > 0 &&
-                doctor.map((data, index) => {
-                  return (
-                    <div
-                      key={data?.id || index}
-                      className="relative w-72 h-full bg-[#006B95] flex justify-center rounded-2xl pb-4"
-                    >
-                      <div className="h-40 w-40 rounded-full bg-white p-1 drop-shadow-xl  absolute -top-24 flex flex-col">
-                        <div className="h-full w-full rounded-full bg-blue-500 text-center flex items-center p-1">
-                          Image of {data?.User_FName} {data?.User_LName}
-                        </div>
-                      </div>
-                      <div className="flex flex-col mt-20 items-center">
-                        <h1 className="font-hind font-bold text-3xl text-white">
-                          Dr. {data?.User_FName} {data?.User_LName}
-                        </h1>
-                        <div className="grid grid-rows-6 items-center px-4 mt-8 h-full">
-                          <h1 className="text-center font-hind text-lg text-white font-medium row-span-3">
-                            {data?.User_Location}
-                          </h1>
-                          <h1 className="text-center font-hind text-lg text-white font-medium">
-                            {data?.User_PNumber}
-                          </h1>
-                          <h1 className="text-center font-hind text-lg text-white font-medium row-span-5">
-                            Available Hours: <br />
-                            <span className="grid grid-cols-3 items-start">
-                              {data?.User_AvailableHours?.Days?.length ? (
-                                data.User_AvailableHours.Days.map(
-                                  (day, dayIndex) => {
-                                    const weekDay = weeks.find(
-                                      (week) => week.key === day
-                                    )?.label;
-                                    return (
-                                      <span key={dayIndex} className="">
-                                        {weekDay}
-                                      </span>
-                                    );
-                                  }
-                                )
-                              ) : (
-                                <span>No available days</span>
-                              )}
-                            </span>
-                          </h1>
-                          <h1 className="text-center font-hind text-lg text-white font-medium row-span-5 grid grid-cols-2 gap-2 mt-4">
-                            <span className="col-span-2">
-                              Appointment Type:
-                            </span>
-                            {data?.User_TypeOfAppointment?.map(
-                              (data, index) => {
-                                return (
-                                  <span
-                                    key={index}
-                                    className="overflow-hidden text-ellipsis whitespace-nowrap"
-                                  >
-                                    {data}
-                                  </span>
-                                );
-                              }
-                            )}
-                          </h1>
-                        </div>
-                        <button
-                          type="button"
-                          className="text-xl font-montserrat font-bold row-span-1 h-14 bg-white mt-4 px-6 rounded-full text-[#006B95]"
-                          onClick={() => setModal(true)}
-                        >
-                          Book Now
-                        </button>
-                        <Modal
-                          open={modal}
-                          onOk={() => {
-                            setModal(false);
-                            onSubmit(data?.User_UID || "");
-                          }}
-                          onCancel={() => setModal(false)}
-                          centered
-                        >
-                          Do you wish to have an appointment with{" "}
-                          {data?.User_FName} {data?.User_LName}
-                        </Modal>
+              {doctor.map((data, index) => {
+                return (
+                  <div
+                    key={index}
+                    className="relative w-72 h-full bg-[#006B95] flex justify-center rounded-2xl pb-4"
+                  >
+                    <div className="h-40 w-40 rounded-full bg-white p-1 drop-shadow-xl  absolute -top-24 flex flex-col">
+                      <div className="h-full w-full rounded-full bg-blue-500 text-center flex items-center p-1">
+                        Image of {data?.User_FName} {data?.User_LName}
                       </div>
                     </div>
-                  );
-                })}
+                    <div className="flex flex-col mt-20 items-center">
+                      <h1 className="font-hind font-bold text-3xl text-white">
+                        Dr. {data?.User_FName} {data?.User_LName}
+                      </h1>
+                      <div className="grid grid-rows-6 items-center px-4 mt-8 h-full">
+                        <h1 className="text-center font-hind text-lg text-white font-medium row-span-3">
+                          {data?.User_Location}
+                        </h1>
+                        <h1 className="text-center font-hind text-lg text-white font-medium">
+                          {data?.User_PNumber}
+                        </h1>
+                        <h1 className="text-center font-hind text-lg text-white font-medium row-span-5">
+                          Available Hours: <br />
+                          <span className="grid grid-cols-3 items-start">
+                            {data?.User_AvailableHours?.Days?.length ? (
+                              data.User_AvailableHours.Days.map(
+                                (day, dayIndex) => {
+                                  const weekDay = weeks.find(
+                                    (week) => week.key === day
+                                  )?.label;
+                                  return (
+                                    <span key={dayIndex} className="">
+                                      {weekDay}
+                                    </span>
+                                  );
+                                }
+                              )
+                            ) : (
+                              <span>No available days</span>
+                            )}
+                          </span>
+                        </h1>
+                        <h1 className="text-center font-hind text-lg text-white font-medium row-span-5 grid grid-cols-2 gap-2 mt-4">
+                          <span className="col-span-2">Appointment Type:</span>
+                          {data?.User_TypeOfAppointment?.map((data, index) => {
+                            return (
+                              <span
+                                key={index}
+                                className="overflow-hidden text-ellipsis whitespace-nowrap"
+                              >
+                                {data}
+                              </span>
+                            );
+                          })}
+                        </h1>
+                      </div>
+                      <button
+                        type="button"
+                        className="text-xl font-montserrat font-bold row-span-1 h-14 bg-white mt-4 px-6 rounded-full text-[#006B95]"
+                        onClick={() => {
+                          setModal(true);
+
+                          setSelectedDoctor(data);
+                        }}
+                      >
+                        Book Now
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {selectedDoctor && (
+            <div>
+              <Modal
+                open={modal}
+                onOk={() => {
+                  setConfirmModal(true);
+                  setModal(false);
+                }}
+                onCancel={() => {
+                  setModal(false);
+                  console.log(selectedDoctor?.User_UID);
+                }}
+                centered
+              >
+                <p className="font-montserrat font-bold text-[#393939]">
+                  Do you wish to have an appointment with{" "}
+                  {selectedDoctor?.User_FName} {selectedDoctor?.User_LName}?
+                </p>
+                <div className="grid grid-cols-3 items-center w-fit my-5 gap-4">
+                  <label
+                    htmlFor="petID"
+                    className="font-montserrat font-bold text-lg text-[#393939]"
+                  >
+                    Pet Name
+                  </label>
+                  <input
+                    className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                    type="text"
+                    name="pet"
+                    id="petID"
+                    value={petName}
+                    onChange={(e) => setPetName(e.target.value)}
+                    placeholder="Enter the name of your pet"
+                  />
+                  <label
+                    htmlFor="petBreed"
+                    className="font-montserrat font-bold text-lg text-[#393939]"
+                  >
+                    Pet Breed
+                  </label>
+                  <input
+                    className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                    type="text"
+                    name="breed"
+                    id="petBreed"
+                    value={petBreed}
+                    onChange={(e) => setPetBreed(e.target.value)}
+                    placeholder="Enter the breed of your pet"
+                  />
+                  <h1 className="col-span-3 font-montserrat font-bold text-lg text-[#393939] mt-8">
+                    Input your pet age
+                  </h1>
+                  <label
+                    htmlFor="petYear"
+                    className="text-end font-montserrat font-bold text-base text-[#393939]"
+                  >
+                    Year
+                  </label>
+                  <input
+                    type="number"
+                    name="year"
+                    id="petYear"
+                    placeholder="Ex. 1"
+                    value={petYear == 0 ? "" : petYear}
+                    onChange={(e) => setPetYear(Number(e.target.value))}
+                    className=" h-9 w-56 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                  />
+                  <label
+                    htmlFor="petMonth"
+                    className="text-end font-montserrat font-bold text-base text-[#393939]"
+                  >
+                    Month
+                  </label>
+                  <input
+                    type="number"
+                    name="month"
+                    id="petMonth"
+                    placeholder="Ex. 3"
+                    value={petMonth == 0 ? "" : petMonth}
+                    onChange={(e) => setPetMonth(Number(e.target.value))}
+                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                  />
+                  <h1 className="col-span-3 font-montserrat font-bold text-lg text-[#393939] mt-6">
+                    Input the blood pressure of your pet
+                  </h1>
+                  <label
+                    htmlFor="mmBP"
+                    className="text-end font-montserrat font-bold text-base text-[#393939]"
+                  >
+                    mm
+                  </label>
+                  <input
+                    type="number"
+                    name="mm"
+                    id="mmBP"
+                    value={petMM == 0 ? "" : petMM}
+                    onChange={(e) => setPetMM(Number(e.target.value))}
+                    placeholder="Ex. 120"
+                    className=" h-9 w-56 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                  />
+                  <label
+                    htmlFor="HgBP"
+                    className="text-end font-montserrat font-bold text-base text-[#393939]"
+                  >
+                    Hg
+                  </label>
+                  <input
+                    type="number"
+                    name="Hg"
+                    id="HgBP"
+                    placeholder="Ex. 90"
+                    value={petHg == 0 ? "" : petHg}
+                    onChange={(e) => {
+                      setPetHg(Number(e.target.value));
+                    }}
+                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                  />
+                </div>
+                <h1 className="col-span-3 font-montserrat font-bold text-lg text-[#393939] mt-10">
+                  Choose Type Of Payment
+                </h1>
+                <div className="col-span-3 grid grid-cols-3 px-2 mt-4">
+                  {options.map((data) => {
+                    return (
+                      <div
+                        key={data.id}
+                        className="flex flex-row items-center gap-2 "
+                      >
+                        <input
+                          type="radio"
+                          name="payment-method"
+                          id={data?.label}
+                          value={data?.label}
+                          checked={typeOfPayment === data?.label}
+                          onChange={() => {
+                            setTypeOfPayment(data?.label);
+                          }}
+                          className="cursor-pointer"
+                        />
+                        <Image
+                          src={`/${data?.img}`}
+                          height={30}
+                          width={30}
+                          alt={data?.label}
+                        />
+                        <label
+                          htmlFor={data?.label}
+                          className="font-montserrat font-semibold text-sm cursor-pointer"
+                        >
+                          {data?.label}
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Modal>
+              <Modal
+                open={confirmModal}
+                onCancel={() => setConfirmModal(false)}
+                onOk={() => {
+                  onSubmit(selectedDoctor?.User_UID || "");
+                  setConfirmModal(false);
+                }}
+                centered={true}
+              >
+                Please confirm your appointment on {selectedDoctor?.User_FName}{" "}
+                {selectedDoctor?.User_LName}
+              </Modal>
             </div>
           )}
         </div>

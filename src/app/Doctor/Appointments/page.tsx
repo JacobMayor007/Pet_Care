@@ -89,10 +89,10 @@ export default function Appointments() {
   return (
     <div>
       <DoctorNavigation />
-      {todayAppointments.length > 1 ||
-      tomorrowAppointments.length > 1 ||
-      upcomingAppointments.length > 1 ? (
-        <div className="mx-44 py-12 flex flex-col gap-8">
+      {todayAppointments.length > 0 ||
+      tomorrowAppointments.length > 0 ||
+      upcomingAppointments.length > 0 ? (
+        <div className="mx-56 py-12 flex flex-col gap-8">
           <h1 className="font-montserrat font-bold text-[#393939] text-3xl">
             Appointments List
           </h1>
@@ -154,7 +154,7 @@ export default function Appointments() {
                 );
               })}
             </div>
-            {tomorrowAppointments.length > 1 ? (
+            {tomorrowAppointments.length > 0 ? (
               <h1 className="font-montserrat font-bold text-3xl text-[#393939]">
                 Tomorrow&#39;s
               </h1>
@@ -216,7 +216,7 @@ export default function Appointments() {
                 );
               })}
             </div>
-            {upcomingAppointments.length > 1 ? (
+            {upcomingAppointments.length > 0 ? (
               <h1 className="font-montserrat font-bold text-[#393939] text-3xl">
                 Upcoming Appointments
               </h1>

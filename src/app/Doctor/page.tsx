@@ -133,7 +133,7 @@ export default function Doctor() {
         onClick={() => setIsModalOpen(true)}
       >
         {firstAppointment && (
-          <div className="h-3 w-3 rounded-full bg-[#FF0000] " />
+          <div className="h-3 w-3 rounded-full bg-[#FF0000] animate-pulse" />
         )}
       </div>
     );
