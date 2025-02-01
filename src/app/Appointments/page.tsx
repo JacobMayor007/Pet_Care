@@ -2,13 +2,12 @@
 
 import ClientNavbar from "../ClientNavbar/page";
 import Image from "next/image";
-import { DatePicker, Modal, Input } from "antd";
+import { DatePicker, Modal } from "antd";
 import "@ant-design/v5-patch-for-react-19";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCaretDown,
   faCheck,
-  faL,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect, useRef } from "react";
@@ -278,7 +277,7 @@ export default function Doctors() {
 
       const patientUserUID = userData[0]?.User_UID || "";
       const docRef = collection(db, "appointments");
-
+      const docNotifRef = collection(db, "notifications");
       // Check if the patient is new or old
       const q = query(
         docRef,
@@ -317,12 +316,24 @@ export default function Doctors() {
         Appointment_IsNewPatient: isNewPatient, // Add this field to indicate if the patient is new
       });
 
+      const notifAppointments = await addDoc(docNotifRef, {
+        notif_userUID: patientUserUID,
+        title: `Appointment Request with ${matchingDoctor?.User_UID}`,
+        message: `${fName} requesting to have a schedule`,
+        type: userAppointment,
+        status: "unread",
+        createdAt: Timestamp.now(),
+        data: {},
+      });
+
       console.log("Appointment added:", addAppointments.id);
 
       // Log whether the patient is new or old
       console.log(
         isNewPatient ? "New patient added." : "Old patient appointment added."
       );
+
+      console.log("New notification added", notifAppointments);
     } catch (error) {
       console.log("Error adding data to Firebase:", error);
     } finally {

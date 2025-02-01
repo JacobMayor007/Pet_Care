@@ -158,8 +158,10 @@ export default function Doctor() {
 
   return (
     <div className="h-full">
-      <DoctorNavigation />
-      <div className="ml-56 mr-48 grid grid-cols-7 gap-5 ">
+      <nav className="relative z-20">
+        <DoctorNavigation />
+      </nav>
+      <div className="ml-56 mr-48 grid grid-cols-7 gap-5 z-10">
         <h1 className="text-4xl font-bold font-montserrat text-[#393939] capitalize text-start col-span-7 mt-8">
           Hello, Dr. {fullName}
         </h1>
