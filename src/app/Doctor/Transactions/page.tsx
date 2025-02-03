@@ -45,8 +45,10 @@ export default function Transaction() {
 
   return (
     <div>
-      <DoctorNavigation />
-      <div className="flex mx-52 my-10 flex-col gap-8">
+      <div className="relative z-20">
+        <DoctorNavigation />
+      </div>
+      <div className="flex mx-52 my-10 flex-col gap-8 z-10">
         <h1 className="font-bold font-montserrat text-4xl ">Transactions</h1>
         <div className="grid grid-cols-5 bg-white drop-shadow-lg h-fit rounded-2xl p-8 gap-5">
           <h1 className="col-span-3 font-montserrat text-3xl font-bold text-[#393939]">

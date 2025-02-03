@@ -3,7 +3,9 @@
 import DoctorNavigation from "../DoctorNavbar/page";
 import { useEffect, useState } from "react";
 import { fetchMyAppointment } from "@/app/fetchData/Doctor/fetchAppointment";
+import isAuthenticate from "@/app/fetchData/User/isAuthenticate";
 import dayjs, { Dayjs } from "dayjs";
+import { useRouter } from "next/navigation";
 
 interface Appointments {
   id?: string;
@@ -28,6 +30,8 @@ interface Appointments {
 }
 
 export default function Appointments() {
+  const router = useRouter();
+
   const [myAppointments, setMyAppointments] = useState<Appointments[]>([]);
   const [todayAppointments, setTodayAppointments] = useState<Appointments[]>(
     []
@@ -38,6 +42,17 @@ export default function Appointments() {
   const [upcomingAppointments, setUpComingAppointments] = useState<
     Appointments[]
   >([]);
+
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      const login = await isAuthenticate();
+      if (!login) {
+        router.push("/Login"); // Redirect if not logged in
+      }
+    };
+
+    checkAuthentication();
+  }, [router]);
 
   useEffect(() => {
     const getMyAppointments = async () => {

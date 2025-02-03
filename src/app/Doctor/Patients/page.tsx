@@ -64,8 +64,10 @@ export default function Patients() {
 
   return (
     <div>
-      <DoctorNavigation />
-      <div className="pt-10 mx-40 flex flex-col gap-8">
+      <div className="relative z-20">
+        <DoctorNavigation />
+      </div>
+      <div className="pt-10 mx-40 flex flex-col gap-8 z-10">
         <h1 className="font-montserrat font-bold text-3xl text-[#393939]">
           My Patients
         </h1>

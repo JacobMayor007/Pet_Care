@@ -7,8 +7,11 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import Signout from "@/app/SignedOut/page";
 import { useRouter } from "next/navigation";
 import myNotification, {
-  unreadNotification,
+  unopenNotification,
 } from "@/app/fetchData/Doctor/fetchNotification";
+import Link from "next/link";
+import * as Notification from "@/app/fetchData/Doctor/fetchNotification";
+
 import fetchUserData from "@/app/fetchData/fetchUserData";
 import {
   UserOutlined,
@@ -16,23 +19,27 @@ import {
   ShoppingCartOutlined,
   BellOutlined,
 } from "@ant-design/icons";
+import { Modal } from "antd";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
 // import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEllipsisVertical } from "@fortawesome/free-solid-svg-icons";
+import { faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 dayjs.extend(relativeTime);
 
 interface Notifications {
   id?: string;
   createdAt?: string;
+  appointment_ID?: string;
   message?: string;
   doctor_UID?: string;
   notif_userUID?: string;
   status?: string;
+  open?: boolean;
   title?: string;
   type?: string;
+  hide?: boolean;
 }
 
 export default function DoctorNavigation() {
@@ -41,12 +48,15 @@ export default function DoctorNavigation() {
   const [unreadNotif, setUnreadNotif] = useState(0);
   const [logout, setLogout] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
+
   const auth = getAuth();
   const router = useRouter();
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         router.push("/Login");
+      } else {
+        setDoctor_UID(user?.uid);
       }
     });
     return () => unsubscribe();
@@ -83,7 +93,7 @@ export default function DoctorNavigation() {
         }
 
         // Call backend function and pass a callback to update state
-        unsubscribe = unreadNotification(doctorUID, (newNotif) => {
+        unsubscribe = unopenNotification(doctorUID, (newNotif) => {
           setUnreadNotif(newNotif.length);
         });
       } catch (err) {
@@ -121,12 +131,12 @@ export default function DoctorNavigation() {
               </a>
             </li>
             <li className="w-28 h-14 flex items-center justify-center">
-              <a
+              <Link
                 href="/Doctor/Patients"
                 className="font-montserrat text-base text-[#006B95] font-bold"
               >
                 Patients
-              </a>
+              </Link>
             </li>
             <li className="w-32 h-14 flex items-center justify-center px-2">
               <a
@@ -161,7 +171,8 @@ export default function DoctorNavigation() {
               <BellOutlined
                 onClick={() => {
                   setShowNotif((prev) => !prev);
-                  setUnreadNotif(0);
+                  setLogout(logout === true ? false : logout);
+                  Notification.openNotification(doctor_UID);
                 }}
                 className="text-[#006B95] font-bold text-lg cursor-pointer relative"
               />
@@ -177,7 +188,10 @@ export default function DoctorNavigation() {
 
               <UserOutlined
                 className="text-[#006B95] font-bold text-lg cursor-pointer"
-                onClick={() => setLogout((prev) => !prev)}
+                onClick={() => {
+                  setLogout((prev) => !prev);
+                  setShowNotif(showNotif === true ? false : false);
+                }}
               />
               <ShoppingCartOutlined className="text-[#006B95] font-bold text-lg cursor-pointer" />
 
@@ -212,6 +226,9 @@ export default function DoctorNavigation() {
 
 function NotificationList() {
   const [notif, setNotif] = useState<Notifications[]>([]);
+  const [accept, setAccept] = useState(false);
+  const [reject, setReject] = useState(false);
+
   // const [userUID, setUserUID] = useState("");
   // useEffect(() => {
   //   const auth = getAuth();
@@ -260,31 +277,118 @@ function NotificationList() {
     };
   }, []);
 
-  console.log(notif);
+  const approvedAppointment = async () => {
+    try {
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const rejectedAppointment = async () => {
+    try {
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
-    <div className="max-w-[500px] w-[482px] h-fit max-h-[542px] bg-white drop-shadow-lg rounded-xl justify-self-center flex flex-col">
+    <div className="max-w-[500px] w-[482px] h-fit max-h-[542px] bg-white drop-shadow-lg rounded-xl justify-self-center flex flex-col pb-1">
       <h1 className="font-hind text-lg mx-4 mt-4 mb-2">Notifications</h1>
-      <div className="h-0.5 border-[#393939] w-full border-[1px]" />
+      <div className="h-0.5 border-[#393939] w-full border-[1px] mb-2" />
       {notif.map((data) => {
         return (
-          <div key={data?.id} className="grid grid-cols-5 items-center my-4 ">
-            <div>
-              <div className="h-10 w-10 rounded-full bg-white drop-shadow-md justify-self-center text-xs flex items-center justify-center text-center">
-                Image of pet
+          <div
+            key={data?.id}
+            className={`${
+              data?.hide === true
+                ? `hidden`
+                : `grid grid-cols-[4px_100%] my-1 items-center px-2 `
+            }`}
+          >
+            {data?.status === "unread" ? (
+              <div className="w-2 animate-pulse ">
+                <div className="h-2 w-2 bg-blue-500 rounded-full" />
+              </div>
+            ) : (
+              <div className="" />
+            )}
+            <div
+              className={`grid grid-cols-12 w-full hover:bg-slate-300 ${
+                data?.status === "read" ? ` col-span-12` : `col-span-11`
+              }`}
+            >
+              <a
+                href={`/Doctor/Patients/${data?.appointment_ID}`}
+                onClick={() => Notification.readNotification(data?.id || "")}
+                className="col-span-11 grid grid-cols-5 w-full items-center "
+              >
+                <div>
+                  <div className="h-10 w-10 rounded-full bg-white drop-shadow-md justify-self-center text-xs flex items-center justify-center text-center">
+                    Image of pet
+                  </div>
+                </div>
+                <div className="col-span-4 flex flex-row">
+                  <div className="flex flex-col">
+                    <h1 className="font-montserrat font-bold text-sm ">
+                      For you: {data?.message}
+                    </h1>
+                    <p className="font-hind text-xs text-[#393939]">
+                      {data?.createdAt}
+                    </p>
+                  </div>
+                </div>
+              </a>
+              <div className="relative">
+                <div
+                  onClick={() => Notification.hideNotification(data?.id || "")}
+                  className="pl-3 pr-2 py-2 rounded-lg flex flex-row items-center gap-2"
+                >
+                  <FontAwesomeIcon icon={faEyeSlash} />
+                </div>
               </div>
             </div>
-            <div className="col-span-4 flex flex-row">
-              <div className="flex flex-col">
-                <h1 className="font-hind ">For you: {data?.message}</h1>
-                <p className="font-hind text-xs text-[#393939]">
-                  {data?.createdAt}
-                </p>
-              </div>
-              <div className="flex-grow flex justify-center">
-                <FontAwesomeIcon icon={faEllipsisVertical} className="" />
-              </div>
+            <div
+              className={
+                data?.appointment_ID !== undefined ||
+                data?.appointment_ID !== null ||
+                data?.appointment_ID !== ""
+                  ? `col-span-12 flex justify-end gap-2 mt-1`
+                  : `hidden`
+              }
+            >
+              <button
+                type="button"
+                className="h-fit py-1 px-5 bg-[#61C4EB] rounded-lg font-montserrat font-semibold text-white text-sm"
+                onClick={() => setAccept(true)}
+              >
+                Accept
+              </button>
+              <button
+                type="button"
+                className="bg-red-400 py-1 px-5  rounded-lg font-montserrat font-semibold text-white text-sm"
+                onClick={() => setReject(true)}
+              >
+                Reject
+              </button>
             </div>
+
+            <Modal
+              open={accept}
+              onOk={approvedAppointment}
+              onCancel={() => setAccept(false)}
+              centered={true}
+            >
+              Finalize what time of schedule you want the patient to appoint?
+            </Modal>
+            <Modal
+              open={reject}
+              onOk={rejectedAppointment}
+              onCancel={() => setReject(false)}
+              onClose={() => setReject(false)}
+              centered={true}
+            >
+              State the reason why you want to cancel?
+            </Modal>
           </div>
         );
       })}

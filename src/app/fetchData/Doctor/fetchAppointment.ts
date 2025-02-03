@@ -1,6 +1,9 @@
 import { db } from "@/app/firebase/config";
-import { getDocs, collection, where, query } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, where, query } from "firebase/firestore";
 import fetchUserData from "../fetchUserData";
+
+
+
 
 const fetchAppointment = async () =>{
     try{
@@ -94,6 +97,32 @@ const myOldPatient = async (doctorUID:string, doctorEmail:string) =>{
       }
 }
 
+const fetchPatientDetails = async (appointment_ID:string) => {
+  console.log("Appoinment ID in backend: ", appointment_ID);
+  
+
+  try{
+    const docRef = doc(db, "appointments", appointment_ID);
+    const docSnap = await getDoc(docRef);
+
+
+    if (!docSnap.exists()) {
+      console.log("No document found");
+      return [];
+    }
+
+    const data = docSnap.data();
+    console.log("Fetched Document Data:", data); // Debugging
+
+    // Ensure appointments is an array, otherwise return full document
+    return Array.isArray(data?.appointments) ? data.appointments : [data];
+   
+  }catch(error){
+    console.error(error);
+    return [];
+  }
+}
+
 export default fetchAppointment;
 
-export {fetchMyAppointment, myNewPatient, myOldPatient};
+export {fetchMyAppointment, myNewPatient, myOldPatient, fetchPatientDetails};

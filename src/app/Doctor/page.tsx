@@ -30,6 +30,9 @@ interface MyAppointment {
 
 export default function Doctor() {
   const [fullName, setFullName] = useState<string | null>("");
+  const [todayAppointments, setTodayAppointments] = useState<MyAppointment[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [myAppointment, setMyAppointment] = useState<MyAppointment[]>([]);
   const [newPatient, setNewPatient] = useState(0);
@@ -150,11 +153,29 @@ export default function Doctor() {
     setAppointmentsForDate(appointmentsForDay);
   };
 
-  // Modal Close
+  useEffect(() => {
+    const getToday = async () => {
+      const day = dayjs().format("MMMM / DD / YYYY");
+
+      const filterAppointments = (date: string) =>
+        myAppointment.filter(
+          (todays) =>
+            todays?.Appointment_Date?.format("MMMM / DD / YYY") === date
+        );
+
+      const fetchTodayAppointments = filterAppointments(day);
+      setTodayAppointments(fetchTodayAppointments);
+    };
+
+    getToday();
+  }, [myAppointment]);
+
   const handleModalClose = () => {
     setIsModalOpen(false);
   };
   if (loading) return <LoadingPage />;
+
+  console.log("Today Appointments: ", todayAppointments);
 
   return (
     <div className="h-full">
@@ -197,40 +218,49 @@ export default function Doctor() {
             <h1 className="font-montserrat font-semibold text-2xl text-[#393939]">
               Appointment List
             </h1>
-            <div className="h-fit grid grid-cols-2 gap-2 py-4 px-10 bg-white drop-shadow-lg rounded-xl">
-              <h1 className="font-montserrat font-semibold text-[#393939]">
-                Today
-              </h1>
-              <div className="flex justify-end items-center">
-                <FontAwesomeIcon
-                  icon={faEllipsisVertical}
-                  className="text-[#756D78]"
-                />
+
+            {todayAppointments.length === 0 ? (
+              <div className="h-fit grid grid-cols-2 gap-2 py-4 px-10 bg-white drop-shadow-lg rounded-xl">
+                <h1 className="col-span-2 font-montserrat text-lg text-[#393939] font-medium">
+                  No Appointments for Today
+                </h1>
               </div>
-              <div className="border-[1px] border-[#b1b1b1] rounded-full w-full col-span-2" />
-              {myAppointment.map((data) => {
-                return (
-                  <div key={data?.id} className="grid grid-cols-4 col-span-2">
-                    <div className="col-span-3">
-                      <div className="flex flex-row gap-3">
-                        <div className="h-16 w-16 text-xs rounded-full font-hind drop-shadow-lg bg-white text-center flex items-center justify-center text-ellipsis overflow-hidden text-nowrap">
-                          Image of <br /> {data?.Appointment_PatientFullName}
-                        </div>
-                        <div className="flex flex-col justify-center">
-                          <p className="text-lg font-bold font-montserrat">
-                            {data?.Appointment_PatientPetName}
-                          </p>
-                          <p className="font-hind text-sm text-[#096F85]">
-                            {data?.Appointment_TypeOfAppointment}
-                          </p>
+            ) : (
+              <div className="h-fit grid grid-cols-2 gap-2 py-4 px-10 bg-white drop-shadow-lg rounded-xl">
+                <h1 className="font-montserrat font-semibold text-[#393939]">
+                  Today
+                </h1>
+                <div className="flex justify-end items-center">
+                  <FontAwesomeIcon
+                    icon={faEllipsisVertical}
+                    className="text-[#756D78]"
+                  />
+                </div>
+                <div className="border-[1px] border-[#b1b1b1] rounded-full w-full col-span-2" />
+                {todayAppointments.map((data) => {
+                  return (
+                    <div key={data?.id} className="grid grid-cols-4 col-span-2">
+                      <div className="col-span-3">
+                        <div className="flex flex-row gap-3">
+                          <div className="h-16 w-16 text-xs rounded-full font-hind drop-shadow-lg bg-white text-center flex items-center justify-center text-ellipsis overflow-hidden text-nowrap">
+                            Image of <br /> {data?.Appointment_PatientFullName}
+                          </div>
+                          <div className="flex flex-col justify-center">
+                            <p className="text-lg font-bold font-montserrat">
+                              {data?.Appointment_PatientPetName}
+                            </p>
+                            <p className="font-hind text-sm text-[#096F85]">
+                              {data?.Appointment_TypeOfAppointment}
+                            </p>
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center justify-end">time</div>
                     </div>
-                    <div className="flex items-center justify-end">time</div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
         <div className=" w-full col-span-4">

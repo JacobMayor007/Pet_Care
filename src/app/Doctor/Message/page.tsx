@@ -366,9 +366,10 @@ export default function Messages() {
               </div>
             </div>
           </nav> */}
-
-          <DoctorNavigation />
-          <div className="grid grid-cols-[35%_70%] h-screen px-32 py-5 gap-4">
+          <nav className="relative z-20">
+            <DoctorNavigation />
+          </nav>
+          <div className="grid grid-cols-[35%_70%] h-screen px-32 py-5 gap-4 z-10">
             <div className="pt-5 bg-white drop-shadow-xl rounded-xl px-5 flex flex-col gap-4 overflow-y-scroll relative">
               <div className="flex flex-row justify-between ">
                 <h1 className="text-3xl font-montserrat font-bold text-[#393939]">
