@@ -22,7 +22,7 @@ const myNotification = (doctorUID: string, callback: (notifications: Notificatio
     }
   
     const notificationsRef = collection(db, "notifications");
-    const q = query(notificationsRef, where("doctor_UID", "==", doctorUID));
+    const q = query(notificationsRef, where("receiver", "==", doctorUID),);
   
     // Real-time listener
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -51,7 +51,7 @@ const myNotification = (doctorUID: string, callback: (notifications: Notificatio
       
       
       const notificationsRef = collection(db, "notifications");
-      const q = query(notificationsRef, where("doctor_UID", "==", doctorUID), where("open", "==", false));
+      const q = query(notificationsRef, where("receiver", "==", doctorUID), where("open", "==", false));
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const myNotif: Notification[] = querySnapshot.docs.map((doc)=>({
             id:doc.id,
@@ -63,7 +63,6 @@ const myNotification = (doctorUID: string, callback: (notifications: Notificatio
       console.log(unsubscribe);
       return unsubscribe;
       
-      
     };
 
     
@@ -71,7 +70,7 @@ const myNotification = (doctorUID: string, callback: (notifications: Notificatio
   const openNotification = async (doctor_UID:string) =>{      
         try{
             const collectionRef = collection(db, "notifications")
-            const q = query(collectionRef, where("open", "!=", null), where("doctor_UID", "==", doctor_UID))
+            const q = query(collectionRef, where("open", "!=", null), where("receiver", "==", doctor_UID))
             const querySnapshot = await getDocs(q);
 
             const updated = querySnapshot.docs.map( async (doc)=>{

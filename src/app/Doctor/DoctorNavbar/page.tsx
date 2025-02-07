@@ -33,13 +33,16 @@ interface Notifications {
   createdAt?: string;
   appointment_ID?: string;
   message?: string;
-  doctor_UID?: string;
-  notif_userUID?: string;
+  reciever?: string;
+  sender?: string;
+  receiver_FName?: string;
+  sender_FName?: string;
   status?: string;
   open?: boolean;
   title?: string;
   type?: string;
   hide?: boolean;
+  isApproved?: boolean;
 }
 
 export default function DoctorNavigation() {
@@ -66,7 +69,6 @@ export default function DoctorNavigation() {
     const closeNotification = (e: MouseEvent) => {
       if (!btnNotif.current?.contains(e.target as Node)) {
         setShowNotif(false);
-        console.log(btnNotif.current);
       }
     };
 
@@ -320,7 +322,7 @@ function NotificationList() {
               <a
                 href={`/Doctor/Patients/${data?.appointment_ID}`}
                 onClick={() => Notification.readNotification(data?.id || "")}
-                className="col-span-11 grid grid-cols-5 w-full items-center "
+                className="col-span-11 grid grid-cols-5 w-full items-center"
               >
                 <div>
                   <div className="h-10 w-10 rounded-full bg-white drop-shadow-md justify-self-center text-xs flex items-center justify-center text-center">
@@ -330,7 +332,7 @@ function NotificationList() {
                 <div className="col-span-4 flex flex-row">
                   <div className="flex flex-col">
                     <h1 className="font-montserrat font-bold text-sm ">
-                      For you: {data?.message}
+                      For you:{data?.message}
                     </h1>
                     <p className="font-hind text-xs text-[#393939]">
                       {data?.createdAt}
@@ -347,30 +349,34 @@ function NotificationList() {
                 </div>
               </div>
             </div>
-            <div
-              className={
-                data?.appointment_ID !== undefined ||
-                data?.appointment_ID !== null ||
-                data?.appointment_ID !== ""
-                  ? `col-span-12 flex justify-end gap-2 mt-1`
-                  : `hidden`
-              }
-            >
-              <button
-                type="button"
-                className="h-fit py-1 px-5 bg-[#61C4EB] rounded-lg font-montserrat font-semibold text-white text-sm"
-                onClick={() => setAccept(true)}
+            {data?.isApproved ? (
+              <div
+                className={
+                  data?.appointment_ID !== undefined ||
+                  data?.appointment_ID !== null ||
+                  data?.appointment_ID !== ""
+                    ? `col-span-12 flex justify-end gap-2 mt-1`
+                    : `hidden`
+                }
               >
-                Accept
-              </button>
-              <button
-                type="button"
-                className="bg-red-400 py-1 px-5  rounded-lg font-montserrat font-semibold text-white text-sm"
-                onClick={() => setReject(true)}
-              >
-                Reject
-              </button>
-            </div>
+                <button
+                  type="button"
+                  className="h-fit py-1 px-5 bg-[#61C4EB] rounded-lg font-montserrat font-semibold text-white text-sm"
+                  onClick={() => setAccept(true)}
+                >
+                  Accept
+                </button>
+                <button
+                  type="button"
+                  className="bg-red-400 py-1 px-5  rounded-lg font-montserrat font-semibold text-white text-sm"
+                  onClick={() => setReject(true)}
+                >
+                  Reject
+                </button>
+              </div>
+            ) : (
+              <div className="hidden" />
+            )}
 
             <Modal
               open={accept}

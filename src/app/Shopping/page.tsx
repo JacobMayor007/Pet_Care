@@ -59,6 +59,22 @@ export default function Shop() {
         <ClientNavbar />
       </div>
 
+      <div className="bg-[url('/Shopping.jpg')] bg-cover bg-center px-52 h-96">
+        <div className="h-full flex justify-center items-center flex-col">
+          <div>
+            <h1 className="font-montserrat text-6xl text-white font-bold mb-2">
+              Shop it!
+            </h1>
+            <p className="text-2xl font-montserrat text-white">
+              What&#39;s best for your pet
+            </p>
+            <button className="w-40 h-12 bg-[#006B95] font-hind text-lg rounded-full text-white mt-10">
+              Shop now
+            </button>
+          </div>
+        </div>
+      </div>
+
       {loading ? (
         <Loading />
       ) : (

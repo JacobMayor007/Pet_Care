@@ -281,26 +281,31 @@ export default function Doctor() {
               renderItem={(item, index) => (
                 <List.Item key={item.id}>
                   <div className="">
-                    <h1 className="font-montserrat font-bold text-lg">
+                    <h1 className="font-montserrat text-base">
                       Patient {index + 1}:
                     </h1>
-                    <p className="font-montserrat text-[#393939]">
+                    <p className="font-montserrat font-bold text-lg text-[#393939]">
                       {item.Appointment_PatientFullName}
                     </p>
-                    <h1 className="font-montserrat font-bold text-lg">Pet:</h1>
-                    <p className="font-montserrat text-[#393939]">
+                    <h1 className="font-montserrat text-base">Pet:</h1>
+                    <p className="font-montserrat font-bold text-lg text-[#393939]">
                       {item.Appointment_PatientPetName}
                     </p>
-                    <h1 className="font-montserrat font-bold text-lg">Type:</h1>
-                    <p className="font-montserrat text-[#393939]">
+                    <h1 className="font-montserrat text-base">Type:</h1>
+                    <p className="font-montserrat font-bold text-lg text-[#393939]">
                       {item.Appointment_TypeOfAppointment}
                     </p>
 
-                    <h1 className="font-montserrat font-bold text-lg">
-                      Location:
+                    <h1 className="font-montserrat text-base">
+                      {item?.Appointment_Status === "isPending"
+                        ? `                      Date Of Schedule want to Appoint:
+`
+                        : item?.Appointment_Status === "Approved"
+                        ? `Approved Schedule`
+                        : ``}
                     </h1>
-                    <p className="font-montserrat text-[#393939]">
-                      {item.Appointment_Location}
+                    <p className="font-montserrat font-bold text-lg text-[#393939]">
+                      {item.Appointment_Date?.format("MMMM DD, YYYY")}
                     </p>
                   </div>
                 </List.Item>

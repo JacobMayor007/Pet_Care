@@ -317,16 +317,22 @@ export default function Doctors() {
       });
 
       const notifAppointments = await addDoc(docNotifRef, {
-        notif_userUID: patientUserUID,
-        title: `Appointment Request with ${matchingDoctor?.User_UID}`,
-        message: `${fName} requesting to have a schedule`,
-        type: userAppointment,
-        status: "unread",
+        appointment_ID: addAppointments.id,
         createdAt: Timestamp.now(),
-        data: {},
+        receiver: matchingDoctor.User_UID,
+        hide: false,
+        message: `${fName} requesting to have a schedule`,
+        sender: patientUserUID,
+        open: false,
+        status: "unread",
+        title: `Appointment Request with ${matchingDoctor?.User_UID}`,
+        type: userAppointment,
+        sender_FName: fName,
+        receiver_FName: matchingDoctor?.User_FName,
+        isApprove: false,
       });
 
-      console.log("Appointment added:", addAppointments.id);
+      console.log("Appointment added:");
 
       // Log whether the patient is new or old
       console.log(
