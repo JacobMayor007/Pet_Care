@@ -9,12 +9,12 @@ import { useRouter } from "next/navigation";
 
 interface Appointments {
   id?: string;
+  Appointment_CreatedAt?: string;
   Appointment_Date?: Dayjs | null;
   Appointment_DoctorEmail?: string;
   Appointment_DoctorName?: string;
   Appointment_DoctorPNumber?: string;
-  Appointment_DoctorUID?: string;
-  Appointment_IsNewPatient?: string;
+  Appointment_IsNewPatient?: boolean;
   Appointment_Location?: string;
   Appointment_PatientFName?: string;
   Appointment_PatientFullName?: string;
@@ -22,11 +22,17 @@ interface Appointments {
     Month?: number;
     Year?: number;
   };
+  Appointment_PatientPetBP?: {
+    Hg?: number;
+    mm?: number;
+  };
   Appointment_PatientPetBreed?: string;
   Appointment_PatientPetName?: string;
+  Appointment_PatientTypeOfPayment?: string;
   Appointment_PatientUserUID?: string;
   Appointment_Status?: string;
   Appointment_TypeOfAppointment?: string;
+  Appointment_Time?: string;
 }
 
 export default function Appointments() {

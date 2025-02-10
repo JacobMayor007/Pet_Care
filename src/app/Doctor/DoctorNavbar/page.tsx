@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import myNotification, {
   unopenNotification,
 } from "@/app/fetchData/Doctor/fetchNotification";
-import Link from "next/link";
 import * as Notification from "@/app/fetchData/Doctor/fetchNotification";
 
 import fetchUserData from "@/app/fetchData/fetchUserData";
@@ -42,7 +41,7 @@ interface Notifications {
   title?: string;
   type?: string;
   hide?: boolean;
-  isApproved?: boolean;
+  isApprove?: boolean;
 }
 
 export default function DoctorNavigation() {
@@ -113,6 +112,46 @@ export default function DoctorNavigation() {
     };
   }, []);
 
+  // useEffect(() => {
+  //     if (!id) {
+  //       console.error("No Appointment ID provided.");
+  //       return;
+  //     }
+
+  //     let unsubscribe: (() => void) | undefined;
+
+  //     const fetchAppointment = async () => {
+  //       try {
+  //         unsubscribe = await Appointment.default(id, (appointmentData) => {
+  //           if (appointmentData) {
+  //             // ✅ Properly convert Firestore Timestamp to Dayjs
+  //             const appointmentDate = appointmentData.Appointment_Date
+  //               ? dayjs((appointmentData.Appointment_Date as Timestamp).toDate())
+  //               : null;
+
+  //             setAppointment({
+  //               ...appointmentData,
+  //               Appointment_Date: appointmentDate,
+  //             });
+  //           } else {
+  //             console.warn("Appointment not found.");
+  //             setAppointment(null);
+  //           }
+  //         });
+  //       } catch (error) {
+  //         console.error("Error fetching appointment:", error);
+  //       }
+  //     };
+
+  //     fetchAppointment();
+
+  //     return () => {
+  //       if (unsubscribe) {
+  //         unsubscribe();
+  //       }
+  //     };
+  //   }, [id]);
+
   return (
     <div>
       <nav className="h-20 flex flex-row justify-center items-center z-[2]">
@@ -133,12 +172,12 @@ export default function DoctorNavigation() {
               </a>
             </li>
             <li className="w-28 h-14 flex items-center justify-center">
-              <Link
+              <a
                 href="/Doctor/Patients"
                 className="font-montserrat text-base text-[#006B95] font-bold"
               >
                 Patients
-              </Link>
+              </a>
             </li>
             <li className="w-32 h-14 flex items-center justify-center px-2">
               <a
@@ -302,7 +341,7 @@ function NotificationList() {
           <div
             key={data?.id}
             className={`${
-              data?.hide === true
+              data?.hide || data?.isApprove
                 ? `hidden`
                 : `grid grid-cols-[4px_100%] my-1 items-center px-2 `
             }`}
@@ -320,7 +359,7 @@ function NotificationList() {
               }`}
             >
               <a
-                href={`/Doctor/Patients/${data?.appointment_ID}`}
+                href={`/Doctor/${data?.appointment_ID}`}
                 onClick={() => Notification.readNotification(data?.id || "")}
                 className="col-span-11 grid grid-cols-5 w-full items-center"
               >
@@ -349,7 +388,7 @@ function NotificationList() {
                 </div>
               </div>
             </div>
-            {data?.isApproved ? (
+            {data?.isApprove ? (
               <div
                 className={
                   data?.appointment_ID !== undefined ||

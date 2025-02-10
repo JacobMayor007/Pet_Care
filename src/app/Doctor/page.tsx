@@ -13,32 +13,45 @@ import { faEllipsisVertical } from "@fortawesome/free-solid-svg-icons";
 import dayjs, { Dayjs } from "dayjs";
 import "@ant-design/v5-patch-for-react-19";
 
-interface MyAppointment {
+interface Appointments {
   id?: string;
-  Appointment_Status?: string;
+  Appointment_CreatedAt?: string;
   Appointment_Date?: Dayjs | null;
+  Appointment_DoctorEmail?: string;
   Appointment_DoctorName?: string;
   Appointment_DoctorPNumber?: string;
-  Appointment_DoctorUID?: string;
+  Appointment_IsNewPatient?: boolean;
   Appointment_Location?: string;
-  Appointment_TypeOfAppointment?: string;
-  Appointment_PatientEmail?: string;
-  Appointment_PatientFullName?: string;
   Appointment_PatientFName?: string;
+  Appointment_PatientFullName?: string;
+  Appointment_PatientPetAge?: {
+    Month?: number;
+    Year?: number;
+  };
+  Appointment_PatientPetBP?: {
+    Hg?: number;
+    mm?: number;
+  };
+  Appointment_PatientPetBreed?: string;
   Appointment_PatientPetName?: string;
+  Appointment_PatientTypeOfPayment?: string;
+  Appointment_PatientUserUID?: string;
+  Appointment_Status?: string;
+  Appointment_TypeOfAppointment?: string;
+  Appointment_Time?: string;
 }
 
 export default function Doctor() {
   const [fullName, setFullName] = useState<string | null>("");
-  const [todayAppointments, setTodayAppointments] = useState<MyAppointment[]>(
+  const [todayAppointments, setTodayAppointments] = useState<Appointments[]>(
     []
   );
   const [loading, setLoading] = useState(true);
-  const [myAppointment, setMyAppointment] = useState<MyAppointment[]>([]);
+  const [myAppointment, setMyAppointment] = useState<Appointments[]>([]);
   const [newPatient, setNewPatient] = useState(0);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [appointmentsForDate, setAppointmentsForDate] = useState<
-    MyAppointment[]
+    Appointments[]
   >([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [oldPatient, setOldPatient] = useState(0);
@@ -65,11 +78,11 @@ export default function Doctor() {
         setLoading(true);
         const fetchedAppointments = await fetchMyAppointment();
         setMyAppointment(
-          fetchedAppointments.map((appointment: MyAppointment) => ({
+          fetchedAppointments.map((appointment: Appointments) => ({
             ...appointment,
             Appointment_Date: appointment.Appointment_Date
-              ? dayjs(appointment.Appointment_Date.toDate()) // Convert Firestore Timestamp to Dayjs
-              : null, // Handle missing or invalid dates
+              ? dayjs(appointment.Appointment_Date.toDate())
+              : null,
           }))
         );
       } catch (err) {
@@ -154,13 +167,12 @@ export default function Doctor() {
   };
 
   useEffect(() => {
-    const getToday = async () => {
-      const day = dayjs().format("MMMM / DD / YYYY");
+    const getToday = () => {
+      const day = dayjs().format("MMMM DD, YYYY");
 
       const filterAppointments = (date: string) =>
         myAppointment.filter(
-          (todays) =>
-            todays?.Appointment_Date?.format("MMMM / DD / YYY") === date
+          (todays) => todays?.Appointment_Date?.format("MMMM DD, YYYY") === date
         );
 
       const fetchTodayAppointments = filterAppointments(day);
@@ -219,7 +231,7 @@ export default function Doctor() {
               Appointment List
             </h1>
 
-            {todayAppointments.length === 0 ? (
+            {todayAppointments.length < 1 ? (
               <div className="h-fit grid grid-cols-2 gap-2 py-4 px-10 bg-white drop-shadow-lg rounded-xl">
                 <h1 className="col-span-2 font-montserrat text-lg text-[#393939] font-medium">
                   No Appointments for Today
@@ -249,13 +261,15 @@ export default function Doctor() {
                             <p className="text-lg font-bold font-montserrat">
                               {data?.Appointment_PatientPetName}
                             </p>
-                            <p className="font-hind text-sm text-[#096F85]">
+                            <p className="font-montserrat text-sm text-[#096F85]">
                               {data?.Appointment_TypeOfAppointment}
                             </p>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center justify-end">time</div>
+                      <div className="flex items-center justify-end font-montserrat font-semibold">
+                        {data?.Appointment_Time}
+                      </div>
                     </div>
                   );
                 })}

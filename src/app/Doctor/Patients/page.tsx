@@ -1,32 +1,37 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import isAuthenticate from "@/app/fetchData/User/isAuthenticate";
 import { useRouter } from "next/navigation";
-import { fetchMyAppointment } from "@/app/fetchData/Doctor/fetchAppointment";
+import { fetchMyPatient } from "@/app/fetchData/Doctor/fetchAppointment";
 import DoctorNavigation from "../DoctorNavbar/page";
 import { Dayjs } from "dayjs";
 
 interface MyAppointment {
   id?: string;
+  Appointment_CreatedAt?: string;
   Appointment_Date?: Dayjs | null;
   Appointment_DoctorEmail?: string;
   Appointment_DoctorName?: string;
   Appointment_DoctorPNumber?: string;
-  Appointment_DoctorUID?: string;
   Appointment_IsNewPatient?: boolean;
   Appointment_Location?: string;
   Appointment_PatientFName?: string;
   Appointment_PatientFullName?: string;
-  Appointment_PatientPetName?: string;
-  Appointment_PatientPetBreed?: string;
   Appointment_PatientPetAge?: {
-    Year?: number;
     Month?: number;
+    Year?: number;
   };
+  Appointment_PatientPetBP?: {
+    Hg?: number;
+    mm?: number;
+  };
+  Appointment_PatientPetBreed?: string;
+  Appointment_PatientPetName?: string;
+  Appointment_PatientTypeOfPayment?: string;
   Appointment_PatientUserUID?: string;
   Appointment_Status?: string;
   Appointment_TypeOfAppointment?: string;
+  Appointment_Time?: string;
 }
 
 export default function Patients() {
@@ -48,7 +53,7 @@ export default function Patients() {
 
   useEffect(() => {
     const getMyAppointments = async () => {
-      const fetchedMyAppointments = await fetchMyAppointment();
+      const fetchedMyAppointments = await fetchMyPatient();
       setMyAppointment(fetchedMyAppointments);
     };
     getMyAppointments();
@@ -132,12 +137,12 @@ export default function Patients() {
                       <p className="text-end text-[#006B95] text-base font-bold col-span-3">
                         {data?.Appointment_PatientPetBreed}
                       </p>
-                      <button
-                        type="button"
-                        className="col-span-4 h-10 bg-[#006B95] rounded-xl text-white"
+                      <a
+                        href={`/Doctor/PatientDetails/${data?.id}`}
+                        className="col-span-4 h-10 bg-[#006B95] rounded-xl text-white flex justify-center items-center"
                       >
                         View Patient Details
-                      </button>
+                      </a>
                     </div>
                   </div>
                 </div>
