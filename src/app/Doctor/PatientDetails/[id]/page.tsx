@@ -23,9 +23,61 @@ import {
 import { db } from "@/app/firebase/config";
 import fetchUserData from "@/app/fetchData/fetchUserData";
 import { v4 as uuidv4 } from "uuid";
+import fetchHistory, { fetchPatientInfo } from "./appointmenthistory";
 
 interface DetailsProps {
   params: Promise<{ id: string }>;
+}
+
+interface PatientHistory {
+  id?: string;
+  appointmentID?: string;
+  doctorUID?: string;
+  historyBody?: string;
+  historyObservation?: [
+    {
+      id?: string;
+      name?: string;
+    }
+  ];
+  historyTitle?: string;
+  historyTreatment?: [
+    {
+      id?: string;
+      name?: string;
+    }
+  ];
+  history_BG?: number;
+  history_BP?: {
+    mm?: number;
+    Hg: number;
+  };
+  history_date?: string;
+  history_document?: string;
+  history_duration?: string;
+  history_height?: string;
+  history_weight?: string;
+  patientID?: string;
+}
+
+interface PatientInfo {
+  id?: string;
+  appointment_ID?: string;
+  doctor_ID?: string;
+  patient_BG?: number;
+  patient_BP?: {
+    Hg?: number;
+    mm?: number;
+  };
+  patient_BT?: string;
+  patient_ID?: string;
+  patient_allergies?: string;
+  patient_disease?: string;
+  patient_height?: number;
+  patient_pet_breed?: string;
+  patient_pet_name?: string;
+  patient_pet_sex?: string;
+  patient_weight?: number;
 }
 
 interface Appointment {
@@ -86,10 +138,12 @@ export default function PatientDetails({ params }: DetailsProps) {
   const [pendingAppointments, setPendingAppointments] =
     useState<Appointment | null>(null);
   const router = useRouter();
+  const [patientInfo, setPatientInfo] = useState<PatientInfo[]>([]);
   const [changeDate, setChangeDate] = useState(false);
   const [userData, setUserData] = useState<DocumentData[]>([]);
   const [observations, setObservations] = useState<Observations[]>([]);
   const [treatment, setTreatment] = useState<Treatment[]>([]);
+  const [patientHistory, setPatientHistory] = useState<PatientHistory[]>([]);
   const [accept, setAccept] = useState(false);
   const [reject, setReject] = useState(false);
   const [newDate, setNewDate] = useState("");
@@ -107,6 +161,8 @@ export default function PatientDetails({ params }: DetailsProps) {
   const [duration, setDuration] = useState("");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [dateHistory, setDateHistory] = useState("");
+  const [addHistory, setAddHistory] = useState(false);
 
   useEffect(() => {
     const checkAuthentication = async () => {
@@ -218,25 +274,35 @@ export default function PatientDetails({ params }: DetailsProps) {
     setObservations(updatedObservations);
   };
 
-  // useEffect(() => {
-  //   const getPractice = async () => {
-  //     try {
-  //       const docRef = collection(db, "practice");
-  //       const docSnap = await getDocs(docRef);
+  useEffect(() => {
+    const getMyPatientInfo = async () => {
+      const info = await fetchPatientInfo(
+        pendingAppointments?.id || "",
+        pendingAppointments?.Appointment_DoctorUID || "",
+        pendingAppointments?.Appointment_PatientUserUID || ""
+      );
 
-  //       const fetch = docSnap.docs.map((doc) => ({
-  //         id: doc.id,
-  //         ...doc.data(),
-  //       })) as practice[];
+      setPatientInfo(info);
+    };
 
-  //       setPractice(fetch);
-  //     } catch (err) {
-  //       console.log(err);
-  //     }
-  //   };
+    getMyPatientInfo();
+  }, [pendingAppointments]);
 
-  //   getPractice();
-  // }, []);
+  useEffect(() => {
+    const getPatientHistory = async () => {
+      const history = await fetchHistory(
+        pendingAppointments?.id || "",
+        pendingAppointments?.Appointment_DoctorUID || "",
+        pendingAppointments?.Appointment_PatientUserUID || ""
+      );
+
+      setPatientHistory(history);
+    };
+
+    getPatientHistory();
+  }, [pendingAppointments]);
+
+  console.log(patientHistory);
 
   const submitPatientInformation = async () => {
     try {
@@ -282,6 +348,7 @@ export default function PatientDetails({ params }: DetailsProps) {
         historyTreatment: treatment,
         history_weight: weight,
         history_height: height,
+        createdAt: Timestamp.now(),
         history_BP: {
           mm: mm,
           Hg: hg,
@@ -289,11 +356,14 @@ export default function PatientDetails({ params }: DetailsProps) {
         history_BG: bloodGlucose,
         history_duration: duration,
         history_document: document,
+        history_date: dateHistory,
       });
 
       console.log(history);
     } catch (error) {
       console.log(error);
+    } finally {
+      router.push(`/Doctor/PatientDetails/${pendingAppointments?.id}`);
     }
   };
 
@@ -335,6 +405,8 @@ export default function PatientDetails({ params }: DetailsProps) {
       console.log(error);
     }
   };
+
+  console.log(duration);
 
   return (
     <div className="h-full pb-2">
@@ -406,7 +478,6 @@ export default function PatientDetails({ params }: DetailsProps) {
                 notifyDate();
                 setAccept(false);
                 Appointment.postApprovedAppointment(id || "", time);
-                window.location.reload();
               }}
             >
               <h1 className="font-montserrat text-[#393939] font-medium">
@@ -500,443 +571,658 @@ export default function PatientDetails({ params }: DetailsProps) {
               </div>
             </Modal>
             <div className="border-[1px] border-[#C3C3C3] p-4 rounded-xl h-full">
-              <div
-                className={
-                  pendingAppointments?.Appointment_Status === "Approved"
-                    ? `flex flex-col gap-7`
-                    : `hidden`
-                }
-              >
-                <h1>Patient Information</h1>
-                <div className="w-full border-[#B1B1B1] border-[1px]" />
-                <div className="grid grid-cols-5 gap-2">
-                  <label
-                    htmlFor="speciesID"
-                    className="font-hind text-base text-[#797979] col-span-2"
-                  >
-                    Species:
-                  </label>
-                  <input
-                    type="text"
-                    name="speci"
-                    id="speciesID"
-                    disabled
-                    value={pendingAppointments?.Appointment_PatientPetBreed}
-                    className="col-span-3 font-hind font-bold text-[#006B95] border-[#C3C3C3] outline-none text-center"
-                  />
-                  <label
-                    htmlFor="sexID"
-                    className="font-hind text-base text-[#797979] col-span-2"
-                  >
-                    Sex:
-                  </label>
-                  <input
-                    type="text"
-                    name="sex"
-                    id="sexID"
-                    value={sex}
-                    placeholder="Male"
-                    onChange={(e) => setSex(e.target.value)}
-                    className={`col-span-3 ${
-                      sex === ""
-                        ? `border-b-[1px]`
-                        : `border-b-0 font-hind font-bold text-[#006B95]`
-                    } border-[#C3C3C3] outline-none text-center`}
-                  />
-                  <label
-                    htmlFor="weightID"
-                    className="font-hind text-base text-[#797979] col-span-2"
-                  >
-                    Weight:
-                  </label>
-                  <input
-                    type="number"
-                    name="weight"
-                    id="weightID"
-                    value={weight == 0 ? `` : weight}
-                    placeholder="kg"
-                    onChange={(e) => setWeight(Number(e.target.value))}
-                    className="[&::-webkit-inner-spin-button]:appearance-none col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center"
-                  />
-                  <label
-                    htmlFor="heightID"
-                    className="font-hind text-base text-[#797979] col-span-2"
-                  >
-                    Height:
-                  </label>
-                  <input
-                    type="number"
-                    name="height"
-                    id="heightID"
-                    placeholder="cm"
-                    value={height == 0 ? `` : height}
-                    onChange={(e) => setHeight(Number(e.target.value))}
-                    className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                  <label
-                    htmlFor="btID"
-                    className="col-span-2 font-hind text-base text-[#797979] "
-                  >
-                    Blood Type:
-                  </label>
-                  <input
-                    type="text"
-                    name="bt"
-                    id="btID"
-                    placeholder="DEA 1.1 Positive"
-                    value={bloodType}
-                    onChange={(e) => setBloodType(e.target.value)}
-                    className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center "
-                  />
-                  <label
-                    htmlFor="bpID"
-                    className="col-span-3 font-hind text-base text-[#797979]"
-                  >
-                    Blood Pressure:
-                  </label>
-                  <input
-                    type="number"
-                    name="mm"
-                    id="mm-id"
-                    value={mm == 0 ? `` : mm}
-                    placeholder="mm"
-                    onChange={(e) => setMM(Number(e.target.value))}
-                    className="col-span-1 border-b-[1px] border-[#C3C3C3] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                  <input
-                    type="number"
-                    name="Hg"
-                    placeholder="Hg"
-                    id="hg-id"
-                    value={hg == 0 ? `` : hg}
-                    className="col-span-1 border-b-[1px] border-[#C3C3C3] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none"
-                    onChange={(e) => setHg(Number(e.target.value))}
-                  />
-                  <label
-                    htmlFor="bgID"
-                    className="col-span-2 font-hind text-base text-[#797979]"
-                  >
-                    Blood Glucose
-                  </label>
-                  <input
-                    type="number"
-                    name="bg"
-                    id="bgID"
-                    placeholder="95 mg/dL"
-                    value={bloodGlucose == 0 ? `` : bloodGlucose}
-                    onChange={(e) => setBloodGlucose(Number(e.target.value))}
-                    className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                  <label
-                    htmlFor="diseaseID"
-                    className="font-hind text-base text-[#797979] col-span-2"
-                  >
-                    Disease:
-                  </label>
-                  <input
-                    type="text"
-                    name="disease"
-                    id="diseaseID"
-                    placeholder="Hyperthroidism"
-                    value={disease}
-                    onChange={(e) => setDisease(e.target.value)}
-                    className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center"
-                  />
-                  <label
-                    htmlFor="allergiesID"
-                    className="font-hind text-base text-[#797979] col-span-2"
-                  >
-                    Allergies:
-                  </label>
-                  <input
-                    type="text"
-                    name="allergies"
-                    id="allergiesID"
-                    placeholder="Chicken, Pollen, Chocolates"
-                    value={allergies}
-                    onChange={(e) => setAllergies(e.target.value)}
-                    className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center "
-                  />
+              {patientInfo.length > 0 ? (
+                <div className="flex flex-col gap-7">
+                  <h1>Patient Information</h1>
+                  <div className="w-full border-[#B1B1B1] border-[1px]" />
+                  {patientInfo.map((data, index) => {
+                    return (
+                      <div key={index} className="grid grid-cols-5 gap-2">
+                        <p className="col-span-2 font-hind text-[#767676]">
+                          Species:{" "}
+                        </p>
+                        <h1 className="col-span-3 text-end font-hind text-[#006B95] font-bold">
+                          {" "}
+                          {data?.patient_pet_breed}
+                        </h1>
+                        <p className="col-span-2 font-hind text-[#767676]">
+                          Sex:
+                        </p>
+                        <h1 className="col-span-3 text-end font-hind text-[#006B95] font-bold">
+                          {data?.patient_pet_sex}
+                        </h1>
+                        <p className="col-span-2 font-hind text-[#767676]">
+                          Weight:
+                        </p>
+                        <h1 className="col-span-3 text-end font-hind text-[#006B95] font-bold">
+                          {data?.patient_weight}
+                        </h1>
+                        <p className="col-span-2 font-hind text-[#767676]">
+                          Height:
+                        </p>
+                        <h1 className="col-span-3 text-end font-hind text-[#006B95] font-bold">
+                          {data?.patient_height}
+                        </h1>
+                        <p className="col-span-2 font-hind text-[#767676]">
+                          Blood Type:
+                        </p>
+                        <h1 className="col-span-3 text-end font-hind text-[#006B95] font-bold">
+                          {data?.patient_BT}
+                        </h1>
+                        <p className="col-span-2 font-hind text-[#767676]">
+                          Blood Pressure:
+                        </p>
+                        <h1 className="col-span-3 text-end font-hind text-[#006B95] font-bold">
+                          {data?.patient_BP?.mm} / {data?.patient_BP?.Hg} mmHG
+                        </h1>
+                        <p className="col-span-2 font-hind text-[#767676]">
+                          Blood Glucose:{" "}
+                        </p>
+                        <h1 className="col-span-3 text-end font-hind text-[#006B95] font-bold">
+                          {data?.patient_BG} mg/dL
+                        </h1>
+                        <p className="col-span-2 font-hind text-[#767676]">
+                          Disease:
+                        </p>
+                        <h1 className="col-span-3 text-end font-hind text-[#006B95] font-bold">
+                          {data?.patient_disease}
+                        </h1>
+                        <p className="col-span-2 font-hind text-[#767676]">
+                          Allergies:
+                        </p>
+                        <h1 className="col-span-3 text-end font-hind text-[#006B95] font-bold">
+                          {data?.patient_allergies}
+                        </h1>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="flex justify-end p-2">
-                  <button
-                    type="button"
-                    className="h-9 w-20 rounded-md bg-[#006B95] text-white font-hind "
-                    onClick={submitPatientInformation}
-                  >
-                    Submit
-                  </button>
+              ) : (
+                <div
+                  className={
+                    pendingAppointments?.Appointment_Status === "Approved"
+                      ? `flex flex-col gap-7`
+                      : `hidden`
+                  }
+                >
+                  <h1>Patient Information</h1>
+                  <div className="w-full border-[#B1B1B1] border-[1px]" />
+                  <div className="grid grid-cols-5 gap-2">
+                    <label
+                      htmlFor="speciesID"
+                      className="font-hind text-base text-[#797979] col-span-2"
+                    >
+                      Species:
+                    </label>
+                    <input
+                      type="text"
+                      name="speci"
+                      id="speciesID"
+                      disabled
+                      value={pendingAppointments?.Appointment_PatientPetBreed}
+                      className="col-span-3 font-hind font-bold text-[#006B95] border-[#C3C3C3] outline-none text-center"
+                    />
+                    <label
+                      htmlFor="sexID"
+                      className="font-hind text-base text-[#797979] col-span-2"
+                    >
+                      Sex:
+                    </label>
+                    <input
+                      type="text"
+                      name="sex"
+                      id="sexID"
+                      value={sex}
+                      placeholder="Male"
+                      onChange={(e) => setSex(e.target.value)}
+                      className={`col-span-3 ${
+                        sex === ""
+                          ? `border-b-[1px]`
+                          : `border-b-0 font-hind font-bold text-[#006B95]`
+                      } border-[#C3C3C3] outline-none text-center`}
+                    />
+                    <label
+                      htmlFor="weightID"
+                      className="font-hind text-base text-[#797979] col-span-2"
+                    >
+                      Weight:
+                    </label>
+                    <input
+                      type="number"
+                      name="weight"
+                      id="weightID"
+                      value={weight == 0 ? `` : weight}
+                      placeholder="kg"
+                      onChange={(e) => setWeight(Number(e.target.value))}
+                      className="[&::-webkit-inner-spin-button]:appearance-none col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center"
+                    />
+                    <label
+                      htmlFor="heightID"
+                      className="font-hind text-base text-[#797979] col-span-2"
+                    >
+                      Height:
+                    </label>
+                    <input
+                      type="number"
+                      name="height"
+                      id="heightID"
+                      placeholder="cm"
+                      value={height == 0 ? `` : height}
+                      onChange={(e) => setHeight(Number(e.target.value))}
+                      className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <label
+                      htmlFor="btID"
+                      className="col-span-2 font-hind text-base text-[#797979] "
+                    >
+                      Blood Type:
+                    </label>
+                    <input
+                      type="text"
+                      name="bt"
+                      id="btID"
+                      placeholder="DEA 1.1 Positive"
+                      value={bloodType}
+                      onChange={(e) => setBloodType(e.target.value)}
+                      className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center "
+                    />
+                    <label
+                      htmlFor="bpID"
+                      className="col-span-3 font-hind text-base text-[#797979]"
+                    >
+                      Blood Pressure:
+                    </label>
+                    <input
+                      type="number"
+                      name="mm"
+                      id="mm-id"
+                      value={mm == 0 ? `` : mm}
+                      placeholder="mm"
+                      onChange={(e) => setMM(Number(e.target.value))}
+                      className="col-span-1 border-b-[1px] border-[#C3C3C3] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <input
+                      type="number"
+                      name="Hg"
+                      placeholder="Hg"
+                      id="hg-id"
+                      value={hg == 0 ? `` : hg}
+                      className="col-span-1 border-b-[1px] border-[#C3C3C3] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none"
+                      onChange={(e) => setHg(Number(e.target.value))}
+                    />
+                    <label
+                      htmlFor="bgID"
+                      className="col-span-2 font-hind text-base text-[#797979]"
+                    >
+                      Blood Glucose
+                    </label>
+                    <input
+                      type="number"
+                      name="bg"
+                      id="bgID"
+                      placeholder="95 mg/dL"
+                      value={bloodGlucose == 0 ? `` : bloodGlucose}
+                      onChange={(e) => setBloodGlucose(Number(e.target.value))}
+                      className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <label
+                      htmlFor="diseaseID"
+                      className="font-hind text-base text-[#797979] col-span-2"
+                    >
+                      Disease:
+                    </label>
+                    <input
+                      type="text"
+                      name="disease"
+                      id="diseaseID"
+                      placeholder="Hyperthroidism"
+                      value={disease}
+                      onChange={(e) => setDisease(e.target.value)}
+                      className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center"
+                    />
+                    <label
+                      htmlFor="allergiesID"
+                      className="font-hind text-base text-[#797979] col-span-2"
+                    >
+                      Allergies:
+                    </label>
+                    <input
+                      type="text"
+                      name="allergies"
+                      id="allergiesID"
+                      placeholder="Chicken, Pollen, Chocolates"
+                      value={allergies}
+                      onChange={(e) => setAllergies(e.target.value)}
+                      className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center "
+                    />
+                  </div>
+                  <div className="flex justify-end p-2">
+                    <button
+                      type="button"
+                      className="h-9 w-20 rounded-md bg-[#006B95] text-white font-hind "
+                      onClick={submitPatientInformation}
+                    >
+                      Submit
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
-        <div className="col-span-8 mt-8 border-[#C3C3C3] border-[1px] ml-3 rounded-2xl p-6 ">
-          <h1 className="font-montserrat font-bold text-2xl text-[#393939]">
-            Appointment History
-          </h1>
+        <div className="col-span-8 mt-8 border-[#C3C3C3] border-[1px] ml-3 rounded-2xl p-6 h-full">
+          <div className="flex flex-row justify-between">
+            <h1 className="font-montserrat font-bold text-2xl text-[#393939]">
+              Appointment History
+            </h1>
+            <span
+              onClick={() => setAddHistory(true)}
+              className="cursor-pointer"
+            >
+              <FontAwesomeIcon icon={faPlus} />
+            </span>
+          </div>
           <div className="h-0.5 w-full rounded-full bg-[#C3C3C3] my-4" />
-          {pendingAppointments?.Appointment_Status === "isPending" ? (
-            <div>
-              <h1>No Appointment History</h1>
+          {!addHistory ? (
+            <div className="w-full h-fit py-2 flex flex-col gap-8">
+              {patientHistory.map((data, index) => {
+                return (
+                  <div key={index} className="flex flex-col gap-2  ">
+                    {
+                      <h1 className="font-hind font-semibold text-[#797979]">
+                        {data?.history_date}
+                      </h1>
+                    }
+                    <div className="bg-[#EAF1F4] p-4 rounded-lg flex flex-col gap-2">
+                      <h1 className="font-montserrat font-bold text-xl text-[#006B95]">
+                        {data?.historyTitle}
+                      </h1>
+                      <p className="mb-4 font-hind text-base text-[#797979] text-semibold">
+                        {data?.historyBody}
+                      </p>
+                      <div className="grid grid-cols-2">
+                        <ul className="bg-white rounded-md w-[296px] px-4 py-4 flex flex-col gap-2">
+                          <li className="font-montserrat font-bold text-[#006B95]">
+                            Observations
+                          </li>
+                          {data?.historyObservation?.map((data) => {
+                            return (
+                              <li
+                                key={data?.id}
+                                className="list-disc mx-7 font-hind font-semibold text-[#797979]"
+                              >
+                                {data?.name}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                        <div className="bg-white w-[296px] p-4 rounded-md flex flex-col gap-3">
+                          <h1 className="font-montserrat font-bold text-[#006B95]">
+                            Patient Details
+                          </h1>
+                          <div className="grid grid-cols-2 gap-2">
+                            <p className="font-hind font-medium text-[#797979]">
+                              Weight:
+                            </p>
+                            <h1 className="text-end font-hind font-semibold text-[#006B95]">
+                              {data?.history_weight}
+                            </h1>
+                            <p className="font-hind font-medium text-[#797979]">
+                              Height:
+                            </p>
+                            <h1 className="text-end font-hind font-semibold text-[#006B95]">
+                              {data?.history_height}
+                            </h1>
+                            <p className="font-hind font-medium text-[#797979]">
+                              Blood Pressure:
+                            </p>
+                            <h1 className="text-end font-hind font-semibold text-[#006B95]">
+                              {data?.history_BP?.mm} / {data?.history_BP?.Hg}{" "}
+                              mmHg
+                            </h1>
+                            <p className="font-hind font-medium text-[#797979]">
+                              Blood Glucose:
+                            </p>
+                            <h1 className="text-end font-hind font-semibold text-[#006B95]">
+                              {data?.history_BG} mg/dL
+                            </h1>
+                          </div>
+                        </div>
+                        <ul></ul>
+                      </div>
+                      <div className="">
+                        <ul className="w-[296px] bg-white p-4 flex flex-col gap-2 rounded-md">
+                          <h1 className="mb-1 font-montserrat font-bold text-[#006B95]">
+                            Treatment:
+                          </h1>
+                          {data?.historyTreatment?.map((data, index) => {
+                            return (
+                              <li
+                                key={index}
+                                className="list-disc mx-7 font-semibold text-[#797979]"
+                              >
+                                {data?.name}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                      <div className="bg-white w-[296px] rounded-md h-28 flex flex-col p-4">
+                        <h1 className="font-montserrat text-[#006B95] font-bold mb-4">
+                          Duration
+                        </h1>
+                        <li className="list-disc font-hind text-[#797979] font-medium">
+                          {data?.history_duration}
+                        </li>
+                      </div>
+                      <div className="bg-white w-[296px] rounded-md h-fit flex flex-col p-4">
+                        <h1 className="font-montserrat text-[#006B95] font-bold mb-4">
+                          Document
+                        </h1>
+                        <ul className="px-4">
+                          <li className="list-disc font-hind text-[#797979] font-medium">
+                            {data?.history_document}
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
-            <div className=" w-full  py-2">
-              <DatePicker
-                className="mb-2 font-montserrat text-[#006B95] font-medium border-[#006B95] border-[1px ]"
-                format={"MMMM DD, YYYY"}
-                needConfirm
-              />
-              <div className="w-full h-screen rounded-xl bg-[#EAF1F4] p-4 flex flex-col gap-4">
+            <div>
+              {pendingAppointments?.Appointment_Status === "isPending" ? (
                 <div>
-                  <label
-                    htmlFor="titleHistory"
-                    className="font-montserrrat font-bold text-2xl text-[#006B95] mr-4 tracking-wide"
-                  >
-                    Title:
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    id="titleHistory"
-                    placeholder="Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="h-8 w-64 placeholder:text-center rounded-lg outline-none font-hind px-2"
-                  />
+                  <h1>No Appointment History</h1>
                 </div>
-
-                <label
-                  htmlFor="bodyText"
-                  className="font-montserrat text-lg text-[#006B95] font-semibold"
-                >
-                  Body:
-                </label>
-                <textarea
-                  name="body"
-                  id="bodyText"
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  cols={30}
-                  rows={4}
-                  className="resize-none outline-none p-4 text-base font-hind rounded-xl mx-2"
-                />
-                <div className="h-full w-full overflow-y-scroll overflow-x-hidden flex flex-col gap-5 px-2">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="bg-white rounded-md drop-shadow-lg flex flex-col justify-between h-full p-4 ">
-                      <h1 className="font-montserrat font-bold text-[#006B95]">
-                        Observations
-                      </h1>
-                      <div className="h-full flex flex-col ">
-                        {observations.map((observations, index) => {
-                          return (
-                            <div
-                              key={observations.id}
-                              className="flex flex-row gap-2 items-center mb-2"
-                            >
-                              <label
-                                htmlFor="observationID"
-                                className="font-hind text-[#797979]"
-                              >
-                                {index + 1}:
-                              </label>
-                              <input
-                                type="text"
-                                name="name"
-                                id="observation-name"
-                                value={observations.name}
-                                onChange={(e) =>
-                                  handleInputChange(e, observations.id)
-                                }
-                                className="h-10 rounded-md outline-none border-[#C3C3C3] border-[1px] px-2"
-                              />
-                              <span
-                                className="cursor-pointer font-bold text-[#006B95]  "
-                                onClick={(e) =>
-                                  removeObservations(observations.id, e)
-                                }
-                              >
-                                <FontAwesomeIcon icon={faMinus} />
-                              </span>
-                            </div>
-                          );
-                        })}
-                        <div className="h-full flex justify-end items-end">
-                          <button
-                            type="button"
-                            onClick={addObservations}
-                            className="h-7 w-8 text-white font-hind rounded-lg bg-[#006B95]"
-                          >
-                            <FontAwesomeIcon icon={faPlus} />
-                          </button>
-                        </div>
-                      </div>
+              ) : (
+                <div className=" w-full  py-2">
+                  <DatePicker
+                    className="mb-2 font-montserrat text-[#006B95] font-medium border-[#006B95] border-[1px ]"
+                    format={"MMMM DD, YYYY"}
+                    needConfirm
+                    onChange={(date: Dayjs | null) =>
+                      setDateHistory(date ? date.format("MMMM DD, YYYY") : "")
+                    }
+                  />
+                  <div className="w-full h-screen rounded-xl bg-[#EAF1F4] p-4 flex flex-col gap-4">
+                    <div>
+                      <label
+                        htmlFor="titleHistory"
+                        className="font-montserrrat font-bold text-2xl text-[#006B95] mr-4 tracking-wide"
+                      >
+                        Title:
+                      </label>
+                      <input
+                        type="text"
+                        name="title"
+                        id="titleHistory"
+                        placeholder="Title"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="h-8 w-64 placeholder:text-center rounded-lg outline-none font-hind px-2"
+                      />
                     </div>
-                    <div className="h-fit p-4 bg-white rounded-md drop-shadow-md">
-                      <h1 className="font-montserrat font-bold text-[#006B95]">
-                        Patient Details
-                      </h1>
 
-                      <div className="flex flex-col gap-4 items-center">
-                        <div className="grid grid-cols-2 gap-4 items-center">
-                          <label htmlFor="weight-id" className="">
-                            Weight:
-                          </label>
-                          <input
-                            type="number"
-                            name="weight"
-                            id="weight-id"
-                            placeholder="kg"
-                            value={weight == 0 ? `` : weight}
-                            onChange={(e) => setWeight(Number(e.target.value))}
-                            className="ml-14 placeholder:text-end text-end  px-2 font-hind w-16 outline-none border-b-[1px] border-[#C3C3C3] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 items-center">
-                          <label htmlFor="height-id">Height:</label>
-                          <input
-                            type="number"
-                            name="height"
-                            id="height-id"
-                            value={height}
-                            onChange={(e) => setHeight(Number(e.target.value))}
-                            placeholder="cm"
-                            className="ml-14 placeholder:text-end text-end  w-16 px-2 border-[#C3C3C3] border-b-[1px] outline-none [&::-webkit-inner-spin-button]:appearance-none font-hind"
-                          />
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 items-center">
-                          <label htmlFor="mm-id">Blood Pressure:</label>
-                          <input
-                            type="number"
-                            name="mm-dp"
-                            id="bpID"
-                            placeholder="mm"
-                            value={mm}
-                            onChange={(e) => setMM(Number(e.target.value))}
-                            className="placeholder:text-end text-end w-16 px-2 border-[#C3C3C3] border-b-[1px] outline-none [&::-webkit-inner-spin-button]:appearance-none font-hind"
-                          />
-                          <input
-                            type="number"
-                            name="hg-dp"
-                            id="hg-id"
-                            placeholder="Hg"
-                            value={hg}
-                            onChange={(e) => setHg(Number(e.target.value))}
-                            className="placeholder:text-end text-end w-16 px-2 border-[#C3C3C3] border-b-[1px] outline-none [&::-webkit-inner-spin-button]:appearance-none font-hind"
-                          />
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 items-center w-full">
-                          <label htmlFor="mg-id" className="col-span-2">
-                            Blood Glucose:
-                          </label>
-                          <input
-                            type="number"
-                            name="mg"
-                            id="mg-id"
-                            placeholder="mg/dL"
-                            value={bloodGlucose}
-                            onChange={(e) =>
-                              setBloodGlucose(Number(e.target.value))
-                            }
-                            className="placeholder:text-end text-end px-2 w-16 border-[#C3C3C3] border-b-[1px] outline-none [&::-webkit-inner-spin-button]:appearance-none font-hind"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="h-fit p-4 bg-white drop-shadow-md w-[293px] rounded-md">
-                    <h1 className="text-[#006B95] font-montserrat font-bold">
-                      Treatment
-                    </h1>
-                    <div className="h-fit flex flex-col gap-2">
-                      {treatment.map((treatment, index) => {
-                        return (
-                          <ul
-                            key={treatment.id}
-                            className="flex flex-col gap-4 w-full"
-                          >
-                            <li className="grid grid-cols-7 items-center gap-2">
-                              <div className=" flex flex-row items-center col-span-6 gap-4 w-full">
-                                <h1>{index + 1}.</h1>
-                                <input
-                                  className=" border-[#C3C3C3] border-[1px] rounded-md h-9 outline-none px-2 py-1"
-                                  type="text"
-                                  name="name"
-                                  id="treatment-id"
-                                  value={treatment.name}
-                                  onChange={(e) =>
-                                    treatmentInputChange(e, treatment.id)
-                                  }
-                                />
-                              </div>
+                    <label
+                      htmlFor="bodyText"
+                      className="font-montserrat text-lg text-[#006B95] font-semibold"
+                    >
+                      Body:
+                    </label>
+                    <textarea
+                      name="body"
+                      id="bodyText"
+                      value={body}
+                      onChange={(e) => setBody(e.target.value)}
+                      cols={30}
+                      rows={4}
+                      className="resize-none outline-none p-4 text-base font-hind rounded-xl mx-2"
+                    />
+                    <div className="h-full w-full overflow-y-scroll overflow-x-hidden flex flex-col gap-5 px-2">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="bg-white rounded-md drop-shadow-lg flex flex-col justify-between h-full p-4 ">
+                          <h1 className="font-montserrat font-bold text-[#006B95]">
+                            Observations
+                          </h1>
+                          <div className="h-full flex flex-col ">
+                            {observations.map((observations, index) => {
+                              return (
+                                <div
+                                  key={observations.id}
+                                  className="flex flex-row gap-2 items-center mb-2"
+                                >
+                                  <label
+                                    htmlFor="observationID"
+                                    className="font-hind text-[#797979]"
+                                  >
+                                    {index + 1}:
+                                  </label>
+                                  <input
+                                    type="text"
+                                    name="name"
+                                    id="observation-name"
+                                    value={observations.name}
+                                    onChange={(e) =>
+                                      handleInputChange(e, observations.id)
+                                    }
+                                    className="h-10 rounded-md outline-none border-[#C3C3C3] border-[1px] px-2"
+                                  />
+                                  <span
+                                    className="cursor-pointer font-bold text-[#006B95]  "
+                                    onClick={(e) =>
+                                      removeObservations(observations.id, e)
+                                    }
+                                  >
+                                    <FontAwesomeIcon icon={faMinus} />
+                                  </span>
+                                </div>
+                              );
+                            })}
+                            <div className="h-full flex justify-end items-end">
                               <button
                                 type="button"
-                                className=""
-                                onClick={(e) =>
-                                  removeTreatment(treatment.id, e)
-                                }
+                                onClick={addObservations}
+                                className="h-7 w-8 text-white font-hind rounded-lg bg-[#006B95]"
                               >
-                                <FontAwesomeIcon
-                                  icon={faMinus}
-                                  className="text-[#006B9B]"
-                                />
+                                <FontAwesomeIcon icon={faPlus} />
                               </button>
-                            </li>
-                          </ul>
-                        );
-                      })}
-                      <div className="flex justify-end mt-4">
-                        <button
-                          type="button"
-                          className="h-7 w-8 bg-[#006B95] rounded-md"
-                          onClick={addTreatment}
-                        >
-                          <FontAwesomeIcon
-                            icon={faPlus}
-                            className="text-white "
+                            </div>
+                          </div>
+                        </div>
+                        <div className="h-fit p-4 bg-white rounded-md drop-shadow-md">
+                          <h1 className="font-montserrat font-bold text-[#006B95]">
+                            Patient Details
+                          </h1>
+
+                          <div className="flex flex-col gap-4 items-center">
+                            <div className="grid grid-cols-2 gap-4 items-center">
+                              <label htmlFor="weight-id" className="">
+                                Weight:
+                              </label>
+                              <input
+                                type="number"
+                                name="weight"
+                                id="weight-id"
+                                placeholder="kg"
+                                value={weight == 0 ? `` : weight}
+                                onChange={(e) =>
+                                  setWeight(Number(e.target.value))
+                                }
+                                className="ml-14 placeholder:text-end text-end  px-2 font-hind w-16 outline-none border-b-[1px] border-[#C3C3C3] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 items-center">
+                              <label htmlFor="height-id">Height:</label>
+                              <input
+                                type="number"
+                                name="height"
+                                id="height-id"
+                                value={height}
+                                onChange={(e) =>
+                                  setHeight(Number(e.target.value))
+                                }
+                                placeholder="cm"
+                                className="ml-14 placeholder:text-end text-end  w-16 px-2 border-[#C3C3C3] border-b-[1px] outline-none [&::-webkit-inner-spin-button]:appearance-none font-hind"
+                              />
+                            </div>
+                            <div className="grid grid-cols-3 gap-4 items-center">
+                              <label htmlFor="mm-id">Blood Pressure:</label>
+                              <input
+                                type="number"
+                                name="mm-dp"
+                                id="bpID"
+                                placeholder="mm"
+                                value={mm}
+                                onChange={(e) => setMM(Number(e.target.value))}
+                                className="placeholder:text-end text-end w-16 px-2 border-[#C3C3C3] border-b-[1px] outline-none [&::-webkit-inner-spin-button]:appearance-none font-hind"
+                              />
+                              <input
+                                type="number"
+                                name="hg-dp"
+                                id="hg-id"
+                                placeholder="Hg"
+                                value={hg}
+                                onChange={(e) => setHg(Number(e.target.value))}
+                                className="placeholder:text-end text-end w-16 px-2 border-[#C3C3C3] border-b-[1px] outline-none [&::-webkit-inner-spin-button]:appearance-none font-hind"
+                              />
+                            </div>
+                            <div className="grid grid-cols-3 gap-4 items-center w-full">
+                              <label htmlFor="mg-id" className="col-span-2">
+                                Blood Glucose:
+                              </label>
+                              <input
+                                type="number"
+                                name="mg"
+                                id="mg-id"
+                                placeholder="mg/dL"
+                                value={bloodGlucose}
+                                onChange={(e) =>
+                                  setBloodGlucose(Number(e.target.value))
+                                }
+                                className="placeholder:text-end text-end px-2 w-16 border-[#C3C3C3] border-b-[1px] outline-none [&::-webkit-inner-spin-button]:appearance-none font-hind"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="h-fit p-4 bg-white drop-shadow-md w-[293px] rounded-md">
+                        <h1 className="text-[#006B95] font-montserrat font-bold">
+                          Treatment
+                        </h1>
+                        <div className="h-fit flex flex-col gap-2">
+                          {treatment.map((treatment, index) => {
+                            return (
+                              <ul
+                                key={treatment.id}
+                                className="flex flex-col gap-4 w-full"
+                              >
+                                <li className="grid grid-cols-7 items-center gap-2">
+                                  <div className=" flex flex-row items-center col-span-6 gap-4 w-full">
+                                    <h1>{index + 1}.</h1>
+                                    <input
+                                      className=" border-[#C3C3C3] border-[1px] rounded-md h-9 outline-none px-2 py-1"
+                                      type="text"
+                                      name="name"
+                                      id="treatment-id"
+                                      value={treatment.name}
+                                      onChange={(e) =>
+                                        treatmentInputChange(e, treatment.id)
+                                      }
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className=""
+                                    onClick={(e) =>
+                                      removeTreatment(treatment.id, e)
+                                    }
+                                  >
+                                    <FontAwesomeIcon
+                                      icon={faMinus}
+                                      className="text-[#006B9B]"
+                                    />
+                                  </button>
+                                </li>
+                              </ul>
+                            );
+                          })}
+                          <div className="flex justify-end mt-4">
+                            <button
+                              type="button"
+                              className="h-7 w-8 bg-[#006B95] rounded-md"
+                              onClick={addTreatment}
+                            >
+                              <FontAwesomeIcon
+                                icon={faPlus}
+                                className="text-white "
+                              />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-white drop-shadow-md w-[295px] rounded-lg h-fit p-4">
+                        <h1 className="text-[#006B95] font-bold font-montserrat">
+                          Duration
+                        </h1>
+                        <div>
+                          <TimePicker
+                            format={"H:mm"}
+                            placeholder="hour : minute"
+                            onChange={(time: Dayjs | null) => {
+                              if (!time?.get("hour")) {
+                                setDuration(time?.format("mm ") + "minute");
+                              } else if (!time?.get("minute")) {
+                                setDuration(time.format("HH ") + "hour");
+                              } else {
+                                setDuration(
+                                  time.format("hh ") +
+                                    "hour " +
+                                    time.format("mm ") +
+                                    "minute"
+                                );
+                              }
+                            }}
                           />
-                        </button>
+                        </div>
+                      </div>
+                      <div className="bg-white drop-shadow-md w-96 h-fit p-4 rounded-lg">
+                        <h1 className="text-[#006B95] font-montserrat font-bold">
+                          Document
+                        </h1>
+                        <div>
+                          <textarea
+                            name="document"
+                            id="document-id"
+                            value={document}
+                            onChange={(e) => setDocument(e.target.value)}
+                            className=" rounded-lg resize-none outline-none px-4 py-2 border-[#C3C3C3] border-[1px] w-full h-20"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-white drop-shadow-md w-[295px] rounded-lg h-fit p-4">
-                    <h1 className="text-[#006B95] font-bold font-montserrat">
-                      Duration
-                    </h1>
-                    <div>
-                      <TimePicker
-                        format={"H:mm"}
-                        placeholder="hour : minute"
-                        onChange={(time: Dayjs | null) =>
-                          setDuration(time ? time.format("HH:mm") : "")
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="bg-white drop-shadow-md w-96 h-fit p-4 rounded-lg">
-                    <h1 className="text-[#006B95] font-montserrat font-bold">
-                      Document
-                    </h1>
-                    <div>
-                      <textarea
-                        name="document"
-                        id="document-id"
-                        value={document}
-                        onChange={(e) => setDocument(e.target.value)}
-                        className=" rounded-lg resize-none outline-none px-4 py-2 border-[#C3C3C3] border-[1px] w-full h-20"
-                      />
-                    </div>
+                  <div className="flex justify-between my-4 ">
+                    <button
+                      type="button"
+                      className="h-10 w-28 rounded-md bg-[#006B95] text-white font-hind"
+                      onClick={() => setAddHistory(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="h-10 w-28 rounded-md bg-[#006B95] text-white font-hind"
+                      onClick={() => {
+                        submitAppointmentHistory();
+                        setAddHistory(false);
+                      }}
+                    >
+                      Submit
+                    </button>
                   </div>
                 </div>
-              </div>
-              <div className="flex justify-end my-4 ">
-                <button
-                  className="h-10 w-28 rounded-md bg-[#006B95] text-white font-hind"
-                  onClick={submitAppointmentHistory}
-                >
-                  Submit
-                </button>
-              </div>
+              )}
             </div>
           )}
         </div>

@@ -359,7 +359,7 @@ function NotificationList() {
               }`}
             >
               <a
-                href={`/Doctor/${data?.appointment_ID}`}
+                href={`/Doctor/PatientDetails/${data?.appointment_ID}`}
                 onClick={() => Notification.readNotification(data?.id || "")}
                 className="col-span-11 grid grid-cols-5 w-full items-center"
               >
