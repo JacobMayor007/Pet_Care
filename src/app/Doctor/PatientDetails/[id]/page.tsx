@@ -24,6 +24,7 @@ import { db } from "@/app/firebase/config";
 import fetchUserData from "@/app/fetchData/fetchUserData";
 import { v4 as uuidv4 } from "uuid";
 import fetchHistory, { fetchPatientInfo } from "./appointmenthistory";
+import Loading from "@/app/Loading/page";
 
 interface DetailsProps {
   params: Promise<{ id: string }>;
@@ -90,7 +91,6 @@ interface Appointment {
   Appointment_DoctorPNumber?: string;
   Appointment_IsNewPatient?: boolean;
   Appointment_Location?: string;
-  Appointment_PatientFName?: string;
   Appointment_PatientFullName?: string;
   Appointment_PatientPetAge?: {
     Month?: number;
@@ -163,6 +163,9 @@ export default function PatientDetails({ params }: DetailsProps) {
   const [body, setBody] = useState("");
   const [dateHistory, setDateHistory] = useState("");
   const [addHistory, setAddHistory] = useState(false);
+  const [price, setPrice] = useState(0);
+  const [confirmPatientInfo, setConfirmPatientInfo] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const checkAuthentication = async () => {
@@ -306,6 +309,8 @@ export default function PatientDetails({ params }: DetailsProps) {
 
   const submitPatientInformation = async () => {
     try {
+      setLoading(true);
+
       const doctorUID = userData[0]?.User_UID;
 
       const docRef = collection(db, "patient-info");
@@ -330,6 +335,8 @@ export default function PatientDetails({ params }: DetailsProps) {
       console.log(patientInfo);
     } catch (e) {
       console.error(e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -370,28 +377,26 @@ export default function PatientDetails({ params }: DetailsProps) {
   const notifyDate = async () => {
     try {
       const doctorUID = userData[0]?.User_UID;
-      const fName = userData[0]?.User_FName;
-      const lName = userData[0]?.User_LName;
-      const fullName = `${fName} ${lName}`;
+      const fullName = userData[0]?.User_Name;
       const docRef = collection(db, "notifications");
       const date =
         pendingAppointments?.Appointment_Date?.format("MMMM DD, YYYY");
       const patient = pendingAppointments?.Appointment_PatientUserUID;
-      const patient_FName = pendingAppointments?.Appointment_PatientFName;
+      const patient_FName = pendingAppointments?.Appointment_PatientFullName;
       console.log(id);
 
       await addDoc(docRef, {
         appointment_ID: id,
         sender: doctorUID,
-        sender_FName: fName,
-        receiver_FName: patient_FName,
-        receiver: patient,
+        sender_FName: fullName,
+        receiver_FullName: patient_FName,
+        receiverID: patient,
         title: newDate
           ? `Change schedule from Dr. ${doctorUID} to ${patient}`
           : `Approved Appointment Request from ${patient} to Dr. ${doctorUID}`,
         message: newDate
-          ? `Dr. ${fullName} change your schedule on ${newDate} ${time}`
-          : `Dr. ${fullName} approved your appointment on ${date} ${time}`,
+          ? `Dr. ${fullName} change your schedule on ${newDate} ${time}, Php ${price} `
+          : `Dr. ${fullName} approved your appointment on ${date} ${time}, Php ${price}`,
         type: newDate ? "Change Appointment" : "Approved Appointment",
         date: newDate ? newDate : date,
         time: time,
@@ -406,7 +411,15 @@ export default function PatientDetails({ params }: DetailsProps) {
     }
   };
 
-  console.log(duration);
+  if (loading) {
+    return (
+      <div>
+        <div>
+          <Loading />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full pb-2">
@@ -477,7 +490,8 @@ export default function PatientDetails({ params }: DetailsProps) {
               onOk={() => {
                 notifyDate();
                 setAccept(false);
-                Appointment.postApprovedAppointment(id || "", time);
+                Appointment.postApprovedAppointment(id || "", time, price);
+                router.push(`/Doctor/PatientDetails/${id}`);
               }}
             >
               <h1 className="font-montserrat text-[#393939] font-medium">
@@ -494,7 +508,7 @@ export default function PatientDetails({ params }: DetailsProps) {
                   Click here if you want to change the date.
                 </span>
               </h1>
-              <div className="flex flex-row gap-2 my-4 items-center">
+              <div className="grid grid-cols-10 gap-2 my-4 items-center">
                 <label
                   htmlFor="TimeAppoint"
                   className="font-montserrat font-medium"
@@ -505,10 +519,26 @@ export default function PatientDetails({ params }: DetailsProps) {
                   size="middle"
                   format={"hh:mm A"}
                   use12Hours
-                  className="font-montserrat font-medium"
+                  className="font-montserrat font-medium col-span-4"
                   onChange={(time: Dayjs | null) =>
                     setTime(time ? time.format("hh:mm A") : "")
                   }
+                />
+
+                <label
+                  htmlFor="priceID"
+                  className="font-montserrat font-medium"
+                >
+                  Price:
+                </label>
+                <input
+                  type="number"
+                  name="price"
+                  placeholder="Php"
+                  id="priceID"
+                  value={price == 0 ? `` : price}
+                  onChange={(e) => setPrice(Number(e.target.value))}
+                  className="col-span-4 h-8 px-2 font-hind text-[#393939] rounded-lg border-[#C3C3C3] border-[1px] [&::-webkit-inner-spin-button]:appearance-none outline-none"
                 />
               </div>
             </Modal>
@@ -694,7 +724,11 @@ export default function PatientDetails({ params }: DetailsProps) {
                       value={weight == 0 ? `` : weight}
                       placeholder="kg"
                       onChange={(e) => setWeight(Number(e.target.value))}
-                      className="[&::-webkit-inner-spin-button]:appearance-none col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center"
+                      className={`[&::-webkit-inner-spin-button]:appearance-none col-span-3 font-hind text-[#006B95] font-bold ${
+                        !weight
+                          ? `border-b-[1px] border-[#C3C3C3]`
+                          : `border-none`
+                      } outline-none text-center`}
                     />
                     <label
                       htmlFor="heightID"
@@ -709,7 +743,11 @@ export default function PatientDetails({ params }: DetailsProps) {
                       placeholder="cm"
                       value={height == 0 ? `` : height}
                       onChange={(e) => setHeight(Number(e.target.value))}
-                      className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none"
+                      className={` col-span-3 ${
+                        !height
+                          ? ` border-b-[1px] border-[#C3C3C3]`
+                          : `border-none`
+                      } font-hind text-[#006B95] font-bold outline-none text-center [&::-webkit-inner-spin-button]:appearance-none`}
                     />
                     <label
                       htmlFor="btID"
@@ -724,7 +762,11 @@ export default function PatientDetails({ params }: DetailsProps) {
                       placeholder="DEA 1.1 Positive"
                       value={bloodType}
                       onChange={(e) => setBloodType(e.target.value)}
-                      className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center "
+                      className={`col-span-3 outline-none text-center ${
+                        !bloodType
+                          ? `border-b-[1px] border-[#C3C3C3]`
+                          : `border-none`
+                      } font-bold font-hind text-[#006B95]`}
                     />
                     <label
                       htmlFor="bpID"
@@ -739,7 +781,9 @@ export default function PatientDetails({ params }: DetailsProps) {
                       value={mm == 0 ? `` : mm}
                       placeholder="mm"
                       onChange={(e) => setMM(Number(e.target.value))}
-                      className="col-span-1 border-b-[1px] border-[#C3C3C3] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none"
+                      className={`col-span-1 ${
+                        !mm ? ` border-b-[1px] border-[#C3C3C3]` : `border-none`
+                      } font-hind font-bold text-[#006B95] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none`}
                     />
                     <input
                       type="number"
@@ -747,7 +791,9 @@ export default function PatientDetails({ params }: DetailsProps) {
                       placeholder="Hg"
                       id="hg-id"
                       value={hg == 0 ? `` : hg}
-                      className="col-span-1 border-b-[1px] border-[#C3C3C3] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none"
+                      className={`col-span-1 ${
+                        !hg ? `border-b-[1px] border-[#C3C3C3]` : `border-none`
+                      } font-hind font-bold text-[#006B95] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none`}
                       onChange={(e) => setHg(Number(e.target.value))}
                     />
                     <label
@@ -763,7 +809,11 @@ export default function PatientDetails({ params }: DetailsProps) {
                       placeholder="95 mg/dL"
                       value={bloodGlucose == 0 ? `` : bloodGlucose}
                       onChange={(e) => setBloodGlucose(Number(e.target.value))}
-                      className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none"
+                      className={`col-span-3 ${
+                        !bloodGlucose
+                          ? `border-b-[1px] border-[#C3C3C3]`
+                          : `border-none`
+                      } font-hind font-bold text-[#006B95] outline-none text-center [&::-webkit-inner-spin-button]:appearance-none`}
                     />
                     <label
                       htmlFor="diseaseID"
@@ -778,7 +828,11 @@ export default function PatientDetails({ params }: DetailsProps) {
                       placeholder="Hyperthroidism"
                       value={disease}
                       onChange={(e) => setDisease(e.target.value)}
-                      className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center"
+                      className={`col-span-3 ${
+                        !disease
+                          ? `border-b-[1px] border-[#C3C3C3]`
+                          : `border-none`
+                      } font-hind font-bold text-[#006B95] outline-none text-center`}
                     />
                     <label
                       htmlFor="allergiesID"
@@ -793,14 +847,18 @@ export default function PatientDetails({ params }: DetailsProps) {
                       placeholder="Chicken, Pollen, Chocolates"
                       value={allergies}
                       onChange={(e) => setAllergies(e.target.value)}
-                      className="col-span-3 border-b-[1px] border-[#C3C3C3] outline-none text-center "
+                      className={`col-span-3 ${
+                        !allergies
+                          ? `border-b-[1px] border-[#C3C3C3]`
+                          : `border-none`
+                      } font-hind font-bold text-[#006B95] outline-none text-center`}
                     />
                   </div>
                   <div className="flex justify-end p-2">
                     <button
                       type="button"
                       className="h-9 w-20 rounded-md bg-[#006B95] text-white font-hind "
-                      onClick={submitPatientInformation}
+                      onClick={() => setConfirmPatientInfo(true)}
                     >
                       Submit
                     </button>
@@ -808,6 +866,22 @@ export default function PatientDetails({ params }: DetailsProps) {
                 </div>
               )}
             </div>
+            <Modal
+              open={confirmPatientInfo}
+              onCancel={() => setConfirmPatientInfo(false)}
+              onClose={() => setConfirmPatientInfo(false)}
+              onOk={() => {
+                submitPatientInformation();
+                setConfirmPatientInfo(false);
+                router.push(`/Doctor/PatientDetails/${id}`);
+              }}
+              centered
+            >
+              <h1 className="font-montserrat font-bold text-[#006B95]">
+                {" "}
+                Do you wish to confirm patient information?
+              </h1>
+            </Modal>
           </div>
         </div>
         <div className="col-span-8 mt-8 border-[#C3C3C3] border-[1px] ml-3 rounded-2xl p-6 h-full">
@@ -815,12 +889,15 @@ export default function PatientDetails({ params }: DetailsProps) {
             <h1 className="font-montserrat font-bold text-2xl text-[#393939]">
               Appointment History
             </h1>
-            <span
+            <h1
               onClick={() => setAddHistory(true)}
-              className="cursor-pointer"
+              className="cursor-pointer flex flex-row items-center gap-4 font-montserrat font-bold text-[#006B95]"
             >
-              <FontAwesomeIcon icon={faPlus} />
-            </span>
+              Add Appointment History
+              <span className="cursor-pointer">
+                <FontAwesomeIcon icon={faPlus} />
+              </span>
+            </h1>
           </div>
           <div className="h-0.5 w-full rounded-full bg-[#C3C3C3] my-4" />
           {!addHistory ? (
@@ -1059,7 +1136,7 @@ export default function PatientDetails({ params }: DetailsProps) {
                                 type="number"
                                 name="height"
                                 id="height-id"
-                                value={height}
+                                value={height == 0 ? `` : height}
                                 onChange={(e) =>
                                   setHeight(Number(e.target.value))
                                 }
@@ -1074,7 +1151,7 @@ export default function PatientDetails({ params }: DetailsProps) {
                                 name="mm-dp"
                                 id="bpID"
                                 placeholder="mm"
-                                value={mm}
+                                value={mm == 0 ? `` : mm}
                                 onChange={(e) => setMM(Number(e.target.value))}
                                 className="placeholder:text-end text-end w-16 px-2 border-[#C3C3C3] border-b-[1px] outline-none [&::-webkit-inner-spin-button]:appearance-none font-hind"
                               />
@@ -1083,7 +1160,7 @@ export default function PatientDetails({ params }: DetailsProps) {
                                 name="hg-dp"
                                 id="hg-id"
                                 placeholder="Hg"
-                                value={hg}
+                                value={hg == 0 ? `` : hg}
                                 onChange={(e) => setHg(Number(e.target.value))}
                                 className="placeholder:text-end text-end w-16 px-2 border-[#C3C3C3] border-b-[1px] outline-none [&::-webkit-inner-spin-button]:appearance-none font-hind"
                               />
@@ -1097,7 +1174,7 @@ export default function PatientDetails({ params }: DetailsProps) {
                                 name="mg"
                                 id="mg-id"
                                 placeholder="mg/dL"
-                                value={bloodGlucose}
+                                value={bloodGlucose == 0 ? `` : bloodGlucose}
                                 onChange={(e) =>
                                   setBloodGlucose(Number(e.target.value))
                                 }
@@ -1216,6 +1293,7 @@ export default function PatientDetails({ params }: DetailsProps) {
                       onClick={() => {
                         submitAppointmentHistory();
                         setAddHistory(false);
+                        window.location.reload();
                       }}
                     >
                       Submit

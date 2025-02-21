@@ -4,9 +4,7 @@ import fetchProduct from "../fetchData/fetchProducts";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileShield } from "@fortawesome/free-solid-svg-icons";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Loading from "../Loading/page";
 import ClientNavbar from "../ClientNavbar/page";
 
 interface Product {
@@ -22,7 +20,7 @@ interface Product {
 }
 
 export default function Shop() {
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [userID, setUserID] = useState("");
   const [, setUserEmail] = useState<string | null>("");
@@ -59,7 +57,7 @@ export default function Shop() {
         <ClientNavbar />
       </div>
 
-      <div className="bg-[url('/Shopping.jpg')] bg-cover bg-center px-52 h-96">
+      <div className="bg-[url('/Shopping.jpg')] bg-cover bg-center px-48 h-72">
         <div className="h-full flex justify-center items-center flex-col">
           <div>
             <h1 className="font-montserrat text-6xl text-white font-bold mb-2">
@@ -73,22 +71,11 @@ export default function Shop() {
             </button>
           </div>
         </div>
-      </div>
-
-      {loading ? (
-        <Loading />
-      ) : (
-        <div className="w-full grid grid-cols-5 gap-5 py-5 px-32 z-[1]">
+        <div className="w-full grid grid-cols-5 gap-5 py-5 z-[1]">
           {products.map((data) => {
             return (
-              <Link
-                href={{
-                  pathname: "Product",
-                  query: {
-                    ProductID: data?.id,
-                  },
-                }}
-                onClick={() => setLoading(true)}
+              <a
+                href={`/Product/${data?.id}`}
                 key={data?.id}
                 className="grid grid-rows-11 z-[1] gap-2 bg-white rounded-lg px-3 py-4 hover:border-blue-500 hover:border-[1px] drop-shadow-xl cursor-pointer h-64 transform transition-all active:scale-95 ease-out duration-50 select-none"
               >
@@ -107,11 +94,11 @@ export default function Shop() {
                 <button className="row-span-2 bg-blue-500 text-white font-hind rounded-md">
                   View Item
                 </button>
-              </Link>
+              </a>
             );
           })}
         </div>
-      )}
+      </div>
     </div>
   );
 }

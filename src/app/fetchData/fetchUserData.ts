@@ -11,7 +11,6 @@ const fetchUserData = async (): Promise<DocumentData[]> => {
         try {
           const userEmail = user.email;
           const userUID = user.uid;
-
           // Query the Users collection with both conditions
           const userQuery = query(
             collection(db, "Users"),

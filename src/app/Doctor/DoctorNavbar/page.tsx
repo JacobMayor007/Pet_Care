@@ -110,7 +110,7 @@ export default function DoctorNavigation() {
         unsubscribe();
       }
     };
-  }, []);
+  }, [doctor_UID]);
 
   // useEffect(() => {
   //     if (!id) {
@@ -156,7 +156,14 @@ export default function DoctorNavigation() {
     <div>
       <nav className="h-20 flex flex-row justify-center items-center z-[2]">
         <div className="flex items-center justify-center gap-16 px-14 w-full">
-          <div className="flex items-center">
+          <div
+            className="flex items-center cursor-pointer"
+            onClick={() => {
+              {
+                router.push("/");
+              }
+            }}
+          >
             <Image src="/Logo.svg" height={54} width={54} alt="Logo" />
             <h1 className="text-2xl font-sigmar font-normal text-[#006B95]">
               Pet Care

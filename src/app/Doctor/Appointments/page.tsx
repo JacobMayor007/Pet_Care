@@ -16,7 +16,6 @@ interface Appointments {
   Appointment_DoctorPNumber?: string;
   Appointment_IsNewPatient?: boolean;
   Appointment_Location?: string;
-  Appointment_PatientFName?: string;
   Appointment_PatientFullName?: string;
   Appointment_PatientPetAge?: {
     Month?: number;
@@ -137,7 +136,7 @@ export default function Appointments() {
                           {data?.Appointment_PatientPetName}
                         </h1>
                         <p className="text-sm font-hind text-[#393939]">
-                          Owner: {data?.Appointment_PatientFName}
+                          Owner: {data?.Appointment_PatientFullName}
                         </p>
                       </div>
                     </div>
@@ -199,7 +198,7 @@ export default function Appointments() {
                           {data?.Appointment_PatientPetName}
                         </h1>
                         <p className="text-sm font-hind text-[#393939]">
-                          Owner: {data?.Appointment_PatientFName}
+                          Owner: {data?.Appointment_PatientFullName}
                         </p>
                       </div>
                     </div>
@@ -260,7 +259,7 @@ export default function Appointments() {
                           {data?.Appointment_PatientPetName}
                         </h1>
                         <p className="text-sm font-hind text-[#393939]">
-                          Owner: {data?.Appointment_PatientFName}
+                          Owner: {data?.Appointment_PatientFullName}
                         </p>
                       </div>
                     </div>

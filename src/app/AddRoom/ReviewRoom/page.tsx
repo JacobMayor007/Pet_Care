@@ -3,8 +3,6 @@ import Image from "next/image";
 import {
   faCircleCheck,
   faCircleXmark,
-  faCircleChevronDown,
-  faCircleUser,
   faEdit,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -22,8 +20,7 @@ import {
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "@/app/firebase/config";
 import { useRouter } from "next/navigation";
-import Signout from "@/app/SignedOut/page";
-import SignedIn from "@/app/SignedIn/page";
+import RentersNavigation from "@/app/Renter/RentersNavigation/page";
 
 type Feature = {
   id: string;
@@ -36,7 +33,6 @@ const Review = () => {
   const [userId, setUserId] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>("");
   const [confirm, setConfirm] = useState(false);
-  const [logout, setLogout] = useState(false);
   const [userData, setUserData] = useState<DocumentData[]>([]);
   let priceIndicator = 0;
   const [roomName, setRoomName] = useState<string | null>(null);
@@ -205,84 +201,9 @@ const Review = () => {
     }
   };
 
-  if (!userId) {
-    return (
-      <div className={userId ? `visible` : `invisible`}>
-        <SignedIn />
-      </div>
-    );
-  }
-
   return (
     <div className="h-full bg-[#D9F0FF] pb-5">
-      <nav className="h-20 flex flex-row justify-center items-center">
-        <div className="flex items-center gap-16">
-          <div className="flex items-center">
-            <Image src="/Logo.svg" height={54} width={54} alt="Logo" />
-            <h1 className="text-2xl font-sigmar font-normal text-[#006B95]">
-              Pet Care
-            </h1>
-          </div>
-          <ul className="list-type-none flex items-center gap-3">
-            <li className="w-28 h-14 flex items-center justify-center">
-              <a
-                href="/Provider"
-                className="font-montserrat text-base text-[#006B95]"
-              >
-                Dashboard
-              </a>
-            </li>
-            <li className="w-28 h-14 flex items-center justify-center">
-              <a
-                href="/Inbox"
-                className="font-montserrat text-base text-[#006B95]"
-              >
-                Inbox
-              </a>
-            </li>
-            <li className="w-28 h-14 flex items-center justify-center">
-              <a
-                className="font-montserrat text-base text-[#006B95]"
-                href="/Notifications"
-              >
-                Notifications
-              </a>
-            </li>
-            <li className="w-36 h-14 flex items-center justify-center">
-              <a
-                className="font-montserrat text-base text-[#006B95]"
-                href="/AddProduct"
-              >
-                Add New Product
-              </a>
-            </li>
-          </ul>
-          <div className="flex items-center gap-4">
-            <div className="relative cursor-pointer">
-              <FontAwesomeIcon
-                icon={faCircleUser}
-                className="text-blue-950 text-3xl"
-              />
-              <FontAwesomeIcon
-                icon={faCircleChevronDown}
-                className="absolute left-5 top-5 text-blue-950"
-                onClick={() => setLogout((prev) => !prev)}
-              />
-              <div
-                className={logout ? `flex absolute top-9 -left-6` : `hidden`}
-                onClick={() => setLogout((prev) => !prev)}
-              >
-                <Signout />
-              </div>
-            </div>
-
-            <h1 className="font-montserrat text-base text-[#006B95]">
-              {/* {userEmail ? userEmail : `No Email Address`} */}
-              {userEmail}
-            </h1>
-          </div>
-        </div>
-      </nav>
+      <RentersNavigation />
 
       <div className="h-full bg-white py-7 mr-4 pr-8 flex flex-row gap-5 ml-32 my-10 rounded-lg">
         <div className="h-full w-1/3 flex flex-col pt-16 px-8 gap-10 ">

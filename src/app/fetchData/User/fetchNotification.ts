@@ -22,7 +22,7 @@ const MyNotification = (userUID: string, callback: (notifications: Notification[
     }
   
     const notificationsRef = collection(db, "notifications");
-    const q = query(notificationsRef, where("receiver", "==", userUID));
+    const q = query(notificationsRef, where("receiverID", "==", userUID));
   
     // Real-time listener
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -32,7 +32,7 @@ const MyNotification = (userUID: string, callback: (notifications: Notification[
           id: doc.id,
           ...data,
           createdAt: data?.createdAt
-            ? dayjs(data.createdAt.toDate()).fromNow() // Convert timestamp to "time ago"
+            ? dayjs(data.createdAt.toDate()).fromNow() 
             : "Unknown time",
         };
       });
@@ -51,7 +51,7 @@ const MyNotification = (userUID: string, callback: (notifications: Notification[
     }
   
     const notificationsRef = collection(db, "notifications");
-    const q = query(notificationsRef, where("receiver", "==", userUID), where("open", "==", false));
+    const q = query(notificationsRef, where("receiverID", "==", userUID), where("open", "==", false));
   
     // Real-time listener
     const unsubscribe = onSnapshot(q, (querySnapshot) => {

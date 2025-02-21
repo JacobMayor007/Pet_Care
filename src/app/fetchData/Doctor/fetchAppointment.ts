@@ -87,7 +87,7 @@ const fetchMyPatient = async () =>{
 
   try{
       const docRef = collection(db, "appointments");
-      const q = query(docRef, where("Appointment_DoctorUID", "==", userUID), where("Appointment_Status", "==", "Approved"));
+      const q = query(docRef, where("Appointment_DoctorUID", "==", userUID), where("Appointment_Status", "==", "Approved" ));
       const querySnapshot = await getDocs(q);
       const myAppointments = querySnapshot.docs.map((doc)=>({
           id:doc.id,
@@ -206,7 +206,7 @@ const fetchPatientDetails = async (appointment_ID:string): Promise <Appointment 
 //   };
 
 
-const postApprovedAppointment = async (appointment_ID:string, time: string) =>{
+const postApprovedAppointment = async (appointment_ID:string, time: string, price:number) =>{
   console.log("Appointment ID ", appointment_ID);
   
 
@@ -222,14 +222,12 @@ const postApprovedAppointment = async (appointment_ID:string, time: string) =>{
       const updated = await updateDoc(docRef, {
         Appointment_Status: "Approved",
         Appointment_Time: time,
+        Appointment_Price: price,
       });
       return updated;
     } else {
       throw new Error("Document does not exist");
     }
-
-
-
   }
   catch(error){
     console.log(error);
@@ -289,6 +287,26 @@ const postApprovedNotification = async (notification_UID:string) => {
   }
 }
 
+const postPaidAppointment = async (appointmentID:string) => {
+  try{
+    if(!appointmentID) throw ("Appointment ID is not good");
+
+    const appointmentRef = doc(db, "appointments", appointmentID);
+    const appointmentSnap = await getDoc(appointmentRef);
+
+    if(appointmentSnap.exists()){
+      const paidAppointment = await updateDoc(appointmentRef, {
+        Appointment_isPaid: true
+      })
+      return paidAppointment;
+    }
+
+  }catch(error){
+    console.log(error);
+    return null;
+  }
+}
+
 
 // import { doc, onSnapshot, Timestamp } from "firebase/firestore";
 // import { db } from "@/app/firebase/config";
@@ -326,4 +344,4 @@ const postApprovedNotification = async (notification_UID:string) => {
 
 export default fetchAppointment;
 
-export {fetchMyAppointment, myNewPatient, myOldPatient, fetchPatientDetails, postApprovedAppointment, postApprovedNotification, fetchMyPatient};
+export {fetchMyAppointment, myNewPatient, myOldPatient, fetchPatientDetails, postApprovedAppointment, postApprovedNotification, fetchMyPatient, postPaidAppointment};

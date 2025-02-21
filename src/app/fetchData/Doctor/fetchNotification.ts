@@ -22,7 +22,7 @@ const myNotification = (doctorUID: string, callback: (notifications: Notificatio
     }
   
     const notificationsRef = collection(db, "notifications");
-    const q = query(notificationsRef, where("receiver", "==", doctorUID),);
+    const q = query(notificationsRef, where("receiverID", "==", doctorUID),);
   
     // Real-time listener
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -51,7 +51,7 @@ const myNotification = (doctorUID: string, callback: (notifications: Notificatio
       
       
       const notificationsRef = collection(db, "notifications");
-      const q = query(notificationsRef, where("receiver", "==", doctorUID), where("open", "==", false));
+      const q = query(notificationsRef, where("receiverID", "==", doctorUID), where("open", "==", false));
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const myNotif: Notification[] = querySnapshot.docs.map((doc)=>({
             id:doc.id,

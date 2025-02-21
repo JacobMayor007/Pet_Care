@@ -37,8 +37,7 @@ interface Doctor {
   };
   User_TypeOfAppointment?: string[];
   User_Email?: string;
-  User_FName?: string;
-  User_LName?: string;
+  User_Name?: string;
   User_UID?: string;
   User_UserType?: string;
   User_Location?: string;
@@ -249,12 +248,12 @@ export default function Doctors() {
     },
   ];
 
-  const fullName = userData
-    .map((user) => `${user?.User_FName} ${user?.User_LName}`)
-    .join(",");
+  // const fullName = userData
+  //   .map((user) => `${user?.User_FName} ${user?.User_LName}`)
+  //   .join(",");
 
   const onSubmit = async (id: string) => {
-    const fName: string = userData[0]?.User_FName;
+    const fullName = userData[0]?.User_Name;
 
     try {
       setLoading(true);
@@ -293,9 +292,9 @@ export default function Doctors() {
         Appointment_PatientFullName: fullName,
         Appointment_CreatedAt: Timestamp.now(),
         Appointment_PatientUserUID: patientUserUID,
-        Appointment_PatientFName: fName,
+
         Appointment_DoctorEmail: matchingDoctor?.User_Email,
-        Appointment_DoctorName: `${matchingDoctor.User_FName} ${matchingDoctor.User_LName}`,
+        Appointment_DoctorName: matchingDoctor?.User_Name,
         Appointment_TypeOfAppointment: userAppointment,
         Appointment_Date: appointmentDate,
         Appointment_DoctorUID: matchingDoctor.User_UID,
@@ -321,14 +320,14 @@ export default function Doctors() {
         createdAt: Timestamp.now(),
         receiver: matchingDoctor.User_UID,
         hide: false,
-        message: `${fName} requesting to have a schedule`,
+        message: `${fullName} requesting to have a schedule`,
         sender: patientUserUID,
         open: false,
         status: "unread",
         title: `Appointment Request with ${matchingDoctor?.User_UID}`,
         type: userAppointment,
-        sender_FName: fName,
-        receiver_FName: matchingDoctor?.User_FName,
+        sender_FullName: fullName,
+        receiver_FullName: matchingDoctor?.User_Name,
         isApprove: false,
       });
 
@@ -577,12 +576,12 @@ export default function Doctors() {
                   >
                     <div className="h-40 w-40 rounded-full bg-white p-1 drop-shadow-xl  absolute -top-24 flex flex-col">
                       <div className="h-full w-full rounded-full bg-blue-500 text-center flex items-center p-1">
-                        Image of {data?.User_FName} {data?.User_LName}
+                        Image of {data?.User_Name}
                       </div>
                     </div>
                     <div className="flex flex-col mt-20 items-center">
                       <h1 className="font-hind font-bold text-3xl text-white">
-                        Dr. {data?.User_FName} {data?.User_LName}
+                        Dr. {data?.User_Name}
                       </h1>
                       <div className="grid grid-rows-6 items-center px-4 mt-8 h-full">
                         <h1 className="text-center font-hind text-lg text-white font-medium row-span-3">
@@ -659,7 +658,7 @@ export default function Doctors() {
               >
                 <p className="font-montserrat font-bold text-[#393939]">
                   Do you wish to have an appointment with{" "}
-                  {selectedDoctor?.User_FName} {selectedDoctor?.User_LName}?
+                  {selectedDoctor?.User_Name}
                 </p>
                 <div className="grid grid-cols-3 items-center w-fit my-5 gap-4">
                   <label
@@ -808,8 +807,7 @@ export default function Doctors() {
                 }}
                 centered={true}
               >
-                Please confirm your appointment on {selectedDoctor?.User_FName}{" "}
-                {selectedDoctor?.User_LName}
+                Please confirm your appointment on {selectedDoctor?.User_Name}
               </Modal>
             </div>
           )}

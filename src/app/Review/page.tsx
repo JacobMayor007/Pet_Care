@@ -183,7 +183,7 @@ const Review = () => {
             : typeOfPayment,
           Seller_TotalPrice: totalPrice,
           Seller_UserID: userId,
-          Seller_StockQuantity: stock.toString(),
+          Seller_StockQuantity: stock,
           Seller_UserFullName: fullName,
           Seller_TypeOfProduct: typeOfProduct,
           Seller_CreatedAt: Timestamp.now(),

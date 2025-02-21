@@ -10,7 +10,6 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import Signout from "../SignedOut/page";
-import SignedIn from "../SignedIn/page";
 import { db } from "../firebase/config";
 import Image from "next/image";
 import { SendOutlined } from "@ant-design/icons";
@@ -206,7 +205,7 @@ export default function Messages() {
           collection(db, "messages"),
           where("senderId", "==", receiveUser.email),
           where("receiverId", "==", user.email),
-          orderBy("timestamp", "asc")
+          orderBy("timestamp", "desc")
         );
 
         onSnapshot(q2, (snapshot2) => {
@@ -567,9 +566,7 @@ export default function Messages() {
           )}
         </section>
       ) : (
-        <div className={user ? `block` : `hidden`}>
-          <SignedIn />
-        </div>
+        <div className={user ? `block` : `hidden`}></div>
       )}
     </div>
   );

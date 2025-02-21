@@ -33,6 +33,7 @@ interface Appointment {
   Appointment_Status?: string;
   Appointment_Time?: string;
   Appointment_TypeOfAppointment?: string;
+  Appointment_Price?: number;
 }
 
 interface DetailsProps {
@@ -122,7 +123,9 @@ export default function Schedule({ params }: DetailsProps) {
               {appointment?.Appointment_PatientTypeOfPayment}
             </p>
           </div>
-          <div className="col-span-2"></div>
+          <div className="col-span-2">
+            <p>{appointment?.Appointment_Price}</p>
+          </div>
           <div className="col-span-2"></div>
         </div>
       </div>

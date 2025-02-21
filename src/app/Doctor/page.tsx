@@ -60,9 +60,7 @@ export default function Doctor() {
     const getUserData = async () => {
       try {
         const data = await fetchUserData();
-        const fullName = data
-          .map((data) => `${data?.User_FName} ${data?.User_LName}`)
-          .join(",");
+        const fullName = data[0]?.User_Name;
 
         setFullName(fullName);
       } catch (error) {
@@ -258,7 +256,7 @@ export default function Doctor() {
                             Image of <br /> {data?.Appointment_PatientFullName}
                           </div>
                           <div className="flex flex-col justify-center">
-                            <p className="text-lg font-bold font-montserrat">
+                            <p className="text-lg  font-bold font-montserrat">
                               {data?.Appointment_PatientPetName}
                             </p>
                             <p className="font-montserrat text-sm text-[#096F85]">

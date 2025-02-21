@@ -1,11 +1,14 @@
 "use client";
-import { auth } from "@/app/firebase/config";
+import { auth, provider } from "@/app/firebase/config";
 import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
+import { FacebookAuthProvider, getAuth, signInWithPopup } from "firebase/auth";
+
 import { getFirestore, doc, setDoc, Timestamp } from "firebase/firestore";
 import Link from "next/link";
+import { FacebookOutlined, GoogleOutlined } from "@ant-design/icons";
 
 export default function SignUp() {
   const [show, setShow] = useState(false);
@@ -51,8 +54,7 @@ export default function SignUp() {
       // Add user data to Firestore
       const userRef = doc(db, "Users", res.user.uid);
       await setDoc(userRef, {
-        User_FName: fName,
-        User_LName: lName,
+        User_Name: fName + lName,
         User_Email: email,
         User_UID: res.user.uid,
         CreatedAt: Timestamp.now(),
@@ -71,6 +73,53 @@ export default function SignUp() {
       console.error("Error during sign-up:", error);
     } finally {
       setIsSubmitting(false); // Re-enable the button after completion
+    }
+  };
+
+  const googleAuth = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      console.log(result.providerId);
+
+      const userRef = doc(db, "Users", result.user.uid);
+      await setDoc(userRef, {
+        User_Name: result.user.displayName,
+        User_Email: result.user.email,
+        User_UID: result.user.uid,
+        CreatedAt: Timestamp.now(),
+      });
+
+      if (result) {
+        router.push("/");
+      } else {
+        router.push("/Sign-Up");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const facebookAuth = async () => {
+    try {
+      const result = await signInWithPopup(
+        getAuth(),
+        new FacebookAuthProvider()
+      );
+      const userRef = doc(db, "Users", result.user.uid);
+      await setDoc(userRef, {
+        User_Name: result.user.displayName,
+        User_Email: result.user.email,
+        User_UID: result.user.uid,
+        CreatedAt: Timestamp.now(),
+      });
+      if (result) {
+        router.push("/");
+      } else {
+        router.push("/Sign-Up");
+      }
+      console.log("Facebook Sign In", result);
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -248,6 +297,23 @@ export default function SignUp() {
                 <Link href="/Login">Log in here</Link>
               </span>
             </p>
+          </div>
+          <div className="w-[600px] h-20 grid grid-cols-3 gap-4">
+            <div
+              className="h-16 flex items-center drop-shadow-lg justify-center rounded-full border-[#C3C3C3] border-[1px] gap-4 cursor-pointer"
+              onClick={googleAuth}
+            >
+              <GoogleOutlined className="text-4xl text-green-500" />
+              <h1 className="text-2xl font-hind">Google</h1>
+            </div>
+            <div
+              className="h-16 flex items-center drop-shadow-lg justify-center rounded-full border-[#C3C3C3] border-[1px] gap-4 cursor-pointer"
+              onClick={facebookAuth}
+            >
+              <FacebookOutlined className="text-4xl text-blue-500" />
+              <h1 className="text-2xl font-hind">Facebook</h1>
+            </div>
+            <div></div>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { db } from "@/app/firebase/config";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 
 
 const fetchHistory = async (appointment_id: string, doctorUID:string, patientUID:string) => {
@@ -13,13 +13,13 @@ const fetchHistory = async (appointment_id: string, doctorUID:string, patientUID
     const fieldAppointmentID = where("appointmentID", "==", appointment_id);
     const fieldDoctorUID =  where("doctorUID", "==", doctorUID);
     const fieldpatientUID = where("patientID", "==", patientUID)
-    const q = query(docRef, fieldAppointmentID, fieldDoctorUID, fieldpatientUID);
+    const q = query(docRef, fieldAppointmentID, fieldDoctorUID, fieldpatientUID, orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q)
 
     const fetched = querySnapshot.docs.map((doc)=>({
         id:doc.id,
         ...doc.data()
-    }));
+    }))
     console.log("Backend", fetched);
 
     return fetched;

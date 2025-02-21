@@ -20,6 +20,8 @@ interface Notifications {
   id?: string;
   createdAt?: string;
   appointment_ID?: string;
+  order_ID?: string;
+  room_ID?: string;
   message?: string;
   sender?: string;
   receiver?: string;
@@ -108,11 +110,10 @@ export default function ClientNavbar() {
         </div>
         <ul className="list-type-none flex items-center gap-3">
           <li className="w-28 h-14 flex items-center justify-center">
-            <Link
-              href="/"
-              className="font-montserrat text-base text-[#006B95] font-bold"
-            >
-              Dashboard
+            <Link href="/" passHref legacyBehavior>
+              <a className="font-montserrat text-base text-[#006B95] font-bold">
+                Dashboard
+              </a>
             </Link>
           </li>
           <li className="w-28 h-14 flex items-center justify-center">
@@ -281,7 +282,13 @@ const UserNotification = () => {
             <div className="m-2 h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
             <div className="grid grid-cols-12 my-2 col-span-11">
               <a
-                href={`/pc/schedule/${data?.appointment_ID}`}
+                href={`/pc/${
+                  data?.appointment_ID
+                    ? `schedule/${data.appointment_ID}`
+                    : data?.order_ID
+                    ? `cart/${data.order_ID}`
+                    : `rooms/${data?.room_ID}`
+                }`}
                 className="col-span-11 grid grid-cols-12"
               >
                 <div className="h-12 w-12 col-span-2 rounded-full bg-white drop-shadow-lg font-montserrat text-xs flex items-center justify-center text-center text-nowrap overflow-hidden">

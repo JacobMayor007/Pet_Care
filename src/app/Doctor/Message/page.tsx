@@ -5,10 +5,6 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter } from "next/navigation";
 import { faCircleUser, faXmark } from "@fortawesome/free-solid-svg-icons";
-// import Signout from "../SignedOut/page";
-// import SignedIn from "../SignedIn/page";
-// import { db } from "../firebase/config";
-import SignedIn from "@/app/SignedIn/page";
 import { db } from "@/app/firebase/config";
 import Image from "next/image";
 import { SendOutlined } from "@ant-design/icons";
@@ -565,9 +561,7 @@ export default function Messages() {
           )}
         </section>
       ) : (
-        <div className={user ? `block` : `hidden`}>
-          <SignedIn />
-        </div>
+        <div className={user ? `block` : `hidden`}></div>
       )}
     </div>
   );

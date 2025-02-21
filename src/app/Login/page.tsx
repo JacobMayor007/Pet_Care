@@ -1,10 +1,9 @@
 "use client";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { signInWithEmailAndPassword, getAuth } from "firebase/auth";
-import { app } from "@/app/firebase/config";
 import { useRouter } from "next/navigation";
 import isAuthenticate from "../fetchData/User/isAuthenticate";
+import { signingIn } from "./signin";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,7 +12,6 @@ export default function Login() {
   const [error, setError] = useState("");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const auth = getAuth(app);
 
   useEffect(() => {
     const checkAuthentication = async () => {
@@ -32,8 +30,12 @@ export default function Login() {
 
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/");
+      const isUser = await signingIn(email, password);
+      if (isUser) {
+        router.push("/");
+      } else {
+        router.push("Login");
+      }
     } catch (err) {
       console.error(err);
       setError("Invalid email or password. Please try again.");
