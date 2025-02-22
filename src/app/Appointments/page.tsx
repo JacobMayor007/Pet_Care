@@ -292,7 +292,6 @@ export default function Doctors() {
         Appointment_PatientFullName: fullName,
         Appointment_CreatedAt: Timestamp.now(),
         Appointment_PatientUserUID: patientUserUID,
-
         Appointment_DoctorEmail: matchingDoctor?.User_Email,
         Appointment_DoctorName: matchingDoctor?.User_Name,
         Appointment_TypeOfAppointment: userAppointment,
@@ -318,10 +317,10 @@ export default function Doctors() {
       const notifAppointments = await addDoc(docNotifRef, {
         appointment_ID: addAppointments.id,
         createdAt: Timestamp.now(),
-        receiver: matchingDoctor.User_UID,
+        receiverID: matchingDoctor.User_UID,
         hide: false,
         message: `${fullName} requesting to have a schedule`,
-        sender: patientUserUID,
+        senderID: patientUserUID,
         open: false,
         status: "unread",
         title: `Appointment Request with ${matchingDoctor?.User_UID}`,

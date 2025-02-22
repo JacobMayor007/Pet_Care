@@ -2,13 +2,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import { app } from "../firebase/config";
 import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Select } from "antd";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
 import RentersNavigation from "../Renter/RentersNavigation/page";
 
 export default function AddProduct() {
@@ -64,7 +62,6 @@ export default function AddProduct() {
 
   const [roomDescription, setRoomDescription] = useState<string>("");
   // const [typeOfPayment, setTypeOfPayment] = useState<string>("");
-  const [userId, setUserId] = useState<string | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [roomName, setRoomName] = useState<string>("");
   const [roomPrice, setRoomPrice] = useState<string | number>(0);
@@ -73,9 +70,7 @@ export default function AddProduct() {
   const [location, setLocation] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState(false);
   const router = useRouter();
-  if (!userId) {
-    router.push("/Login");
-  }
+
   // const itemType = [
   //   {
   //     key: 1,
@@ -88,17 +83,6 @@ export default function AddProduct() {
   // ];
 
   // Handle user authentication
-  useEffect(() => {
-    const auth = getAuth(app);
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUserId(user.email);
-      } else {
-        setUserId("");
-      }
-    });
-    return () => unsubscribe();
-  }, []);
 
   // Load initial data from localStorage
   useEffect(() => {

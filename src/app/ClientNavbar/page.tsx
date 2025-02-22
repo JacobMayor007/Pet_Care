@@ -58,6 +58,8 @@ export default function ClientNavbar() {
     const closeNotification = (e: MouseEvent) => {
       if (!btnRef.current?.contains(e.target as Node)) {
         setShowNotif(false);
+        setDropDown(false);
+        setLogout(false);
       }
     };
 
@@ -117,12 +119,18 @@ export default function ClientNavbar() {
             </Link>
           </li>
           <li className="w-28 h-14 flex items-center justify-center">
-            <a
+            <Link href="/Booking" passHref legacyBehavior>
+              <a className="font-montserrat text-base text-[#006B95] font-bold">
+                Booking
+              </a>
+            </Link>
+
+            {/* <a
               href="/Booking"
               className="font-montserrat text-base text-[#006B95] font-bold"
             >
               Booking
-            </a>
+            </a> */}
           </li>
           <li className="w-28 h-14 flex items-center justify-center ">
             <a
@@ -167,16 +175,11 @@ export default function ClientNavbar() {
             />
             <ShoppingCartOutlined
               className="text-[#006B95] font-bold text-lg cursor-pointer"
-              onMouseEnter={() => setDropDown(true)}
-              onMouseLeave={() => setDropDown(false)}
+              onClick={() => setDropDown((prev) => !prev)}
             />
 
             {dropDown ? (
-              <nav
-                onMouseEnter={() => setDropDown(true)}
-                onMouseLeave={() => setDropDown(false)}
-                className="absolute top-4 flex flex-col left-10 gap-2 bg-white drop-shadow-md p-4 rounded-md"
-              >
+              <nav className="absolute top-4 flex flex-col left-10 gap-2 bg-white drop-shadow-md p-4 rounded-md">
                 <Link
                   href="/pc/cart"
                   className="font-montserrat font-bold text-[#006B95] text-sm"

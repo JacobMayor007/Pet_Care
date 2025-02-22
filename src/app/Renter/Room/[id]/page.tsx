@@ -1,5 +1,5 @@
 import React from "react";
-import RentersNavigation from "../RentersNavigation/page";
+import RentersNavigation from "../../RentersNavigation/page";
 
 interface boardID {
   params: Promise<{ id: string }>;

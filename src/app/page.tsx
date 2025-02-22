@@ -318,18 +318,17 @@ export default function Home() {
           <h1 className="font-montserrat text-3xl text-[#393939] font-bold my-4">
             Rooms
           </h1>
-          <a
-            href="/Booking"
-            className="text-sm font-montserrat font-bold italic text-[#4ABEC5] flex flex-col gap-1"
-          >
-            View List Room
-            <span className="w-full h-1 rounded-full bg-[#4ABEC5]" />
-          </a>
+          <Link href="/Booking" passHref legacyBehavior>
+            <a className="text-sm font-montserrat font-bold italic text-[#4ABEC5] flex flex-col gap-1">
+              View List Room
+              <span className="w-full h-1 rounded-full bg-[#4ABEC5]" />
+            </a>
+          </Link>
         </div>
         {room.slice(0, 5).map((data) => {
           return (
             <a
-              href="/Booking/Room"
+              href={`/Booking/${data?.id}`}
               key={data?.id}
               className="grid grid-rows-11 z-[1] gap-2 bg-white rounded-lg px-3 py-4 hover:border-blue-500 hover:border-[1px] drop-shadow-xl cursor-pointer h-64 w-72 transform transition-all active:scale-95 ease-out duration-50 select-none"
             >

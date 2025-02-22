@@ -1,6 +1,19 @@
 import { db } from "../firebase/config"
-import { collection, getDocs, orderBy, query, where } from "firebase/firestore"
+import { collection, getDocs, orderBy, query, where, onSnapshot } from "firebase/firestore"
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime)
 
+interface Notification {
+    id?: string;
+    createdAt?: string;
+    message?: string;
+    doctor_UID?: string;
+    notif_userUID?: string;
+    status?: string;
+    title?: string;
+    type?: string;
+  }
 
 const myRooms = async (userID: string)=>{
     try{
@@ -48,4 +61,33 @@ const myRoomsEmph = async (userID: string, roomStatus: string) =>{
    }
 }
 
-export {myRooms, myRoomsEmph}
+const MyNotification = (userUID: string, callback: (notifications: Notification[]) => void) => {
+    if (!userUID) {
+      console.log("No doctor UID found.");
+      return () => {}; 
+    }
+  
+    const notificationsRef = collection(db, "notifications");
+    const q = query(notificationsRef, where("receiverID", "==", userUID));
+  
+    // Real-time listener
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const myNotif: Notification[] = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data?.createdAt
+            ? dayjs(data.createdAt.toDate()).fromNow() 
+            : "Unknown time",
+        };
+      });
+  
+      callback(myNotif); // Send data to frontend
+    });
+  
+    return unsubscribe; // Return the unsubscribe function for cleanup
+  };
+
+
+export {myRooms, myRoomsEmph, MyNotification}

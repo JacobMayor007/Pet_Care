@@ -4,7 +4,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import fetchRoom from "../fetchData/fetchRoom";
 import { useEffect, useState } from "react";
 import ClientNavbar from "../ClientNavbar/page";
-import { Carousel } from "antd";
+import { Carousel, Modal } from "antd";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import "@ant-design/v5-patch-for-react-19";
@@ -23,6 +23,7 @@ interface Room {
   Renter_RoomFeatures?: string;
   Renter_RoomName?: string;
   Renter_RoomPrice?: number;
+  Renter_RoomStatus?: string;
   Renter_TotalPrice?: number;
   Renter_TypeOfRoom?: string;
   Renter_UserFullName?: string;
@@ -31,8 +32,8 @@ interface Room {
 
 export default function Booking() {
   const [room, setRoom] = useState<Room[]>([]);
-  const [roomID, setRooomID] = useState<string | null>("");
   const [select, setSelect] = useState(false);
+  const [bookNow, setBookNow] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -125,7 +126,6 @@ export default function Booking() {
       localStorage.setItem("Check Out Date", JSON.stringify(checkOutDate));
       localStorage.setItem("Check In Time", JSON.stringify(checkInTime));
       localStorage.setItem("Check Out Time", JSON.stringify(checkOutTime));
-      localStorage.setItem("Room ID", roomID || "");
 
       // Make sure guests is a number before saving
       localStorage.setItem("Guest", guests.toString() || "");
@@ -134,7 +134,7 @@ export default function Booking() {
       const countedDays = calculateDays(checkInDate, checkOutDate);
       localStorage.setItem("Days", countedDays.toString());
     }
-  }, [checkInDate, checkOutDate, checkInTime, checkOutTime, guests, roomID]);
+  }, [checkInDate, checkOutDate, checkInTime, checkOutTime, guests]);
 
   return (
     <div className="h-full">
@@ -319,8 +319,7 @@ export default function Booking() {
                           : ""}
                       </p>
                       <a
-                        href="/Booking/Room"
-                        onClick={() => setRooomID(data?.id || "")}
+                        href={`/Booking/${data?.id}`}
                         className="text-white italic underline font-montserrat text-base"
                       >
                         View Room Details
@@ -369,9 +368,24 @@ export default function Booking() {
                             </p>
                             <button
                               type="button"
-                              className="w-full h-10 bg-[#77D8DD] font-montserrat text-base rounded-3xl text-white"
+                              onClick={() => setBookNow(true)}
+                              className={`w-full h-10 font-montserrat text-base rounded-3xl uppercase mt-5 ${
+                                data?.Renter_RoomStatus === "occupied" ||
+                                data?.Renter_RoomStatus === "reserved"
+                                  ? `bg-slate-100 text-black font-bold`
+                                  : `bg-[#77D8DD]  text-white font-bold`
+                              }`}
+                              disabled={
+                                data?.Renter_RoomStatus === "occupied" ||
+                                data?.Renter_RoomStatus === "reserved"
+                                  ? true
+                                  : false
+                              }
                             >
-                              Book Now
+                              {data?.Renter_RoomStatus === "occupied" ||
+                              data?.Renter_RoomStatus === "reserved"
+                                ? data?.Renter_RoomStatus
+                                : `Book Now`}
                             </button>
                           </div>
                         </div>
@@ -384,6 +398,12 @@ export default function Booking() {
           </div>
         )}
       </div>
+      <Modal
+        open={bookNow}
+        centered
+        onCancel={() => setBookNow(false)}
+        onClose={() => setBookNow(false)}
+      ></Modal>
     </div>
   );
 }

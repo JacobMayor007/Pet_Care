@@ -28,8 +28,7 @@ interface Doctor {
     Days?: [number];
   };
   User_Email?: string;
-  User_FName?: string;
-  User_LName?: string;
+  User_Name?: string;
   User_Location?: string;
   User_PNumber?: string;
   User_TypeOfAppointment?: [string];
@@ -188,11 +187,11 @@ function DoctorProfile(props: { id: string }) {
           return (
             <div key={data?.id} className="grid grid-cols-5 w-full">
               <div className="h-48 w-48 text-center rounded-full bg-white drop-shadow-lg flex justify-center items-center font-montserrat text-xl">
-                Image of {data?.User_FName} {data?.User_LName}
+                Image of {data?.User_Name}
               </div>
               <div className="flex flex-col gap-4 w-full col-span-4">
                 <h1 className="font-montserrat font-bold text-4xl">
-                  Dr. {data?.User_FName} {data?.User_LName}
+                  Dr. {data?.User_Name}
                 </h1>
                 <div className="flex flex-row gap-2">
                   {data?.User_TypeOfAppointment?.map((data, index) => {
