@@ -79,8 +79,8 @@ export default function Room({ params }: RoomID) {
   const [userData, setUserData] = useState<DocumentData[]>([]);
   const [checkInDate, setCheckInDate] = useState<Dayjs | null>(null);
   const [checkOutDate, setCheckOutDate] = useState<Dayjs | null>(null);
-  const [checkInTime, setCheckInTime] = useState<string | null>(null);
-  const [checkOutTime, setCheckOutTime] = useState<string | null>(null);
+  const [checkInTime, setCheckInTime] = useState<Dayjs | null>(null);
+  const [checkOutTime, setCheckOutTime] = useState<Dayjs | null>(null);
   const [guest, setGuest] = useState<number | null>(0);
   const [days, setDays] = useState<number | null>(0);
   const [roomID, setRoomID] = useState<string | null>("");
@@ -165,19 +165,21 @@ export default function Room({ params }: RoomID) {
 
       const parsedCheckInDate =
         storedCheckInDate && storedCheckInDate !== "undefined"
-          ? JSON.parse(storedCheckInDate)
+          ? dayjs(JSON.parse(storedCheckInDate))
           : null;
+
       const parsedCheckOutDate =
         storedCheckOutDate && storedCheckOutDate !== "undefined"
-          ? JSON.parse(storedCheckOutDate)
+          ? dayjs(JSON.parse(storedCheckOutDate))
           : null;
       const parsedCheckInTime =
         storedCheckInTime && storedCheckInTime !== "undefined"
-          ? JSON.parse(storedCheckInTime as string)
+          ? dayjs(JSON.parse(storedCheckInTime as string))
           : null;
+
       const parsedCheckOutTime =
         storedCheckOutTime && storedCheckOutTime !== "undefined"
-          ? JSON.parse(storedCheckOutTime as string)
+          ? dayjs(JSON.parse(storedCheckOutTime as string))
           : null;
 
       setRoomID(storedRoomID);
@@ -212,13 +214,12 @@ export default function Room({ params }: RoomID) {
     }
   }, [checkInDate, checkOutDate, checkInTime, checkOutTime, guest, roomID]);
 
-  const formatTime = (date: string | null): string => {
+  const formatTime = (date: Dayjs | null): string => {
     if (!date) return "";
 
     const dayjsDate = dayjs(date);
 
     if (!dayjsDate.isValid()) {
-      console.error("Invalid date", date);
       return "Invalid Time";
     }
 
@@ -227,15 +228,14 @@ export default function Room({ params }: RoomID) {
   };
 
   const calculatedTime = (
-    checkIn: string | null,
-    checkOut: string | null
+    checkIn: Dayjs | null,
+    checkOut: Dayjs | null
   ): number => {
     if (!checkIn || !checkOut) return 0;
     const checkInTime = dayjs(checkIn);
     const checkOutTime = dayjs(checkOut);
 
     if (!checkInTime.isValid() || !checkOutTime.isValid()) {
-      console.error("Invalid date range", { checkIn, checkOut });
       return 0;
     }
 
@@ -300,10 +300,21 @@ export default function Room({ params }: RoomID) {
         BC_BoarderFullName: fullName,
         BC_BoarderEmail: userEmail,
         BC_BoarderBoardedAt: Timestamp.now(),
-        BC_BoarderCheckInTime: checkInTime,
-        BC_BoarderCheckOutTime: checkOutTime,
-        BC_BoarderCheckInDate: checkInDate,
-        BC_BoarderCheckOutDate: checkOutDate,
+        BC_BoarderCheckInTime: checkInTime
+          ? Timestamp.fromDate(dayjs(checkInTime).toDate())
+          : null,
+        BC_BoarderCheckOutTime: checkOutTime
+          ? Timestamp.fromDate(dayjs(checkOutTime).toDate())
+          : null,
+        BC_BoarderCheckInDate:
+          checkInDate && dayjs(checkInDate).isValid()
+            ? Timestamp.fromDate(dayjs(checkInDate).toDate())
+            : null,
+
+        BC_BoarderCheckOutDate:
+          checkOutDate && dayjs(checkOutDate).isValid()
+            ? Timestamp.fromDate(dayjs(checkOutDate).toDate())
+            : null,
         BC_BoarderChoiceFeature: selectedFeatures,
         BC_BoarderDays: days,
         BC_BoarderDietaryRestrictions: restrictions,
@@ -318,23 +329,10 @@ export default function Room({ params }: RoomID) {
         BC_RenterPrice: room?.Renter_RoomPrice,
         BC_RenterLocation: room?.Renter_Location,
         BC_RenterEmail: room?.Renter_UserEmail,
+        BC_TypeOfPayment: typeOfPayment,
       });
 
       console.log("Document ID of Adding boarder", addRef.id);
-
-      // appointment_ID: addAppointments.id,
-      //   createdAt: Timestamp.now(),
-      //   receiver: matchingDoctor.User_UID,
-      //   hide: false,
-      //   message: `${fullName} requesting to have a schedule`,
-      //   sender: patientUserUID,
-      //   open: false,
-      //   status: "unread",
-      //   title: `Appointment Request with ${matchingDoctor?.User_UID}`,
-      //   type: userAppointment,
-      //   sender_FullName: fullName,
-      //   receiver_FullName: matchingDoctor?.User_Name,
-      //   isApprove: false,
 
       const notifRef = collection(db, "notifications");
       addDoc(notifRef, {
@@ -378,9 +376,6 @@ export default function Room({ params }: RoomID) {
       } else {
         setRoomStatus([]);
       }
-
-      console.log("Result Front End:", result);
-      console.log("Status: ", roomStatus);
     };
     getMyStatus();
   }, [id, userData, roomStatus]);
@@ -408,18 +403,17 @@ export default function Room({ params }: RoomID) {
   };
 
   const checkInTimeChange = (time: Dayjs | null) => {
-    setCheckInTime(time ? time.toISOString() : null);
+    setCheckInTime(time);
   };
 
   const checkOutTimeChange = (time: Dayjs | null) => {
-    setCheckOutTime(time ? time.toISOString() : null); // Format as desired
+    setCheckOutTime(time);
   };
 
   const formatDate = (date: Dayjs | null): string => {
     if (!date) return "";
     const dayjsDate = dayjs(date);
     if (!dayjsDate.isValid()) {
-      console.error("Invalid date", date);
       return "";
     }
 
@@ -431,11 +425,6 @@ export default function Room({ params }: RoomID) {
 
   const formattedCheckIn = formatDate(checkInDate);
   const formattedCheckOut = formatDate(checkOutDate);
-
-  console.log("Check In Date", checkInDate);
-  console.log("Check Out Date", checkOutDate);
-  console.log("Check In Time", checkInTime);
-  console.log("Check Out Time", checkOutTime);
 
   return (
     <div className={loadingPage ? `invisible` : `visible`}>
@@ -455,7 +444,7 @@ export default function Room({ params }: RoomID) {
               Leave a Review
             </a>
           </div>
-          <div className="h-96 flex justify-center items-center font-montserrat text-xl font-bold bg-white rounded-2xl drop-shadow-2xl">
+          <div className="h-96 flex justify-center items-center bg-white rounded-2xl drop-shadow-2xl">
             <h1 className="font-montserrat text-xl font-bold">
               Image of room {room?.Renter_RoomName}
             </h1>
@@ -622,7 +611,14 @@ export default function Room({ params }: RoomID) {
                 <div className="border-b-2 col-span-2 border-[#787E7E]" />
                 <div className="col-span-2 ml-3 py-2">
                   <h1 className="font-bold font-hind text-[#4E5656]">Guests</h1>
-                  <p className="font-hind text-[#4E5656]">{guest} pet</p>
+                  <input
+                    type="number"
+                    name="guests"
+                    id="guestID"
+                    value={guest == 0 ? `` : guest || 0}
+                    className="rounded-lg px-2 h-7 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    onChange={(e) => setGuest(Number(e.target.value))}
+                  />
                 </div>
               </div>
               <button
@@ -631,8 +627,7 @@ export default function Room({ params }: RoomID) {
                 disabled={
                   roomStatus[0]?.BC_BoarderStatus === "Pending" ||
                   roomStatus[0]?.BC_BoarderStatus === "Accept" ||
-                  roomStatus[0]?.BC_BoarderStatus === "Checked-In" ||
-                  roomStatus[0]?.BC_BoarderStatus === "Paid"
+                  roomStatus[0]?.BC_BoarderStatus === "Checked-In"
                     ? true
                     : false
                 }

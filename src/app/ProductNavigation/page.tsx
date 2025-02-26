@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -75,12 +75,12 @@ export default function ProductNavigation() {
             </a>
           </li>
           <li className="w-fit px-4 h-14 flex items-center justify-center">
-            <a
+            <Link
               className="font-montserrat text-base text-[#006B95] font-bold"
               href="/AddProduct"
             >
               Add New Product
-            </a>
+            </Link>
           </li>
         </ul>
         <div className="flex flex-row items-center gap-4">

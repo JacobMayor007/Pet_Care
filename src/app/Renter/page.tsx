@@ -88,10 +88,10 @@ export default function RentersPage() {
                   Php {data?.Renter_RoomPrice}
                 </p>
                 <a
-                  href={`/Renter/${data?.id}`}
+                  href={`/Renter/ListOfRooms/${data?.id}`}
                   className="bg-[#006B95] font-hind text-white font-semibold py-0.5 rounded-md text-center"
                 >
-                  Details
+                  View Room Details
                 </a>
               </div>
             );

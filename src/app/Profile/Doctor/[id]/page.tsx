@@ -193,15 +193,7 @@ function DoctorProfile(props: { id: string }) {
                 <h1 className="font-montserrat font-bold text-4xl">
                   Dr. {data?.User_Name}
                 </h1>
-                <div className="flex flex-row gap-2">
-                  {data?.User_TypeOfAppointment?.map((data, index) => {
-                    return (
-                      <p key={index} className="font-montserrat text-lg">
-                        {data?.split(",")}
-                      </p>
-                    );
-                  })}
-                </div>
+
                 <div className="w-full border-[1px] border-[#C3C3C3]" />
                 <p className="font-montserrat text-lg">
                   <FontAwesomeIcon

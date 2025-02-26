@@ -1,8 +1,41 @@
 import { db } from "../firebase/config"
-import { collection, getDocs, orderBy, query, where, onSnapshot } from "firebase/firestore"
+import { collection, getDocs, orderBy, query, where, onSnapshot, doc, getDoc, Timestamp, updateDoc, addDoc } from "firebase/firestore"
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import fetchUserData from "../fetchData/fetchUserData";
 dayjs.extend(relativeTime)
+
+interface BoardDetails {
+  boardId?: string;
+  BC_BoarderUID?: string;
+  BC_BoarderFullName?: string;
+  BC_BoarderEmail?: string;
+  BC_BoarderBoardedAt?: Timestamp | string | null;
+  BC_BoarderCheckInTime?: Timestamp | string | null;
+  BC_BoarderCheckOutTime?: Timestamp | string | null;
+  BC_BoarderCheckInDate?: Timestamp | string | null;
+  BC_BoarderCheckOutDate?: Timestamp | string | null;
+  BC_BoarderChoiceFeature?: [
+    {
+      label?: string;
+      name?: string;
+      value?: number;
+    }
+  ];
+  BC_BoarderDays?: number;
+  BC_BoarderDietaryRestrictions?: string;
+  BC_BoarderGuest?: string;
+  BC_BoarderStatus?: string;
+  BC_BoarderUpdated?: Timestamp | string | null;
+  BC_BoarderTypeRoom?: string;
+  BC_RenterRoomID?: string;
+  BC_RenterFullName?: string;
+  BC_RenterUID?: string;
+  BC_RenterRoomName?: string;
+  BC_RenterPrice?: string;
+  BC_RenterLocation?: string;
+  BC_RenterEmail?: string;
+}
 
 interface Notification {
     id?: string;
@@ -89,5 +122,98 @@ const MyNotification = (userUID: string, callback: (notifications: Notification[
     return unsubscribe; // Return the unsubscribe function for cleanup
   };
 
+  const roomDetails = async(boardID:string): Promise<BoardDetails | null> => {
+   try{
+    const docRef = doc(db, "boarders", boardID);
+    const docSnap = await getDoc(docRef);
+ 
+    console.log("Doc Snap: ", docSnap);
+  
+    if(docSnap.exists()){
+      return {boardId:docSnap.id, ...docSnap.data() as BoardDetails};
 
-export {myRooms, myRoomsEmph, MyNotification}
+    }else{
+      return null;
+    }
+   
+  }catch(error){
+    console.error(error);
+    
+    return null;
+   }
+  }
+
+  
+  const acceptedBooked = async(board_UID:string, totalPrice:number, senderID:string, receiverID:string) => {
+    const userData = await fetchUserData();
+    const displayName = userData[0]?.User_Name;
+    try{
+      const docRef = doc(db, "boarders", board_UID);
+      const docSnap = await getDoc(docRef);
+
+      if(docSnap.exists()){
+         const fbNotifRef = collection(db, "notifications");
+            await addDoc(fbNotifRef, {
+                createdAt: Timestamp.now(),
+                hide: false,
+                open:false,
+                message: `${displayName} accepted your booking`,
+                room_ID: board_UID,
+                receiverID: receiverID,
+                senderID: senderID,
+                status: "unread",
+                title: `Accepted ${receiverID} booking`,
+            });  
+
+        const updated = updateDoc(docRef, {
+          BC_BoarderStatus: "Reserved",
+          BC_BoarderTotalPrice: totalPrice,
+          BC_AcceptedAt: Timestamp.now(),
+        })
+        return updated;
+      }
+    }catch(error){
+      console.error(error);
+      return null;
+      
+    }
+  }
+
+  const paidBooking = async (board_UID:string, senderID:string, senderName: string, 
+    receiverID:string, receiverName: string, roomName: string ) =>{
+    try{
+      const docRef = doc(db, "boarders", board_UID);
+      const docSnap = await getDoc(docRef);
+
+      if(docSnap.exists()){
+        const notifRef = await addDoc(collection(db, "notifications"), {
+          createdAt: Timestamp.now(),
+          hide: false,
+          room: roomName,
+          message: `${senderName} received your payment, 
+          please rate the room ${roomName}, and service of ${senderName} `,
+          open: false,
+          room_ID: board_UID,
+          senderID: senderID,
+          receiverID: receiverID,
+          senderName: senderName,
+          receiverName: receiverName,
+          status: "unread",
+          title: "Paid room", 
+        });
+        console.log(notifRef);
+        
+        const updated = await updateDoc(docRef,{
+          BC_BoarderStatus: "Paid",
+        });
+        console.log(updated);
+        
+        return updated;
+      }
+    }catch(error){
+      console.log(error);
+      
+    }
+  }
+
+export {myRooms, myRoomsEmph, MyNotification, roomDetails, acceptedBooked, paidBooking}

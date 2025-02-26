@@ -9,6 +9,7 @@ import Signout from "@/app/SignedOut/page";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import Loading from "@/app/Loading/page";
+import Link from "next/link";
 import { MyNotification } from "../renterData";
 
 interface Notifications {
@@ -110,19 +111,16 @@ const RentersNavigation = () => {
               Add New Room
             </a>
           </li>
-          {/* <Link
+          <Link
             className="w-28 h-14 flex items-center justify-center cursor-pointer"
             href="/Renter/Transactions"
             passHref
             legacyBehavior
-          > */}
-          <a
-            href="/Renter/Transactions"
-            className="font-montserrat text-base text-[#006B95] font-bold"
           >
-            Transactions
-          </a>
-          {/* </Link> */}
+            <a className="font-montserrat text-base text-[#006B95] font-bold">
+              Transactions
+            </a>
+          </Link>
 
           {/* <Link href="/Renter/Messages" passHref legacyBehavior> */}
           <li className="w-28 h-14 flex items-center justify-center">
@@ -217,7 +215,7 @@ const UserNotification = () => {
             <div className="m-2 h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
             <div className="grid grid-cols-12 my-2 col-span-11">
               <a
-                href={`/Renter/Room/${data?.boardID}`}
+                href={`/Renter/Transactions/${data?.boardID}`}
                 className="col-span-11 grid grid-cols-12"
               >
                 <div className="h-12 w-12 col-span-2 rounded-full bg-white drop-shadow-lg font-montserrat text-xs flex items-center justify-center text-center text-nowrap overflow-hidden">
