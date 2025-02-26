@@ -1,4 +1,4 @@
-import { collection, where, query, onSnapshot, getDocs, updateDoc } from "firebase/firestore";
+import { collection, where, query, onSnapshot, getDocs, updateDoc, orderBy } from "firebase/firestore";
 // import fetchUserData from "../fetchUserData"
 import { db } from "@/app/firebase/config";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -22,7 +22,7 @@ const MyNotification = (userUID: string, callback: (notifications: Notification[
     }
   
     const notificationsRef = collection(db, "notifications");
-    const q = query(notificationsRef, where("receiverID", "==", userUID));
+    const q = query(notificationsRef, where("receiverID", "==", userUID), orderBy("createdAt", "desc"));
   
     // Real-time listener
     const unsubscribe = onSnapshot(q, (querySnapshot) => {

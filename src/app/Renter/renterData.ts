@@ -144,12 +144,15 @@ const MyNotification = (userUID: string, callback: (notifications: Notification[
   }
 
   
-  const acceptedBooked = async(board_UID:string, totalPrice:number, senderID:string, receiverID:string) => {
+  const acceptedBooked = async(board_UID:string, totalPrice:number, senderID:string, receiverID:string, roomID: string) => {
     const userData = await fetchUserData();
     const displayName = userData[0]?.User_Name;
     try{
       const docRef = doc(db, "boarders", board_UID);
       const docSnap = await getDoc(docRef);
+      console.log(roomID);
+      
+
 
       if(docSnap.exists()){
          const fbNotifRef = collection(db, "notifications");
@@ -163,7 +166,15 @@ const MyNotification = (userUID: string, callback: (notifications: Notification[
                 senderID: senderID,
                 status: "unread",
                 title: `Accepted ${receiverID} booking`,
-            });  
+            });
+          
+          const boardRef = doc(db, "board", roomID);
+          const boardUpdated = await updateDoc(boardRef,{
+            Renter_RoomStatus: "reserved",
+          })
+
+          console.log(boardUpdated);
+          
 
         const updated = updateDoc(docRef, {
           BC_BoarderStatus: "Reserved",
@@ -178,15 +189,51 @@ const MyNotification = (userUID: string, callback: (notifications: Notification[
       
     }
   }
+  const checkedInRoom = async(board_UID:string, roomName: string, senderID:string, receiverID:string, roomID: string) => {
+
+    try{
+      const docRef = doc(db, "boarders", board_UID);
+      const docSnap = await getDoc(docRef);
+      console.log(roomID);
+      
+      const boardRef = doc(db, "board", roomID);
+      const boardUpdated = await updateDoc(boardRef,{
+        Renter_RoomStatus: "occupied",
+      })
+
+      if(docSnap.exists()){
+         const fbNotifRef = collection(db, "notifications");
+            await addDoc(fbNotifRef, {
+                createdAt: Timestamp.now(),
+                hide: false,
+                open:false,
+                message: `You have Checked-In in room ${roomName}`,
+                room_ID: board_UID,
+                receiverID: receiverID,
+                senderID: senderID,
+                status: "unread",
+                title: `Checked-IN ${receiverID} booking`,
+            });          
+        const updated = updateDoc(docRef, {
+          BC_BoarderStatus: "Occupied",
+        })
+        return {updated, boardUpdated};
+      }
+    }catch(error){
+      console.error(error);
+      return null;
+      
+    }
+  }
 
   const paidBooking = async (board_UID:string, senderID:string, senderName: string, 
-    receiverID:string, receiverName: string, roomName: string ) =>{
+    receiverID:string, receiverName: string, roomName: string, roomID:string ) =>{
     try{
       const docRef = doc(db, "boarders", board_UID);
       const docSnap = await getDoc(docRef);
 
       if(docSnap.exists()){
-        const notifRef = await addDoc(collection(db, "notifications"), {
+        await addDoc(collection(db, "notifications"), {
           createdAt: Timestamp.now(),
           hide: false,
           room: roomName,
@@ -201,12 +248,16 @@ const MyNotification = (userUID: string, callback: (notifications: Notification[
           status: "unread",
           title: "Paid room", 
         });
-        console.log(notifRef);
+        
+
+        await updateDoc(doc(db, "board", roomID),{
+          Renter_RoomStatus: "vacant",
+        })
         
         const updated = await updateDoc(docRef,{
           BC_BoarderStatus: "Paid",
+          BC_BoarderPaidAt: Timestamp.now(),
         });
-        console.log(updated);
         
         return updated;
       }
@@ -216,4 +267,43 @@ const MyNotification = (userUID: string, callback: (notifications: Notification[
     }
   }
 
-export {myRooms, myRoomsEmph, MyNotification, roomDetails, acceptedBooked, paidBooking}
+  const myEarnings = async (userID: string) =>{
+    try{
+      const docRef = collection(db, "boarders");
+      const q = query(docRef, where("BC_RenterUID", "==", userID));
+      const docSnap = await getDocs(q);
+
+      const result = docSnap.docs.map((data)=>({
+        BC_BoarderTotalPrice: data?.get("BC_BoarderTotalPrice"),
+        BC_BoarderPaidAt: data?.get("BC_BoarderPaidAt")
+      }));
+
+    
+      return result;
+      
+    }catch(error){
+      console.error(error);
+      return null
+    }
+  }
+
+  const totalEarnings = async (userID: string) =>{
+    try{
+      const docRef = collection(db, "boarders");
+      const q = query(docRef, where("BC_RenterUID", "==", userID));
+      const docSnap = await getDocs(q);
+
+      const result = docSnap.docs.map((data)=>({
+        BC_BoarderTotalPrice: data?.get("BC_BoarderTotalPrice"),
+      }));
+
+    
+      return result;
+      
+    }catch(error){
+      console.error(error);
+      return null
+    }
+  }
+
+export {myRooms, myRoomsEmph, MyNotification, roomDetails, acceptedBooked, paidBooking, myEarnings, totalEarnings, checkedInRoom}

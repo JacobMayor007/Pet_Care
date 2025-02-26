@@ -1,4 +1,4 @@
-import { collection, getDoc, getDocs, doc, Timestamp, where, query } from "firebase/firestore"
+import { collection, getDoc, getDocs, doc, Timestamp, where, query, updateDoc, addDoc } from "firebase/firestore"
 import { db } from "@/app/firebase/config"
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -25,7 +25,7 @@ interface BoardDetails {
   BC_BoarderDietaryRestrictions?: string;
   BC_BoarderGuest?: string;
   BC_BoarderStatus?: string;
-  BC_BoarderTotalPrice?:number;
+  BC_BoarderTotalPrice?: number;
   BC_BoarderUpdated?: Timestamp | string | null;
   BC_BoarderTypeRoom?: string;
   BC_RenterRoomID?: string;
@@ -70,5 +70,43 @@ const fetchMyBooked = async(userID: string) =>{
     }
 }
 
+const feedBackRoom = async(boardID: string, senderID:string, receiverID:string,
+     star:number, senderName:string, receiverName:string, descriptor: string) =>{
+    try{
+        const docRef = doc(db, "boarders", boardID);
+        const docSnap = await getDoc(docRef);
 
-export {fetchBookedDetails, fetchMyBooked}
+        if(docSnap.exists()){
+            const notifRef = collection(db, "notifications");
+            const addRatedRoom = await addDoc(notifRef, {
+                createdAt: Timestamp.now(),
+                hide: false,
+                boardID: boardID,
+                rate: star,
+                message: `${senderName} rated your room`,
+                open:false,
+                senderID:senderID,
+                receiverID:receiverID,
+                status: "unread",
+                title: `Rate ${receiverName} room`
+            })
+
+
+            const updated = await updateDoc(docRef, {
+                BC_BoarderRate: star,
+                BC_BoarderDescriptor: descriptor,
+            });
+
+            console.log(addRatedRoom, updated);
+            
+            return updated;
+        }
+
+    }catch(error){
+        console.error(error);
+        return null;
+        
+    }
+}
+
+export {fetchBookedDetails, fetchMyBooked, feedBackRoom}

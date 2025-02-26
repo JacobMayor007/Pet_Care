@@ -11,6 +11,7 @@ import { faChevronDown, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import Loading from "@/app/Loading/page";
 import Link from "next/link";
 import { MyNotification } from "../renterData";
+import { Rate } from "antd";
 
 interface Notifications {
   id?: string;
@@ -24,6 +25,7 @@ interface Notifications {
   title?: string;
   type?: string;
   hide?: boolean;
+  rate?: number;
 }
 
 const RentersNavigation = () => {
@@ -224,7 +226,12 @@ const UserNotification = () => {
                 </div>
                 <div className="flex flex-col gap-1 font-montserrat text-wrap col-span-10 text-sm">
                   <h1 className="text-[#393939] font-medium">
-                    {data?.message}
+                    {data?.message}{" "}
+                    {data?.rate ? (
+                      <Rate disabled defaultValue={data?.rate} />
+                    ) : (
+                      <p />
+                    )}
                   </h1>
                   <p className="text-xs text-[#797979]">{data?.createdAt}</p>
                 </div>

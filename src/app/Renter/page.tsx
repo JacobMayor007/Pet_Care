@@ -4,7 +4,7 @@ import RentersNavigation from "./RentersNavigation/page";
 import fetchUserData from "../fetchData/fetchUserData";
 import { useEffect, useState } from "react";
 import { DocumentData } from "firebase/firestore";
-import { myRooms } from "./renterData";
+import { myRooms, myEarnings, totalEarnings } from "./renterData";
 import dayjs, { Dayjs } from "dayjs";
 
 interface myBoard {
@@ -30,9 +30,26 @@ interface myBoard {
   Renter_UserID?: string;
 }
 
+interface MonthlyEarnings {
+  BC_BoarderPaidAt: Dayjs | null;
+  BC_BoarderTotalPrice: number;
+}
+
+interface DailyEarnings {
+  BC_BoarderPaidAt: Dayjs | null;
+  BC_BoarderTotalPrice: number;
+}
+
+interface TotalEarnings {
+  BC_BoarderTotalPrice: number;
+}
+
 export default function RentersPage() {
   const [userData, setUserData] = useState<DocumentData[]>([]);
   const [myBoards, setMyBoards] = useState<myBoard[]>([]);
+  const [monthlyProfit, setMonthlyProfit] = useState(0);
+  const [dailyProfit, setDailyProfit] = useState(0);
+  const [totalProfit, setTotalProfit] = useState<number | null>(null);
 
   useEffect(() => {
     const getUserData = async () => {
@@ -57,6 +74,101 @@ export default function RentersPage() {
       );
     };
     getMyRooms();
+  }, [userData]);
+
+  useEffect(() => {
+    const getMonthlyEarnings = async () => {
+      const userUID = userData[0]?.User_UID;
+      console.log(userUID);
+
+      try {
+        const getEarnings = await myEarnings(userUID);
+
+        // Get the current month (0-based index, e.g., January = 0, February = 1, etc.)
+        const currentMonth = dayjs().month();
+
+        // Filter and sum the totalPrice for the current month
+        const result = getEarnings
+          ?.filter((earn: MonthlyEarnings) => {
+            const paidAt = earn?.BC_BoarderPaidAt?.toDate();
+            return paidAt && paidAt.getMonth() === currentMonth; // Check if the month matches
+          })
+          .reduce(
+            (sum, earn) => {
+              const totalPrice = earn?.BC_BoarderTotalPrice || 0;
+              return {
+                totalPrice: sum.totalPrice + totalPrice,
+                count: sum.count + 1,
+              };
+            },
+            { totalPrice: 0, count: 0 }
+          );
+        setMonthlyProfit(result?.totalPrice);
+      } catch (error) {
+        console.error(error);
+
+        return 0;
+      }
+    };
+    getMonthlyEarnings();
+  }, [userData]);
+
+  useEffect(() => {
+    const getDailyEarnings = async () => {
+      const userUID = userData[0]?.User_UID;
+      console.log(userUID);
+
+      try {
+        const getEarnings = await myEarnings(userUID);
+
+        const now = dayjs().get("day");
+
+        // Filter and sum the totalPrice for the current month
+        const result = getEarnings
+          ?.filter((earn: DailyEarnings) => {
+            const paidAt = earn?.BC_BoarderPaidAt?.toDate();
+            return paidAt && paidAt.getDay() === now;
+          })
+          .reduce(
+            (sum, earn) => {
+              const totalPrice = earn?.BC_BoarderTotalPrice || 0;
+              return {
+                totalPrice: sum.totalPrice + totalPrice,
+                count: sum.count + 1,
+              };
+            },
+            { totalPrice: 0, count: 0 }
+          );
+        setDailyProfit(result?.totalPrice);
+      } catch (error) {
+        console.error(error);
+
+        return 0;
+      }
+    };
+    getDailyEarnings();
+  }, [userData]);
+
+  useEffect(() => {
+    const getTotalEarnings = async () => {
+      try {
+        const userUID = userData[0]?.User_UID;
+        const earnings = await totalEarnings(userUID);
+
+        const result = earnings?.reduce((sum: number, earn: TotalEarnings) => {
+          return sum + earn?.BC_BoarderTotalPrice;
+        }, 0);
+
+        console.log("Total Profit", result);
+
+        setTotalProfit(result || 0);
+      } catch (error) {
+        console.error("Error calculating total earnings:", error);
+        return null;
+      }
+    };
+
+    getTotalEarnings();
   }, [userData]);
 
   return (
@@ -96,6 +208,34 @@ export default function RentersPage() {
               </div>
             );
           })}
+        </div>
+        <div className="grid grid-cols-2 mt-4">
+          <h1 className="font-montserrat font-bold text-4xl col-span-2">
+            Summary
+          </h1>
+          <div className="h-36 bg-white drop-shadow-lg rounded-lg p-4 mt-4 grid grid-cols-3">
+            <h1 className="font-semibold font-montserrat text-[#565656] text-2xl col-span-3">
+              Earnings
+            </h1>
+            <p className="text-center font-montserrat text-xs text-[#565656]">
+              Daily
+            </p>
+            <p className="text-center font-montserrat text-xs text-[#565656]">
+              Monthly
+            </p>
+            <p className="text-center font-montserrat text-xs text-[#565656]">
+              Total Earnings
+            </p>
+            <h1 className="text-center font-montserrat font-semibold text-lg text-[#26A2AB] ">
+              Php {dailyProfit}
+            </h1>
+            <h1 className="text-center font-montserrat font-semibold text-lg text-[#26A2AB] ">
+              Php {monthlyProfit}
+            </h1>
+            <h1 className="text-center font-montserrat font-semibold text-lg text-[#26A2AB] ">
+              Php {totalProfit}
+            </h1>
+          </div>
         </div>
       </div>
     </div>

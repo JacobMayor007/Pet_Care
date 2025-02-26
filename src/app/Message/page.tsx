@@ -300,7 +300,7 @@ export default function Messages() {
                   My Inbox
                 </h1>
                 <Image
-                  src="Create Message.svg"
+                  src="/Create Message.svg"
                   width={36}
                   height={36}
                   alt="Create A Message Icon"

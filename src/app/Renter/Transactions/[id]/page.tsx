@@ -2,7 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import RentersNavigation from "../../RentersNavigation/page";
-import { acceptedBooked, paidBooking, roomDetails } from "../../renterData";
+import {
+  acceptedBooked,
+  paidBooking,
+  roomDetails,
+  checkedInRoom,
+} from "../../renterData";
 import dayjs, { Dayjs } from "dayjs";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
@@ -67,8 +72,9 @@ export default function RoomDetails({ params }: boardID) {
   const [featureValue, setFeatureValue] = useState<Value | null>(null);
   const [totalPrice, setTotalPrice] = useState<number | null>(null);
   const [acceptModal, setAcceptModal] = useState(false);
-  const [toPaid, setToPaid] = useState(false);
+  const [checkedIn, setCheckedIn] = useState(false);
   const [showModalPaid, setShowModalPaid] = useState(false);
+  const [checkedInModal, setCheckedInModal] = useState(false);
 
   useEffect(() => {
     const getRoomDetails = async () => {
@@ -144,13 +150,15 @@ export default function RoomDetails({ params }: boardID) {
       now.format("MMMM DD, YYYY") ===
       boardDetails?.BC_BoarderCheckOutDate.format("MMMM DD, YYYY")
     ) {
-      setToPaid(true);
+      setCheckedIn(true);
     } else if (now.isAfter(checkOutDate.toDate(), "day")) {
-      setToPaid(true);
-    } else {
-      setToPaid(false);
+      setCheckedIn(true);
+    } else if (now.isBefore(checkOutDate.toDate(), "day")) {
+      setCheckedIn(false);
     }
   }, [boardDetails]);
+
+  console.log(checkedIn);
 
   return (
     <div>
@@ -306,19 +314,36 @@ export default function RoomDetails({ params }: boardID) {
                   </div>
                 ) : (
                   <div className="col-span-2 grid grid-cols-2 gap-4">
-                    <h1 className=" rounded-lg font-montserrat font-bold text-white bg-[#006B95] py-2 text-center ">
+                    <h1
+                      className={`${
+                        boardDetails?.BC_BoarderStatus === "Paid"
+                          ? `col-span-2 `
+                          : ` col-span-1`
+                      } text-lg rounded-lg font-montserrat font-bold text-white bg-[#006B95] py-2 text-center`}
+                    >
                       {boardDetails?.BC_BoarderStatus}
                     </h1>
-                    <button
-                      className={
-                        toPaid
-                          ? `bg-[#006B95] text-white py-1 font-hind rounded-lg`
-                          : `hidden`
-                      }
-                      onClick={() => setShowModalPaid(true)}
-                    >
-                      Click here if the user paid
-                    </button>
+
+                    {boardDetails?.BC_BoarderStatus === "Occupied" ? (
+                      <button
+                        className={`bg-[#006B95] text-white py-1 font-hind rounded-lg`}
+                        onClick={() => setShowModalPaid(true)}
+                      >
+                        Click here if the user paid
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setCheckedInModal(true)}
+                        className={`${
+                          boardDetails?.BC_BoarderStatus !== "Paid"
+                            ? `block`
+                            : `hidden`
+                        }  bg-[#28e96b] text-white font-hind font-bold py-2 text-lg rounded-md`}
+                      >
+                        Checked In?
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -327,6 +352,27 @@ export default function RoomDetails({ params }: boardID) {
         </div>
       </div>
       <Modal
+        open={checkedInModal}
+        centered
+        onOk={() => {
+          checkedInRoom(
+            boardDetails?.boardId || "",
+            boardDetails?.BC_RenterRoomName || "",
+            boardDetails?.BC_RenterUID || "",
+            boardDetails?.BC_BoarderUID || "",
+            boardDetails?.BC_RenterRoomID || ""
+          );
+          setCheckedInModal(false);
+        }}
+        onCancel={() => setCheckedInModal(false)}
+        onClose={() => setCheckedInModal(false)}
+      >
+        <h1 className="font-montserrat font-medium">
+          Confirm {boardDetails?.BC_BoarderFullName} has checked-in in room{" "}
+          {boardDetails?.BC_RenterRoomName}
+        </h1>
+      </Modal>
+      <Modal
         open={acceptModal}
         centered
         onOk={() => {
@@ -334,7 +380,8 @@ export default function RoomDetails({ params }: boardID) {
             boardDetails?.boardId || "",
             totalPrice || 0,
             boardDetails?.BC_RenterUID || "",
-            boardDetails?.BC_BoarderUID || ""
+            boardDetails?.BC_BoarderUID || "",
+            boardDetails?.BC_RenterRoomID || ""
           );
           setAcceptModal(false);
         }}
@@ -358,7 +405,8 @@ export default function RoomDetails({ params }: boardID) {
             boardDetails?.BC_RenterFullName || "",
             boardDetails?.BC_BoarderUID || "",
             boardDetails?.BC_BoarderFullName || "",
-            boardDetails?.BC_RenterRoomName || ""
+            boardDetails?.BC_RenterRoomName || "",
+            boardDetails?.BC_RenterRoomID || ""
           );
         }}
         centered

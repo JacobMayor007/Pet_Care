@@ -428,8 +428,11 @@ export default function Room({ params }: RoomID) {
 
   return (
     <div className={loadingPage ? `invisible` : `visible`}>
-      <ClientNavbar />
-      <div className="mx-44 gap-4 mt-8">
+      <nav className="relative z-20">
+        <ClientNavbar />
+      </nav>
+
+      <div className="mx-44 gap-4 mt-8 z-10">
         <div className=" grid grid-cols-2 gap-4">
           <div>
             <h1 className="font-montserrat text-base text-[#565656] font-bold">
@@ -627,7 +630,8 @@ export default function Room({ params }: RoomID) {
                 disabled={
                   roomStatus[0]?.BC_BoarderStatus === "Pending" ||
                   roomStatus[0]?.BC_BoarderStatus === "Accept" ||
-                  roomStatus[0]?.BC_BoarderStatus === "Checked-In"
+                  roomStatus[0]?.BC_BoarderStatus === "Checked-In" ||
+                  roomStatus[0]?.BC_BoarderStatus === "Reserved"
                     ? true
                     : false
                 }
@@ -635,7 +639,7 @@ export default function Room({ params }: RoomID) {
                   setConfirm(true);
                 }}
               >
-                {roomStatus[0]?.BC_BoarderStatus || ""
+                {roomStatus[0]?.BC_BoarderStatus !== "Paid" || ""
                   ? roomStatus[0]?.BC_BoarderStatus
                   : `Book Now`}
               </button>
