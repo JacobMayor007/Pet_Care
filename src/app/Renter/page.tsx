@@ -364,7 +364,7 @@ export default function RentersPage() {
             {onGoing === 0 ? (
               <p className="text-[#565656] font-montserrat font-semibold text-lg">
                 No Boarders
-                <span className="text-[#26A2AB] text-base">On Going</span>
+                <span className="text-[#26A2AB] text-base block">On Going</span>
               </p>
             ) : (
               <div className="m-auto">
@@ -381,7 +381,7 @@ export default function RentersPage() {
             {upcoming === 0 ? (
               <p className="text-[#565656] font-montserrat font-semibold text-lg">
                 No Boarders
-                <span className="text-[#26A2AB] text-base">Upcoming</span>
+                <span className="text-[#26A2AB] text-base block">Upcoming</span>
               </p>
             ) : (
               <div className="m-auto">
