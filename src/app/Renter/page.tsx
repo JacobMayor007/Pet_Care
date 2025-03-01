@@ -364,13 +364,14 @@ export default function RentersPage() {
             {onGoing === 0 ? (
               <p className="text-[#565656] font-montserrat font-semibold text-lg">
                 No Boarders
+                <span className="text-[#26A2AB] text-base">On Going</span>
               </p>
             ) : (
               <div className="m-auto">
                 <h1 className="text-center font-montserrat font-semibold text-[#26A2AB] text-2xl">
                   {onGoing}
                 </h1>
-                <p className="font-montserrat font-semibold text-[#565656] text-lg">
+                <p className="font-montserrat font-semibold text-[#565656] ">
                   On Going
                 </p>
               </div>
@@ -380,6 +381,7 @@ export default function RentersPage() {
             {upcoming === 0 ? (
               <p className="text-[#565656] font-montserrat font-semibold text-lg">
                 No Boarders
+                <span className="text-[#26A2AB] text-base">Upcoming</span>
               </p>
             ) : (
               <div className="m-auto">
