@@ -130,27 +130,37 @@ export default function ListOfRooms() {
             </div>
           </div>
         </div>
-        {roomEmph.map((data) => {
-          return (
-            <div
-              key={data?.id}
-              className="bg-white drop-shadow-lg h-72 w-64 p-4 rounded-lg flex flex-col gap-4"
-            >
-              <div className="h-1/2 flex justify-center items-center font-montserrat font-bold">
-                Image of {data?.Renter_RoomName}
-              </div>
-              <div>
-                <p className="font-montserrat text-[#565656]">
-                  {data?.Renter_TypeOfRoom}
-                </p>
-                <h1 className="font-hind font-bold">{data?.Renter_RoomName}</h1>
-              </div>
-              <p className="font-hind font-semibold">
-                Php {data?.Renter_RoomPrice}
-              </p>
-            </div>
-          );
-        })}
+        {roomEmph.length === 0 ? (
+          <p className="mt-16 text-center font-bold font-montserrat text-[#393939] text-2xl">
+            There are no {selected}
+          </p>
+        ) : (
+          <div className="mt-10 h-fit grid-cols-4 gap-5">
+            {roomEmph.slice(0, 4).map((data) => {
+              return (
+                <div
+                  key={data?.id}
+                  className="bg-white drop-shadow-lg h-72 w-64 p-4 rounded-lg flex flex-col gap-4"
+                >
+                  <div className="h-1/2 flex justify-center items-center font-montserrat font-bold">
+                    Image of {data?.Renter_RoomName}
+                  </div>
+                  <div>
+                    <p className="font-montserrat text-[#565656]">
+                      {data?.Renter_TypeOfRoom}
+                    </p>
+                    <h1 className="font-hind font-bold">
+                      {data?.Renter_RoomName}
+                    </h1>
+                  </div>
+                  <p className="font-hind font-semibold">
+                    Php {data?.Renter_RoomPrice}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

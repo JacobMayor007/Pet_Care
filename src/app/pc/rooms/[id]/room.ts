@@ -71,7 +71,7 @@ const fetchMyBooked = async(userID: string) =>{
 }
 
 const feedBackRoom = async(boardID: string, senderID:string, receiverID:string,
-     star:number, senderName:string, receiverName:string, descriptor: string) =>{
+     star:number, senderName:string, receiverName:string, descriptor: string, feedback: string) =>{
     try{
         const docRef = doc(db, "boarders", boardID);
         const docSnap = await getDoc(docRef);
@@ -95,6 +95,7 @@ const feedBackRoom = async(boardID: string, senderID:string, receiverID:string,
             const updated = await updateDoc(docRef, {
                 BC_BoarderRate: star,
                 BC_BoarderDescriptor: descriptor,
+                BC_BoarderFeedback: feedback,
             });
 
             console.log(addRatedRoom, updated);

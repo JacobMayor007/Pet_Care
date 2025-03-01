@@ -306,4 +306,95 @@ const MyNotification = (userUID: string, callback: (notifications: Notification[
     }
   }
 
-export {myRooms, myRoomsEmph, MyNotification, roomDetails, acceptedBooked, paidBooking, myEarnings, totalEarnings, checkedInRoom}
+  const fetchMyDataBoarders = async(userUID: string) => {
+    try{
+      const docRef = collection(db, "boarders");
+      const q = query(docRef, where("BC_RenterUID", "==", userUID || ""));
+      const docSnap = await getDocs(q);
+
+      const result = docSnap.docs.map((doc)=>({       
+        id:doc.id,
+        ...doc.data(),
+      }))
+
+      return result;
+
+    } catch(error){
+      console.error(error);
+      return []
+    }  
+  }
+
+  const ongoingRoom = async(userID:string) => {
+    try{
+      const docRef = collection(db, "boarders");
+      const q = query(docRef, where("BC_RenterUID", "==", userID));
+      const docSnap = await getDocs(q);
+
+      let onGoing:number = 0;
+
+      docSnap.docs.map((doc)=>{
+        const data = doc.data()
+        if(data.BC_BoarderStatus === "Occupied"){
+          onGoing++;
+        }
+      })
+      
+      
+      return onGoing;
+    }
+    catch(error){
+      console.error(error);
+      
+    }
+  }
+  const completedRoom = async(userID:string) => {
+    try{
+      const docRef = collection(db, "boarders");
+      const q = query(docRef, where("BC_RenterUID", "==", userID));
+      const docSnap = await getDocs(q);
+
+      let paid:number = 0;
+
+      docSnap.docs.map((doc)=>{
+        const data = doc.data()
+        if(data.BC_BoarderStatus === "Paid"){
+          paid++;
+        }
+      })
+      
+      
+      return paid;
+    }
+    catch(error){
+      console.error(error);
+      
+    }
+  }
+  const upcomingRoom = async(userID:string) => {
+    try{
+      const docRef = collection(db, "boarders");
+      const q = query(docRef, where("BC_RenterUID", "==", userID));
+      const docSnap = await getDocs(q);
+
+      let reserved:number = 0;
+
+      docSnap.docs.map((doc)=>{
+        const data = doc.data()
+        if(data.BC_BoarderStatus === "Reserved"){
+          reserved++;
+        }
+      })
+      
+      
+      return reserved;
+    }
+    catch(error){
+      console.error(error);
+      
+    }
+  }
+
+export {myRooms,  fetchMyDataBoarders,  myRoomsEmph, MyNotification,
+   roomDetails, acceptedBooked, paidBooking, myEarnings, 
+   totalEarnings, checkedInRoom, ongoingRoom, upcomingRoom, completedRoom}

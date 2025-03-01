@@ -191,6 +191,7 @@ export default function MyRooms({ params }: RoomID) {
               boardDetails?.BC_BoarderUID || "",
               boardDetails?.BC_RenterUID || "",
               star,
+              feedback,
               boardDetails?.BC_BoarderFullName || "",
               boardDetails?.BC_RenterFullName || "",
               descriptor[star - 1]
