@@ -68,10 +68,14 @@ interface Room {
 interface Doctor {
   id?: string;
   User_Email?: string;
-  User_FName?: string;
-  User_LName?: string;
+  User_Name?: string;
   User_UID?: string;
   User_UserType?: string;
+  User_PNumber?: string;
+  User_TypeOfAppointment?: [string];
+  User_AvailableHours?: {
+    Days?: [number];
+  };
 }
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -133,6 +137,37 @@ export default function Home() {
     };
     getRooms();
   });
+
+  const weeks = [
+    {
+      key: 0,
+      label: "Sunday",
+    },
+    {
+      key: 1,
+      label: "Monday",
+    },
+    {
+      key: 2,
+      label: "Tuesday",
+    },
+    {
+      key: 3,
+      label: "Wednesday",
+    },
+    {
+      key: 4,
+      label: "Thursday",
+    },
+    {
+      key: 5,
+      label: "Friday",
+    },
+    {
+      key: 6,
+      label: "Saturday",
+    },
+  ];
 
   useEffect(() => {
     const getDoctors = async () => {
@@ -370,24 +405,55 @@ export default function Home() {
             <a
               href={`/Profile/Doctor/${data?.User_UID}`}
               key={data?.id}
-              className="grid relative grid-rows-11 z-[1] gap-2 bg-[#006B95] rounded-lg px-3 py-4 drop-shadow-2xl cursor-pointer h-64 w-72  select-none"
+              className="grid relative grid-rows-11 z-[1] gap-2 bg-[#006B95] rounded-lg px-3 py-4 drop-shadow-2xl cursor-pointer full w-72  select-none"
             >
               <div className="flex justify-center absolute -top-12 left-24 rounded-full bg-white drop-shadow-2xl p-0.5 h-28 w-28">
                 <h1 className="h-full w-full bg-blue-500 rounded-full flex justify-center items-center text-center font-montserrat font-medium text-xs">
                   Image of the doctor
                 </h1>
               </div>
-              <div className="row-span-11 flex flex-col gap-7 mt-16">
-                <div className="font-hind text-xs text-white">
-                  {data?.User_FName}
+              <div className="row-span-11 flex flex-col justify-between gap-2 mt-16">
+                <div className="font-hind font-bold text-xl text-white text-center">
+                  {data?.User_Name}
                 </div>
-                <div className="row-span-2 text-ellipsis font-hind text-sm text-white font-semibold">
-                  {data?.User_LName || "Room Name"}{" "}
-                </div>
-
-                <button className="row-span-2 bg-blue-500 text-white font-hind rounded-md h-10 transform transition-all active:scale-95 ease-out duration-50">
+                <h1 className="text-center font-hind text-base text-white font-medium row-span-5 grid grid-cols-2 gap-2 mt-2 bg-blue-500 rounded-sm py-2">
+                  <span className="col-span-2">Appointment Type:</span>
+                  {data?.User_TypeOfAppointment?.map((data, index) => {
+                    return (
+                      <span
+                        key={index}
+                        className="overflow-hidden text-ellipsis whitespace-nowrap"
+                      >
+                        {data}
+                      </span>
+                    );
+                  })}
+                </h1>{" "}
+                <h1 className="text-center font-hind text-white font-medium row-span-5 bg-red-500 py-2 rounded-lg">
+                  Available Hours: <br />
+                  <span className="grid grid-cols-3 items-start">
+                    {data?.User_AvailableHours?.Days?.length ? (
+                      data.User_AvailableHours.Days.map((day, dayIndex) => {
+                        const weekDay = weeks.find(
+                          (week) => week.key === day
+                        )?.label;
+                        return (
+                          <span key={dayIndex} className="">
+                            {weekDay}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      <span>No available days</span>
+                    )}
+                  </span>
+                </h1>
+                <a
+                  href={`/Profile/Doctor/${data?.User_UID}`}
+                  className="row-span-2 bg-white font-hind rounded-md h-10 transform transition-all active:scale-95 ease-out duration-50 flex items-center justify-center"
+                >
                   View Doctor
-                </button>
+                </a>
               </div>
             </a>
           );

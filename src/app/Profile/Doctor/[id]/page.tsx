@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ClientNavbar from "@/app/ClientNavbar/page";
 import fetchUserData from "../../../fetchData/fetchUserData";
 import { DocumentData } from "firebase/firestore";
@@ -9,13 +9,19 @@ import BoardNavigation from "../../../BoardNavigation/page";
 import ProductNavigation from "../../../ProductNavigation/page";
 import fetchProfile, { fetchIsDoctor } from "./fetchProfile";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import "@ant-design/v5-patch-for-react-19";
 import {
   faArrowLeft,
+  faCircleCheck,
   faEnvelope,
   faMapPin,
   faPhone,
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
+// import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { DatePicker, Modal, TimePicker } from "antd";
+import dayjs, { Dayjs } from "dayjs";
 
 interface doctorID {
   params: Promise<{ id: string }>;
@@ -87,6 +93,9 @@ export default function ViewDoctor({ params }: doctorID) {
 }
 
 function DoctorProfile(props: { id: string }) {
+  const divRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const weeks = [
     {
       key: 0,
@@ -118,10 +127,81 @@ function DoctorProfile(props: { id: string }) {
     },
   ];
 
+  const appointments = [
+    {
+      key: 1,
+      label: "Blood test",
+    },
+    {
+      key: 2,
+      label: "Heartworm test",
+    },
+    {
+      key: 3,
+      label: "Endoscopy",
+    },
+    {
+      key: 4,
+      label: "Magnetic Resonance Imaging",
+    },
+    {
+      key: 5,
+      label: "Urinalysis",
+    },
+    {
+      key: 6,
+      label: "X-ray",
+    },
+    {
+      key: 7,
+      label: "Biopsy",
+    },
+    {
+      key: 8,
+      label: "Vetirinary Appointment",
+    },
+    {
+      key: 9,
+      label: "Stool test",
+    },
+    {
+      key: 10,
+      label: "Ultrasound",
+    },
+    {
+      key: 11,
+      label: "Electrocardiography",
+    },
+  ];
+
+  const [dateModal, setDateModal] = useState(false);
+  const [bookModal, setBookModal] = useState(false);
   const [isDoctor, setIsDoctor] = useState<boolean | null>(false);
   const [userData, setUserData] = useState<DocumentData[]>([]);
   const [doctor, setDoctor] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [time, setTime] = useState<Dayjs | null>(dayjs());
+  const [date, setDate] = useState<Dayjs | null>(dayjs());
+  // const [typeOfPayment, setTypeOfPayment] = useState("");
+  const [userAppointment, setUserAppointment] = useState("");
+  const [other, setOther] = useState(false);
+  const [showAppointments, setShowAppointments] = useState(false);
+  const [seeMore, setSeeMore] = useState(false);
+
+  useEffect(() => {
+    const closeShowAppointments = (e: MouseEvent) => {
+      // Check if the click is outside the divRef element
+      if (divRef.current && !divRef.current.contains(e.target as Node)) {
+        setShowAppointments(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeShowAppointments);
+
+    return () => {
+      document.removeEventListener("mousedown", closeShowAppointments);
+    };
+  }, [showAppointments]);
 
   useEffect(() => {
     const getUserData = async () => {
@@ -141,7 +221,6 @@ function DoctorProfile(props: { id: string }) {
   }, []);
 
   const userType = userData[0]?.User_UID;
-  console.log(userType);
 
   useEffect(() => {
     const itsDoctor = async () => {
@@ -154,7 +233,6 @@ function DoctorProfile(props: { id: string }) {
   useEffect(() => {
     const getDoctor = async () => {
       const profile = await fetchProfile(props.id);
-      console.log("Front End:", profile);
 
       setDoctor(profile);
     };
@@ -170,6 +248,22 @@ function DoctorProfile(props: { id: string }) {
     );
   }
 
+  const submitAppointment = async () => {};
+
+  // const convertTimeToTimestamp = (time: Dayjs | null) => {
+  //   if (time) {
+  //     return Timestamp.fromDate(time.toDate());
+  //   }
+  //   return null;
+  // };
+
+  // const convertDateToTimestamp = (date: Dayjs | null) => {
+  //   if (date) {
+  //     return Timestamp.fromDate(date.toDate());
+  //   }
+  //   return null;
+  // };
+
   return (
     <div className="h-full mx-52 py-4">
       {isDoctor ? (
@@ -179,7 +273,9 @@ function DoctorProfile(props: { id: string }) {
         </h1>
       ) : (
         <h1 className="font-montserrat mt-4 mb-8 font-bold text-4xl flex gap-5 items-center">
-          <FontAwesomeIcon icon={faArrowLeft} /> Doctor&#39;s Profile
+          <Link href="/">
+            <FontAwesomeIcon icon={faArrowLeft} /> Doctor&#39;s Profile
+          </Link>
         </h1>
       )}
       <div className="p-4">
@@ -190,8 +286,14 @@ function DoctorProfile(props: { id: string }) {
                 Image of {data?.User_Name}
               </div>
               <div className="flex flex-col gap-4 w-full col-span-4">
-                <h1 className="font-montserrat font-bold text-4xl">
-                  Dr. {data?.User_Name}
+                <h1 className="font-montserrat font-bold text-4xl flex justify-between">
+                  Dr. {data?.User_Name}{" "}
+                  <span
+                    className="text-lg flex items-center gap-2 px-4 rounded-full cursor-pointer bg-green-500 text-white"
+                    onClick={() => setDateModal(true)}
+                  >
+                    Consult Now <FontAwesomeIcon icon={faCircleCheck} />{" "}
+                  </span>
                 </h1>
 
                 <div className="w-full border-[1px] border-[#C3C3C3]" />
@@ -283,6 +385,126 @@ function DoctorProfile(props: { id: string }) {
           );
         })}
       </div>
+      <Modal
+        open={dateModal}
+        onCancel={() => setDateModal(false)}
+        onClose={() => setDateModal(false)}
+        onOk={() => {
+          setDateModal(false);
+          if (date || !time || !userAppointment) {
+            alert("Please input fields");
+          } else {
+            setBookModal(true);
+          }
+        }}
+        className="mt-32 relative z-10"
+      >
+        <h1 className="text-center my-8 font-montserrat font-bold text-[#006B95] text-xl">
+          Select Date and Time
+        </h1>
+        <div className="flex items-center justify-around">
+          <DatePicker
+            format={"MMMM DD, YYYY"}
+            needConfirm
+            className="font-hind font-medium cursor-pointer"
+            value={date}
+            onChange={(date: Dayjs | null) => setDate(date)}
+          />
+          <TimePicker
+            format={"hh:mm A"}
+            needConfirm
+            className="font-hind font-medium cursor-pointer"
+            value={time}
+            onChange={(time: Dayjs | null) => setTime(time)}
+          />
+        </div>
+        <div>
+          <div
+            className={`h-8 w-96 bg-white rounded-lg drop-shadow-md ml-9 mt-8 cursor-pointer ${
+              other ? `px-0` : `px-3`
+            }`}
+            onClick={() => setShowAppointments(true)}
+          >
+            {other ? (
+              <input
+                ref={inputRef}
+                type="text"
+                id="userAppointment"
+                name="user-appointment"
+                placeholder="Please select your type of service"
+                onClick={() =>
+                  setShowAppointments(userAppointment ? false : false)
+                }
+                className={`h-full w-full outline-none font-hind text-black font-medium autofill:bg-white px-3 rounded-lg ${
+                  userAppointment
+                    ? `bg-white cursor-pointer`
+                    : `bg-[#D6EBEC] focus:outline-none focus:text-black`
+                }`}
+                value={userAppointment}
+                onChange={(e) => setUserAppointment(e.target.value)}
+              />
+            ) : userAppointment ? (
+              userAppointment
+            ) : (
+              `Please select your type of service`
+            )}
+          </div>
+          <div
+            ref={divRef}
+            className="absolute top-[220px] left-0 bg-white w-full rounded-md drop-shadow-xl z-20"
+          >
+            {showAppointments ? (
+              <div className=" flex flex-col gap-2 py-2 px-4 rounded-md ">
+                {appointments
+                  .slice(!seeMore ? 0 : 0, !seeMore ? 5 : 11)
+                  .map((data) => {
+                    return (
+                      <div
+                        key={data?.key}
+                        className=" cursor-pointer hover:bg-slate-200 p-2 rounded-md"
+                      >
+                        <h1
+                          className="font-hind text-base font-medium"
+                          onClick={() => {
+                            setUserAppointment(data?.label);
+                            setShowAppointments(false);
+                          }}
+                        >
+                          {data?.label}
+                        </h1>
+                      </div>
+                    );
+                  })}
+                <button
+                  className="mt-2 font-montserrat text-sm font-bold"
+                  onClick={() => setSeeMore((prev) => !prev)}
+                >
+                  {seeMore ? `See Less..` : <h1>See More...</h1>}
+                </button>
+                <button
+                  type="button"
+                  className="mt-2 font-montserrat text-sm font-bold italic"
+                  onClick={() => {
+                    setOther(true);
+                    inputRef.current?.focus();
+                    setShowAppointments(false);
+                  }}
+                >
+                  Others
+                </button>
+              </div>
+            ) : (
+              <div></div>
+            )}
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        open={bookModal}
+        onCancel={() => setBookModal(false)}
+        onClose={() => setBookModal(false)}
+        onOk={() => submitAppointment}
+      ></Modal>
     </div>
   );
 }
