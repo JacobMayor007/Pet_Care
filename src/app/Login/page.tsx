@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import isAuthenticate from "../fetchData/User/isAuthenticate";
 import { signingIn } from "./signin";
-
+import { auth } from "../firebase/config";
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -23,6 +23,11 @@ export default function Login() {
 
     checkAuthentication();
   }, [router]);
+
+  useEffect(() => {
+    // Use Firebase auth or other services here
+    console.log(auth.currentUser);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
