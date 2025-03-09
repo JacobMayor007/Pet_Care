@@ -25,7 +25,6 @@ export default function Login() {
   }, [router]);
 
   useEffect(() => {
-    // Use Firebase auth or other services here
     console.log(auth.currentUser);
   }, []);
 

@@ -1,9 +1,17 @@
 "use client";
-
+import Image from "next/image";
 import React, { useState, useEffect, useRef } from "react";
 import ClientNavbar from "@/app/ClientNavbar/page";
 import fetchUserData from "../../../fetchData/fetchUserData";
-import { DocumentData } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  DocumentData,
+  getDocs,
+  query,
+  Timestamp,
+  where,
+} from "firebase/firestore";
 import DoctorNavigation from "../../../Doctor/DoctorNavbar/page";
 import BoardNavigation from "../../../BoardNavigation/page";
 import ProductNavigation from "../../../ProductNavigation/page";
@@ -22,6 +30,7 @@ import {
 import Link from "next/link";
 import { DatePicker, Modal, TimePicker } from "antd";
 import dayjs, { Dayjs } from "dayjs";
+import { db } from "@/app/firebase/config";
 
 interface doctorID {
   params: Promise<{ id: string }>;
@@ -173,6 +182,31 @@ function DoctorProfile(props: { id: string }) {
       label: "Electrocardiography",
     },
   ];
+  const options = [
+    {
+      id: 1,
+      label: "Cash On Hand",
+      img: "./Cash On Hand Image.svg",
+    },
+    {
+      id: 2,
+      label: "GCash",
+      img: "./GCash Image.svg",
+    },
+    {
+      id: 3,
+      label: "Debit Or Credit",
+      img: "./Debit Or Credit Image.svg",
+    },
+  ];
+
+  const [typeOfPayment, setTypeOfPayment] = useState("");
+  const [petName, setPetName] = useState("");
+  const [petBreed, setPetBreed] = useState("");
+  const [petYear, setPetYear] = useState(0);
+  const [petMonth, setPetMonth] = useState(0);
+  const [petMM, setPetMM] = useState(0);
+  const [petHg, setPetHg] = useState(0);
 
   const [dateModal, setDateModal] = useState(false);
   const [bookModal, setBookModal] = useState(false);
@@ -187,6 +221,7 @@ function DoctorProfile(props: { id: string }) {
   const [other, setOther] = useState(false);
   const [showAppointments, setShowAppointments] = useState(false);
   const [seeMore, setSeeMore] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(false);
 
   useEffect(() => {
     const closeShowAppointments = (e: MouseEvent) => {
@@ -240,6 +275,14 @@ function DoctorProfile(props: { id: string }) {
     getDoctor();
   }, [props.id]);
 
+  const submitDateAppointment = () => {
+    if (!date || !time || !userAppointment) {
+      alert("Please input fields");
+    } else {
+      setBookModal(true);
+    }
+  };
+
   if (loading) {
     return (
       <div className="">
@@ -248,7 +291,97 @@ function DoctorProfile(props: { id: string }) {
     );
   }
 
-  const submitAppointment = async () => {};
+  const onSubmit = async (id: string) => {
+    const fullName = userData[0]?.User_Name;
+
+    try {
+      setLoading(true);
+
+      if (!date) {
+        throw new Error("Appointment date is required.");
+      }
+
+      const appointmentDate = Timestamp.fromDate(
+        dayjs.isDayjs(date)
+          ? date.toDate() // Convert Dayjs to Date
+          : new Date(date) // Convert to Date if it's a string
+      );
+
+      const matchingDoctor = doctor.find((data) => data.User_UID === id);
+
+      if (!matchingDoctor) {
+        throw new Error("Matching doctor not found.");
+      }
+
+      const patientUserUID = userData[0]?.User_UID || "";
+      const docRef = collection(db, "appointments");
+      const docNotifRef = collection(db, "notifications");
+      const q = query(
+        docRef,
+        where("Appointment_DoctorUID", "==", matchingDoctor.User_UID),
+        where("Appointment_PatientUserUID", "==", patientUserUID)
+      );
+      const querySnapshot = await getDocs(q);
+
+      const isNewPatient = querySnapshot.empty; // If no prior appointments, the patient is new
+
+      // Add the appointment to Firestore
+      const addAppointments = await addDoc(docRef, {
+        Appointment_PatientFullName: fullName,
+        Appointment_CreatedAt: Timestamp.now(),
+        Appointment_PatientUserUID: patientUserUID,
+        Appointment_DoctorEmail: matchingDoctor?.User_Email,
+        Appointment_DoctorName: matchingDoctor?.User_Name,
+        Appointment_TypeOfAppointment: userAppointment,
+        Appointment_Date: appointmentDate,
+        Appointment_DoctorUID: matchingDoctor.User_UID,
+        Appointment_Location: matchingDoctor.User_Location,
+        Appointment_DoctorPNumber: matchingDoctor.User_PNumber,
+        Appointment_PatientPetAge: {
+          Year: petYear,
+          Month: petMonth,
+        },
+        Appointment_PatientPetBreed: petBreed,
+        Appointment_PatientPetName: petName,
+        Appointment_PatientPetBP: {
+          Hg: petHg,
+          mm: petMM,
+        },
+        Appointment_Status: "isPending",
+        Appointment_PatientTypeOfPayment: typeOfPayment,
+        Appointment_IsNewPatient: isNewPatient, // Add this field to indicate if the patient is new
+      });
+
+      const notifAppointments = await addDoc(docNotifRef, {
+        appointment_ID: addAppointments.id,
+        createdAt: Timestamp.now(),
+        receiverID: matchingDoctor.User_UID,
+        hide: false,
+        message: `${fullName} requesting to have a schedule`,
+        senderID: patientUserUID,
+        open: false,
+        status: "unread",
+        title: `Appointment Request with ${matchingDoctor?.User_UID}`,
+        type: userAppointment,
+        sender_FullName: fullName,
+        receiver_FullName: matchingDoctor?.User_Name,
+        isApprove: false,
+      });
+
+      console.log("Appointment added:");
+
+      // Log whether the patient is new or old
+      console.log(
+        isNewPatient ? "New patient added." : "Old patient appointment added."
+      );
+
+      console.log("New notification added", notifAppointments);
+    } catch (error) {
+      console.log("Error adding data to Firebase:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // const convertTimeToTimestamp = (time: Dayjs | null) => {
   //   if (time) {
@@ -391,11 +524,7 @@ function DoctorProfile(props: { id: string }) {
         onClose={() => setDateModal(false)}
         onOk={() => {
           setDateModal(false);
-          if (date || !time || !userAppointment) {
-            alert("Please input fields");
-          } else {
-            setBookModal(true);
-          }
+          submitDateAppointment();
         }}
         className="mt-32 relative z-10"
       >
@@ -503,8 +632,161 @@ function DoctorProfile(props: { id: string }) {
         open={bookModal}
         onCancel={() => setBookModal(false)}
         onClose={() => setBookModal(false)}
-        onOk={() => submitAppointment}
-      ></Modal>
+        onOk={() => {
+          setBookModal(false);
+          setConfirmModal(true);
+        }}
+      >
+        <p className="font-montserrat font-bold text-[#393939]">
+          Do you wish to have an appointment with {doctor[0]?.User_Name}
+        </p>
+        <div className="grid grid-cols-3 items-center w-fit my-5 gap-4">
+          <label
+            htmlFor="petID"
+            className="font-montserrat font-bold text-lg text-[#393939]"
+          >
+            Pet Name
+          </label>
+          <input
+            className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+            type="text"
+            name="pet"
+            id="petID"
+            value={petName}
+            onChange={(e) => setPetName(e.target.value)}
+            placeholder="Enter the name of your pet"
+          />
+          <label
+            htmlFor="petBreed"
+            className="font-montserrat font-bold text-lg text-[#393939]"
+          >
+            Pet Breed
+          </label>
+          <input
+            className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+            type="text"
+            name="breed"
+            id="petBreed"
+            value={petBreed}
+            onChange={(e) => setPetBreed(e.target.value)}
+            placeholder="Enter the breed of your pet"
+          />
+          <h1 className="col-span-3 font-montserrat font-bold text-lg text-[#393939] mt-8">
+            Input your pet age
+          </h1>
+          <label
+            htmlFor="petYear"
+            className="text-end font-montserrat font-bold text-base text-[#393939]"
+          >
+            Year
+          </label>
+          <input
+            type="number"
+            name="year"
+            id="petYear"
+            placeholder="Ex. 1"
+            value={petYear == 0 ? "" : petYear}
+            onChange={(e) => setPetYear(Number(e.target.value))}
+            className=" h-9 w-56 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+          />
+          <label
+            htmlFor="petMonth"
+            className="text-end font-montserrat font-bold text-base text-[#393939]"
+          >
+            Month
+          </label>
+          <input
+            type="number"
+            name="month"
+            id="petMonth"
+            placeholder="Ex. 3"
+            value={petMonth == 0 ? "" : petMonth}
+            onChange={(e) => setPetMonth(Number(e.target.value))}
+            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+          />
+          <h1 className="col-span-3 font-montserrat font-bold text-lg text-[#393939] mt-6">
+            Input the blood pressure of your pet
+          </h1>
+          <label
+            htmlFor="mmBP"
+            className="text-end font-montserrat font-bold text-base text-[#393939]"
+          >
+            mm
+          </label>
+          <input
+            type="number"
+            name="mm"
+            id="mmBP"
+            value={petMM == 0 ? "" : petMM}
+            onChange={(e) => setPetMM(Number(e.target.value))}
+            placeholder="Ex. 120"
+            className=" h-9 w-56 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+          />
+          <label
+            htmlFor="HgBP"
+            className="text-end font-montserrat font-bold text-base text-[#393939]"
+          >
+            Hg
+          </label>
+          <input
+            type="number"
+            name="Hg"
+            id="HgBP"
+            placeholder="Ex. 90"
+            value={petHg == 0 ? "" : petHg}
+            onChange={(e) => {
+              setPetHg(Number(e.target.value));
+            }}
+            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+          />
+        </div>
+        <h1 className="col-span-3 font-montserrat font-bold text-lg text-[#393939] mt-10">
+          Choose Type Of Payment
+        </h1>
+        <div className="col-span-3 grid grid-cols-3 px-2 mt-4">
+          {options.map((data) => {
+            return (
+              <div key={data.id} className="flex flex-row items-center gap-2 ">
+                <input
+                  type="radio"
+                  name="payment-method"
+                  id={data?.label}
+                  value={data?.label}
+                  checked={typeOfPayment === data?.label}
+                  onChange={() => {
+                    setTypeOfPayment(data?.label);
+                  }}
+                  className="cursor-pointer"
+                />
+                <Image
+                  src={`/${data?.img}`}
+                  height={30}
+                  width={30}
+                  alt={data?.label}
+                />
+                <label
+                  htmlFor={data?.label}
+                  className="font-montserrat font-semibold text-sm cursor-pointer"
+                >
+                  {data?.label}
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      </Modal>
+
+      <Modal
+        open={confirmModal}
+        onCancel={() => setConfirmModal(false)}
+        onOk={() => {
+          onSubmit(doctor[0]?.User_UID || "");
+          setConfirmModal(false);
+        }}
+        centered={true}
+      >
+        Please confirm your appointment on {doctor[0]?.User_Name}
+      </Modal>
     </div>
   );
 }

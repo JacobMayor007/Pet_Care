@@ -15,6 +15,7 @@ import {
 } from "./renterData";
 import dayjs, { Dayjs } from "dayjs";
 import { Rate } from "antd";
+import { useRouter } from "next/navigation";
 
 interface myBoard {
   id?: string;
@@ -102,14 +103,17 @@ export default function RentersPage() {
   const [onGoing, setOnGoing] = useState(0);
   const [upcoming, setUpcoming] = useState(0);
   const [completed, setCompleted] = useState(0);
-
+  const router = useRouter();
   useEffect(() => {
     const getUserData = async () => {
       const user = await fetchUserData();
       setUserData(user);
+      if (!user) {
+        router.push("/Login");
+      }
     };
     getUserData();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     const getMyRooms = async () => {

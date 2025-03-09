@@ -385,8 +385,7 @@ const MyNotification = (userUID: string, callback: (notifications: Notification[
           reserved++;
         }
       })
-      
-      
+            
       return reserved;
     }
     catch(error){

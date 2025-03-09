@@ -5,7 +5,7 @@ export default function Signout() {
   return (
     auth.currentUser && (
       <button
-        className="w-24 h-10 bg-blue-950 text-white text-base font-hind font-medium tracking-wide rounded-md drop-shadow-lg"
+        className="w-44 h-10 font-hind tracking-wide rounded-md drop-shadow-lg"
         onClick={() => {
           auth
             .signOut()

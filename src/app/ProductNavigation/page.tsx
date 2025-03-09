@@ -6,12 +6,14 @@ import {
   faCircleUser,
   faCircleChevronDown,
   faEyeSlash,
+  faChevronDown,
 } from "@fortawesome/free-solid-svg-icons";
 import { BellOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import fetchUserData from "../fetchData/fetchUserData";
 import Signout from "../SignedOut/page";
 import { notifications } from "../Provider/fetchNotification";
+import { DocumentData } from "firebase/firestore";
 
 interface Notifications {
   id?: string;
@@ -30,12 +32,12 @@ interface Notifications {
 export default function ProductNavigation() {
   const [logout, setLogout] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
-  const [name, setName] = useState("");
+  const [userData, setUserData] = useState<DocumentData>([]);
 
   useEffect(() => {
     const getName = async () => {
       const data = await fetchUserData();
-      setName(data[0]?.User_Name);
+      setUserData(data);
     };
     getName();
   }, []);
@@ -85,15 +87,6 @@ export default function ProductNavigation() {
         </ul>
         <div className="flex flex-row items-center gap-4">
           <div className="relative cursor-pointer flex flex-row items-center gap-4  ">
-            <FontAwesomeIcon
-              icon={faCircleUser}
-              className="text-blue-950 text-3xl"
-            />
-            <FontAwesomeIcon
-              icon={faCircleChevronDown}
-              className="absolute left-5 top-5 text-blue-950"
-              onClick={() => setLogout((prev) => !prev)}
-            />
             <BellOutlined
               onClick={() => {
                 setShowNotif((prev) => !prev);
@@ -102,6 +95,12 @@ export default function ProductNavigation() {
               }}
               className="text-[#006B95] font-bold text-lg cursor-pointer relative"
             />
+            <h1
+              className="font-montserrat font-bold text-[#006B95] cursor-pointer"
+              onClick={() => setLogout((prev) => !prev)}
+            >
+              {userData[0]?.User_Name} <FontAwesomeIcon icon={faChevronDown} />
+            </h1>
             {/* <div
                     className={
                       unreadNotif > 0
@@ -127,8 +126,6 @@ export default function ProductNavigation() {
               <UserNotification />
             </div>
           </div>
-
-          <h1 className="font-montserrat text-base text-[#006B95]">{name}</h1>
         </div>
       </div>
     </nav>

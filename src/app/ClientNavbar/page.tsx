@@ -202,17 +202,53 @@ export default function ClientNavbar() {
             ) : (
               <div className="hidden" />
             )}
-
             <div
               className={
                 logout
-                  ? `flex absolute top-10 -left-3 cursor-pointer`
+                  ? `grid grid-rows-6 justify-center items-center bg-[#F3F3F3] drop-shadow-xl rounded-lg absolute top-10 -left-3 cursor-pointer h-fit w-56`
                   : `hidden`
               }
-              onClick={() => setLogout((prev) => !prev)}
             >
+              <Link
+                href={`/Profile/Boarder/${userUID}`}
+                className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
+              >
+                My Account
+              </Link>
+              <Link
+                href={`/find-my-buddy`}
+                className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
+              >
+                Want to find your buddy?
+              </Link>
+              <Link
+                href={`/Doctor`}
+                className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
+              >
+                Want to become part of our doctors?
+              </Link>
+              <Link
+                href={`/Provider`}
+                className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
+              >
+                Want to become part of our product sellers?
+              </Link>
+              <Link
+                href={`/Renter`}
+                className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
+              >
+                Want to become part of our renters?
+              </Link>
+              <Link
+                href={`/Settings`}
+                className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
+              >
+                Settings
+              </Link>
+
               <Signout />
             </div>
+
             <div
               className={
                 unopenNotif > 0
@@ -333,3 +369,5 @@ const UserNotification = () => {
     </div>
   );
 };
+
+export { UserNotification };

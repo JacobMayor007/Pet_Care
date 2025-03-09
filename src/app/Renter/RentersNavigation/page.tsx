@@ -3,7 +3,7 @@ import fetchUserData from "@/app/fetchData/fetchUserData";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { BellOutlined } from "@ant-design/icons";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DocumentData } from "firebase/firestore";
 import Signout from "@/app/SignedOut/page";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -29,17 +29,35 @@ interface Notifications {
 }
 
 const RentersNavigation = () => {
+  const divRef = useRef<HTMLDivElement>(null);
+
   const router = useRouter();
   const [userData, setUserData] = useState<DocumentData[]>([]);
   const [logout, setLogout] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
+  const [userUID, setUserUID] = useState("");
+  useEffect(() => {
+    const closeProfile = (e: MouseEvent) => {
+      // Check if the click is outside the divRef element
+      if (divRef.current && !divRef.current.contains(e.target as Node)) {
+        setLogout(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeProfile);
+
+    return () => {
+      document.removeEventListener("mousedown", closeProfile);
+    };
+  }, [logout]);
 
   useEffect(() => {
     const getUserData = async () => {
       try {
         const user = await fetchUserData();
         setUserData(user);
+        setUserUID(user[0]?.User_UID);
       } catch (err) {
         console.error(err);
       } finally {
@@ -135,7 +153,7 @@ const RentersNavigation = () => {
           </li>
           {/* </Link> */}
         </ul>
-        <div className="flex flex-row gap-4 relative">
+        <div className="flex flex-row gap-4 relative" ref={divRef}>
           <BellOutlined
             className="text-lg text-[#006B95] font-bold cursor-pointer"
             onClick={() => setShowNotif((prev) => !prev)}
@@ -147,12 +165,54 @@ const RentersNavigation = () => {
             {userData[0]?.User_Name} <FontAwesomeIcon icon={faChevronDown} />
           </h1>
           {logout ? (
-            <div className="absolute left-12 top-8">
-              {" "}
-              <Signout />{" "}
+            <div
+              className={
+                logout
+                  ? `grid grid-rows-6 justify-center items-center bg-[#F3F3F3] drop-shadow-xl rounded-lg absolute top-10 -left-3 cursor-pointer h-fit w-56`
+                  : `hidden`
+              }
+            >
+              <Link
+                href={`/Profile/Boarder/${userUID}`}
+                className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
+              >
+                My Account
+              </Link>
+              <Link
+                href={`/find-my-buddy`}
+                className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
+              >
+                Want to find your buddy?
+              </Link>
+              <Link
+                href={`/Doctor`}
+                className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
+              >
+                Want to become part of our doctors?
+              </Link>
+              <Link
+                href={`/Provider`}
+                className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
+              >
+                Want to become part of our product sellers?
+              </Link>
+              <Link
+                href={`/Renter`}
+                className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
+              >
+                Want to become part of our renters?
+              </Link>
+              <Link
+                href={`/Settings`}
+                className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
+              >
+                Settings
+              </Link>
+
+              <Signout />
             </div>
           ) : (
-            <div className="hidden" />
+            <span className="hidden" />
           )}
 
           <div
