@@ -2,12 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCircleUser,
-  faCircleChevronDown,
-  faEyeSlash,
-  faChevronDown,
-} from "@fortawesome/free-solid-svg-icons";
+import { faEyeSlash, faChevronDown } from "@fortawesome/free-solid-svg-icons";
 import { BellOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import fetchUserData from "../fetchData/fetchUserData";

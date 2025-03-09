@@ -30,7 +30,7 @@ interface Notifications {
   hide?: boolean;
 }
 
-export default function foundMyBuddy() {
+export default function FoundMyBuddy() {
   const userRef = useRef<HTMLDivElement | null>(null);
   const [showNotif, setShowNotif] = useState(false);
   const [logout, setLogout] = useState(false);
