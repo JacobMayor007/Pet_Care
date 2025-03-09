@@ -369,5 +369,3 @@ const UserNotification = () => {
     </div>
   );
 };
-
-export { UserNotification };
