@@ -75,6 +75,7 @@ export default function FoundMyBuddy() {
           <FontAwesomeIcon
             icon={faXmark}
             className="text-xl text-red-900 cursor-pointer"
+            onClick={() => history.back}
           />
           <h1 className="bg-gradient-to-r from-[#B32134] via-[#DC5987] text-transparent bg-clip-text to-[#F77FBE] font-montserrat font-bold text-3xl ">
             Find My Buddy
