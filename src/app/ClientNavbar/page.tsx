@@ -210,16 +210,16 @@ export default function ClientNavbar() {
               }
             >
               <Link
-                href={`/Profile/Boarder/${userUID}`}
+                href={`/Profile/${userUID}`}
                 className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
               >
-                My Account
+                My Profile
               </Link>
               <Link
-                href={`/find-my-buddy`}
+                href={`/find-my-breeding-partner`}
                 className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
               >
-                Want to find your buddy?
+                Find match to breed?
               </Link>
               <Link
                 href={`/Doctor`}

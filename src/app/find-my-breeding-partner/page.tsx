@@ -1,11 +1,6 @@
 "use client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faEyeSlash,
-  faHeart,
-  faStar,
-  faXmark,
-} from "@fortawesome/free-solid-svg-icons";
+import { faEyeSlash, faXmark } from "@fortawesome/free-solid-svg-icons";
 import {
   BellOutlined,
   ShoppingCartOutlined,
@@ -16,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import fetchUserData from "../fetchData/fetchUserData";
 import Link from "next/link";
 import Signout from "../SignedOut/page";
-import Image from "next/image";
+// import { useRouter } from "next/navigation";
 
 interface Notifications {
   id?: string;
@@ -34,15 +29,30 @@ interface Notifications {
   hide?: boolean;
 }
 
+// interface PetToBreed {
+//   id?: string;
+//   pet_age?: {
+//     month?: number;
+//     year?: number;
+//   };
+//   pet_name?: string;
+//   pet_ownerName?: string;
+//   pet_ownerUID?: string;
+// }
+
 export default function FoundMyBuddy() {
   const userRef = useRef<HTMLDivElement | null>(null);
+  // const [petToMatch, setPetToMatch] = useState<PetToBreed[]>([]);
   const [showNotif, setShowNotif] = useState(false);
   const [logout, setLogout] = useState(false);
   const [userUID, setUserUID] = useState("");
   const [dropDown, setDropDown] = useState(false);
-  const [isHeart, setIsHeart] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isReject, setIsReject] = useState(false);
+  // const [isHeart, setIsHeart] = useState(false);
+  // const [isFavorite, setIsFavorite] = useState(false);
+  // const [isReject, setIsReject] = useState(false);
+  // const router = useRouter();
+
+  // console.log(petToMatch);
 
   useEffect(() => {
     const getUserData = async () => {
@@ -68,6 +78,8 @@ export default function FoundMyBuddy() {
     };
   }, []);
 
+  useEffect(() => {});
+
   return (
     <div className="h-screen relative bg-red-50">
       <nav className="h-16 flex flex-row items-center justify-between w-full pr-32 pl-24 fixed top-0">
@@ -75,10 +87,10 @@ export default function FoundMyBuddy() {
           <FontAwesomeIcon
             icon={faXmark}
             className="text-xl text-red-900 cursor-pointer"
-            onClick={() => history.back()}
+            onClick={() => window.history.back()}
           />
           <h1 className="bg-gradient-to-r from-[#B32134] via-[#DC5987] text-transparent bg-clip-text to-[#F77FBE] font-montserrat font-bold text-3xl ">
-            Find My Buddy
+            Find My Match To Breed
           </h1>
         </div>
         <div
@@ -185,7 +197,7 @@ export default function FoundMyBuddy() {
           <div
             className={
               showNotif
-                ? `flex absolute cursor-pointer top-5 right-20 transform-gpu ease-in-out duration-300`
+                ? `flex fixed z-50 cursor-pointer top-12 right-16 transform-gpu ease-in-out duration-300`
                 : `hidden`
             }
           >
@@ -193,7 +205,8 @@ export default function FoundMyBuddy() {
           </div>
         </div>
       </nav>
-      <div className="relative top-8 z-20 w-[550px] h-[94%] mx-auto rounded-lg grid grid-cols-5 ">
+
+      {/* <div className="relative top-8 left-10 z-20 w-[550px] h-[94%] mx-auto rounded-lg grid grid-cols-5 ">
         <div className="bg-red-300 px-4 h-full w-full col-span-4 flex items-center rounded-lg">
           <Image
             height={140}
@@ -249,7 +262,7 @@ export default function FoundMyBuddy() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
