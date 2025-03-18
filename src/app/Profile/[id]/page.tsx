@@ -159,7 +159,7 @@ export default function UserProfile() {
       setRated(isRated ? true : false);
     };
     getListOfOrders();
-  }, [userData, rated]);
+  }, [userData, rated, listOfOrders]);
 
   useEffect(() => {
     const getUserData = async () => {
@@ -267,24 +267,24 @@ export default function UserProfile() {
           {myPets.length > 0 ? (
             myPets.map((data) => {
               return (
-                <Image
-                  key={data?.id}
-                  src={`/${data?.pet_name?.toLocaleLowerCase()}.jpg`}
-                  height={205}
-                  width={205}
-                  alt={`${data?.pet_name} Image`}
-                  className="object-cover rounded-lg"
-                />
-                // <Image
-                //   src={`${data?.pet_name?.toLowerCase}.jpg`}
-                //   alt={`${data?.pet_name} Image`}
-                //   height={52}
-                //   width={48}
-                // />
+                <div key={data?.id} className="relative">
+                  <Image
+                    src={`/${data?.pet_name?.toLocaleLowerCase()}.jpg`}
+                    height={205}
+                    width={205}
+                    alt={`${data?.pet_name} Image`}
+                    className="object-cover rounded-lg"
+                  />
+                  <h1 className="absolute bottom-1 left-5 font-bold font-montserrat text-2xl text-white">
+                    {data?.pet_name}
+                  </h1>
+                </div>
               );
             })
           ) : (
-            <div className="hidden" />
+            <div className="text-xl my-8 font-bold font-montserrat h-52 w-52 bg-white rounded-md drop-shadow-md flex items-center justify-center pt-4">
+              You have no pets
+            </div>
           )}
           <button
             className="h-52 w-48 text-xl font-montserrat font-bold text-[#006B95] border-[#006B95] border-2 rounded-md hover:border-blue-500 hover:text-blue-500"

@@ -15,6 +15,18 @@ import {
 } from "@ant-design/icons";
 import Link from "next/link";
 import fetchUserData from "../fetchData/fetchUserData";
+import { Modal } from "antd";
+import { getMyPets } from "../Profile/[id]/myData";
+import {
+  collection,
+  DocumentData,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
+import dayjs, { Dayjs } from "dayjs";
+import { db } from "../firebase/config";
 
 interface Notifications {
   id?: string;
@@ -32,16 +44,58 @@ interface Notifications {
   hide?: boolean;
 }
 
+interface MatchingNotifications {
+  id?: string;
+  hide?: boolean;
+  open?: boolean;
+  message?: string;
+  receiverEmail?: string[];
+  receiverUid?: string[];
+  senderEmail?: string;
+  status?: string;
+  timestamp?: Dayjs | null;
+}
+
+interface MyPets {
+  id?: string;
+  pet_age?: {
+    month?: number;
+    year?: number;
+  };
+  pet_name?: string;
+  pet_ownerEmail?: string;
+  pet_ownerName?: string;
+  pet_ownerUID?: string;
+  pet_sex?: string;
+  pet_type?: string;
+}
+
 export default function ClientNavbar() {
   const btnRef = useRef<HTMLDivElement | null>(null);
-
+  const [myPets, setMyPets] = useState<MyPets[]>([]);
+  const [userData, setUserData] = useState<DocumentData[]>([]);
   const [logout, setLogout] = useState(false);
   const auth = getAuth();
   const router = useRouter();
   const [showNotif, setShowNotif] = useState(false);
   const [dropDown, setDropDown] = useState(false);
   const [unopenNotif, setUnopenNotif] = useState(0);
-  const [userUID, setUserUID] = useState<string | null>("");
+  const [userUID, setUserUID] = useState("");
+  const [toMatchModal, setToMatchModal] = useState(false);
+  // const [dropdownSex, setDropdownSex] = useState(false);
+  // const [selectedSex, setSelectedSex] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+
+  // const sex = [
+  //   {
+  //     key: 0,
+  //     sex: "Male",
+  //   },
+  //   {
+  //     key: 1,
+  //     sex: "Female",
+  //   },
+  // ];
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -53,6 +107,15 @@ export default function ClientNavbar() {
     });
     return () => unsubscribe();
   });
+
+  useEffect(() => {
+    const getUserData = async () => {
+      const result = await fetchUserData();
+      setUserData(result);
+      setUserEmail(result[0]?.User_Email);
+    };
+    getUserData();
+  }, []);
 
   useEffect(() => {
     const closeNotification = (e: MouseEvent) => {
@@ -69,6 +132,18 @@ export default function ClientNavbar() {
       document.body.removeEventListener("mouseover", closeNotification);
     };
   }, [showNotif]);
+
+  useEffect(() => {
+    const fetchedMyPets = async () => {
+      try {
+        const getPets = await getMyPets(userData[0]?.User_UID);
+        setMyPets(getPets);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchedMyPets();
+  }, [userData]);
 
   useEffect(() => {
     let unsubscribe: () => void;
@@ -100,6 +175,52 @@ export default function ClientNavbar() {
       }
     };
   }, []);
+
+  const latestChats = async () => {
+    try {
+      if (!userEmail) {
+        console.error("User UID is not defined.");
+        return;
+      }
+
+      console.log(userEmail);
+
+      const docRef = collection(db, "chats");
+      const q = query(
+        docRef,
+        where("participants", "array-contains", userEmail)
+      );
+      const docSnap = await getDocs(q);
+
+      if (docSnap.empty) {
+        console.log("No chats found.");
+        return;
+      }
+
+      const otherUser = docSnap.docs.map((doc) => {
+        const chatData = doc.data();
+        const otherUserEmail = chatData.participants.find(
+          (email: string) => email !== userEmail
+        );
+        return otherUserEmail;
+      });
+
+      const otherUserEmail = otherUser[0];
+
+      const userRef = collection(db, "Users");
+      const userQ = query(userRef, where("User_Email", "==", otherUserEmail));
+      const userSnap = await getDocs(userQ);
+
+      let otherID: string = "";
+      if (!userSnap.empty) {
+        otherID = userSnap.docs[0].id;
+      }
+
+      router.push(`/Message/${otherID}`);
+    } catch (error) {
+      console.error("Error fetching chats:", error);
+    }
+  };
 
   return (
     <nav className="h-20 flex flex-row justify-center items-center">
@@ -150,12 +271,14 @@ export default function ClientNavbar() {
           </li>
 
           <li className="w-28 h-14 flex items-center justify-center">
-            <a
-              className="font-montserrat text-base text-[#006B95] font-bold"
-              href="/Message"
+            <div
+              className="font-montserrat text-base text-[#006B95] font-bold cursor-pointer"
+              onClick={() => {
+                latestChats();
+              }}
             >
               Inbox
-            </a>
+            </div>
           </li>
         </ul>
         <div className="flex items-center gap-4" ref={btnRef}>
@@ -171,11 +294,19 @@ export default function ClientNavbar() {
             />
             <UserOutlined
               className="text-[#006B95] font-bold text-lg cursor-pointer"
-              onClick={() => setLogout((prev) => !prev)}
+              onClick={() => {
+                setLogout((prev) => !prev);
+                setShowNotif(false);
+                setDropDown(false);
+              }}
             />
             <ShoppingCartOutlined
               className="text-[#006B95] font-bold text-lg cursor-pointer"
-              onClick={() => setDropDown((prev) => !prev)}
+              onClick={() => {
+                setDropDown((prev) => !prev);
+                setLogout(false);
+                setShowNotif(false);
+              }}
             />
 
             {dropDown ? (
@@ -215,12 +346,12 @@ export default function ClientNavbar() {
               >
                 My Profile
               </Link>
-              <Link
-                href={`/find-my-breeding-partner`}
+              <h1
+                onClick={() => setToMatchModal(true)}
                 className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
               >
                 Find match to breed?
-              </Link>
+              </h1>
               <Link
                 href={`/Doctor`}
                 className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
@@ -270,12 +401,91 @@ export default function ClientNavbar() {
           </div>
         </div>
       </div>
+      <Modal
+        open={toMatchModal}
+        onCancel={() => setToMatchModal(false)}
+        onClose={() => () => setToMatchModal(false)}
+        onOk={() => () => {
+          setToMatchModal(false);
+        }}
+        footer={null}
+      >
+        <div className="gap-2 flex flex-col">
+          <h1 className="font-montserrat font-medium text-[#393939] text-lg">
+            Choose your pet to breed.
+          </h1>
+          <div className="flex flex-row justify-evenly">
+            {myPets.length > 0 ? (
+              myPets.map((data) => {
+                return (
+                  <div key={data?.id} className=" relative">
+                    <Link
+                      href={`/find-my-breeding-partner/${data?.id}`}
+                      className=""
+                    >
+                      <Image
+                        src={`/${data?.pet_name?.toLocaleLowerCase()}.jpg`}
+                        height={105}
+                        width={150}
+                        alt={`${data?.pet_name} Image`}
+                        className={`object-cover rounded-lg 
+                            border-4 border-[#4ABEC5] cursor-pointer`}
+                      />
+                      <h1 className="absolute bottom-5 left-2 font-bold font-montserrat text-2xl  text-white max-w-32 overflow-hidden text-ellipsis text-nowrap">
+                        {data?.pet_name}
+                      </h1>
+                    </Link>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-xl my-8 font-bold font-montserrat h-52 w-52 bg-white rounded-md drop-shadow-md flex items-center justify-center pt-4">
+                You have no pets
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
     </nav>
   );
 }
 
 const UserNotification = () => {
   const [myNotification, setMyNotification] = useState<Notifications[]>([]);
+  const [userEmail, setUserEmail] = useState("");
+  const [myMatchingNotifications, setMyMatchingNotifications] = useState<
+    MatchingNotifications[]
+  >([]);
+
+  const [userUID, setUserUID] = useState("");
+
+  useEffect(() => {
+    if (!userEmail) return; // Ensure userUID is valid
+
+    const docRef = collection(db, "matching-notifications");
+    const q = query(
+      docRef,
+      where("receiverEmail", "array-contains", userEmail)
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const myMatchings = querySnapshot.docs.map(
+        (doc) => doc.data() as MatchingNotifications
+      );
+
+      setMyMatchingNotifications(
+        myMatchings.map((data) => ({
+          ...data,
+          receiverEmail: data.receiverEmail
+            ? data.receiverEmail.filter((user) => user !== userEmail)
+            : [],
+          timestamp: data.timestamp ? dayjs(data.timestamp.toDate()) : null,
+        }))
+      );
+    });
+
+    return () => unsubscribe(); // Ensure cleanup
+  }, [userEmail]);
 
   useEffect(() => {
     let unsubscribe: () => void;
@@ -284,9 +494,11 @@ const UserNotification = () => {
       try {
         const data = await fetchUserData();
         const userUID = data[0]?.User_UID;
-
+        setUserEmail(data[0]?.User_Email);
+        setUserUID(data[0]?.User_Email);
         if (!userUID) {
           console.log("Logged In First");
+
           return;
         }
 
@@ -312,10 +524,47 @@ const UserNotification = () => {
     <div className="max-w-[500px] w-[482px] h-fit max-h-[542px] bg-white drop-shadow-lg rounded-xl justify-self-center flex flex-col  overflow-y-scroll">
       <h1 className="font-hind text-lg mx-4 mt-4 mb-2">Notifications</h1>
       <div className="h-0.5 border-[#393939] w-full border-[1px] mb-2" />
-      {myNotification.map((data) => {
+      {myMatchingNotifications.map((data, index) => {
         return (
           <div
-            key={data?.id}
+            key={index}
+            className=" drop-shadow-lg grid grid-cols-12 p-2 items-center"
+          >
+            <div className="m-2 h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
+            <div className="grid grid-cols-12 my-2 col-span-11">
+              <div className="col-span-11 grid grid-cols-12">
+                <div className="h-12 w-12 col-span-2 rounded-full bg-white drop-shadow-lg font-montserrat text-xs flex items-center justify-center text-center text-nowrap overflow-hidden">
+                  Image of <br />
+                  Pet
+                </div>
+                <div className="flex flex-col gap-1 font-montserrat text-wrap col-span-10 text-sm">
+                  <h1 className="text-[#393939] font-medium">
+                    {data?.message}
+                  </h1>
+                  <p className="text-xs text-[#797979]">
+                    {data?.timestamp?.fromNow()}
+                  </p>
+                  <Link
+                    href={`/Message/${data?.receiverUid?.find(
+                      (uid: string) => uid !== userUID
+                    )}`}
+                    className="place-self-end p-2 rounded-md bg-[#006B95] text-white"
+                  >
+                    Send A Message
+                  </Link>
+                </div>
+              </div>
+              <div className="flex justify-center mt-0.5 ">
+                <FontAwesomeIcon icon={faEyeSlash} />
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      {myNotification.map((data, index) => {
+        return (
+          <div
+            key={index}
             className=" drop-shadow-lg grid grid-cols-12 p-2 items-center"
           >
             <div className="m-2 h-2 w-2 rounded-full bg-blue-400 animate-pulse" />

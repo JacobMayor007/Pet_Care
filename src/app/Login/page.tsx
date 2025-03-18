@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import isAuthenticate from "../fetchData/User/isAuthenticate";
 import { signingIn } from "./signin";
-import { auth } from "../firebase/config";
+import { auth, fbprovider, provider } from "../firebase/config";
+import { signInWithPopup } from "firebase/auth";
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -48,9 +49,31 @@ export default function Login() {
     }
   };
 
+  const googleAuth = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      if (result) {
+        router.push("/");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const facebookAuth = async () => {
+    try {
+      const result = await signInWithPopup(auth, fbprovider);
+      if (result) {
+        router.push("/");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div className="bg-login h-screen flex justify-center items-center relative">
-      <div className="h-[450px] w-[525px] bg-white rounded-[20px] flex flex-col items-center p-11 gap-6">
+      <div className="h-fit w-[525px] bg-white rounded-[20px] flex flex-col items-center p-11 gap-6">
         <div className="flex items-center gap-1">
           <Image
             src="./Logo.svg"
@@ -129,6 +152,7 @@ export default function Login() {
               </p>
             </div>
           </div>
+
           <div className="flex flex-col justify-center items-center">
             <a href="/Sign-Up" className="text-center text-[#13585c] font-hind">
               Don&lsquo;t have an account?{" "}
@@ -145,6 +169,30 @@ export default function Login() {
             />
           </div>
         </form>
+        <div
+          onClick={googleAuth}
+          className="flex flex-row items-center justify-between gap-4 text-[#4ABEC5] px-10 py-3 rounded-md border-[#4ABEC5] border-[2px] cursor-pointer active:scale-95 active:bg-[#4ABEC5] active:text-white"
+        >
+          <Image
+            src={`/GoogleIcon.svg`}
+            width={30}
+            height={30}
+            alt="Google Icon"
+          />
+          <h1 className="font-montserrat font-bold">Continue with Google</h1>
+        </div>
+        <div
+          onClick={facebookAuth}
+          className="flex flex-row items-center justify-between gap-4 text-[#4ABEC5] px-7 py-3 rounded-md border-[#4ABEC5] border-[2px] cursor-pointer active:scale-95 active:bg-[#4ABEC5] active:text-white"
+        >
+          <Image
+            src={`/Facebook-Icon.svg`}
+            width={30}
+            height={30}
+            alt="Google Icon"
+          />
+          <h1 className="font-montserrat font-bold">Continue with Facebook</h1>
+        </div>
       </div>
       <div
         className={

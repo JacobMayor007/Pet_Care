@@ -52,7 +52,7 @@ const myRooms = async (userID: string)=>{
     try{
         
         const roomsRef = collection(db, "board");
-        const q = query(roomsRef, where("Renter_UserID", "==", userID), orderBy("Renter_CreatedAt", "desc"));
+        const q = query(roomsRef, where("Renter_UserID", "==", userID), orderBy("Renter_UserID", "desc"));
         const roomSnap = await getDocs(q);
 
         const rooms = roomSnap.docs.map((doc)=>({
