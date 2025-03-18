@@ -18,11 +18,18 @@ import Link from "next/link";
 import Signout from "@/app/SignedOut/page";
 import { Modal } from "antd";
 import { useRouter } from "next/navigation";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "@/app/firebase/config";
 import React from "react";
 import Loading from "@/app/Loading/page";
 import { handleLikedPets } from "./match";
+import dayjs, { Dayjs } from "dayjs";
 
 interface Notifications {
   id?: string;
@@ -38,6 +45,18 @@ interface Notifications {
   title?: string;
   type?: string;
   hide?: boolean;
+}
+
+interface MatchingNotifications {
+  id?: string;
+  hide?: boolean;
+  open?: boolean;
+  message?: string;
+  receiverEmail?: string[];
+  receiverUid?: string[];
+  senderEmail?: string;
+  status?: string;
+  timestamp?: Dayjs | null;
 }
 
 interface petId {
@@ -450,6 +469,40 @@ export default function FoundMyBuddy({ params }: petId) {
 
 const UserNotification = () => {
   const [myNotification, setMyNotification] = useState<Notifications[]>([]);
+  const [userEmail, setUserEmail] = useState("");
+  const [myMatchingNotifications, setMyMatchingNotifications] = useState<
+    MatchingNotifications[]
+  >([]);
+
+  const [userUID, setUserUID] = useState("");
+
+  useEffect(() => {
+    if (!userEmail) return; // Ensure userUID is valid
+
+    const docRef = collection(db, "matching-notifications");
+    const q = query(
+      docRef,
+      where("receiverEmail", "array-contains", userEmail)
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const myMatchings = querySnapshot.docs.map(
+        (doc) => doc.data() as MatchingNotifications
+      );
+
+      setMyMatchingNotifications(
+        myMatchings.map((data) => ({
+          ...data,
+          receiverEmail: data.receiverEmail
+            ? data.receiverEmail.filter((user) => user !== userEmail)
+            : [],
+          timestamp: data.timestamp ? dayjs(data.timestamp.toDate()) : null,
+        }))
+      );
+    });
+
+    return () => unsubscribe(); // Ensure cleanup
+  }, [userEmail]);
 
   useEffect(() => {
     let unsubscribe: () => void;
@@ -458,9 +511,11 @@ const UserNotification = () => {
       try {
         const data = await fetchUserData();
         const userUID = data[0]?.User_UID;
-
+        setUserEmail(data[0]?.User_Email);
+        setUserUID(data[0]?.User_Email);
         if (!userUID) {
           console.log("Logged In First");
+
           return;
         }
 
@@ -486,10 +541,47 @@ const UserNotification = () => {
     <div className="max-w-[500px] w-[482px] h-fit max-h-[542px] bg-white drop-shadow-lg rounded-xl justify-self-center flex flex-col  overflow-y-scroll">
       <h1 className="font-hind text-lg mx-4 mt-4 mb-2">Notifications</h1>
       <div className="h-0.5 border-[#393939] w-full border-[1px] mb-2" />
-      {myNotification.map((data) => {
+      {myMatchingNotifications.map((data, index) => {
         return (
           <div
-            key={data?.id}
+            key={index}
+            className=" drop-shadow-lg grid grid-cols-12 p-2 items-center"
+          >
+            <div className="m-2 h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
+            <div className="grid grid-cols-12 my-2 col-span-11">
+              <div className="col-span-11 grid grid-cols-12">
+                <div className="h-12 w-12 col-span-2 rounded-full bg-white drop-shadow-lg font-montserrat text-xs flex items-center justify-center text-center text-nowrap overflow-hidden">
+                  Image of <br />
+                  Pet
+                </div>
+                <div className="flex flex-col gap-1 font-montserrat text-wrap col-span-10 text-sm">
+                  <h1 className="text-[#393939] font-medium">
+                    {data?.message}
+                  </h1>
+                  <p className="text-xs text-[#797979]">
+                    {data?.timestamp?.fromNow()}
+                  </p>
+                  <Link
+                    href={`/Message/${data?.receiverUid?.find(
+                      (uid: string) => uid !== userUID
+                    )}`}
+                    className="place-self-end p-2 rounded-md bg-[#006B95] text-white"
+                  >
+                    Send A Message
+                  </Link>
+                </div>
+              </div>
+              <div className="flex justify-center mt-0.5 ">
+                <FontAwesomeIcon icon={faEyeSlash} />
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      {myNotification.map((data, index) => {
+        return (
+          <div
+            key={index}
             className=" drop-shadow-lg grid grid-cols-12 p-2 items-center"
           >
             <div className="m-2 h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
