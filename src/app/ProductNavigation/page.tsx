@@ -48,28 +48,28 @@ export default function ProductNavigation() {
         </div>
         <ul className="list-type-none flex items-center gap-3">
           <li className="w-28 h-14 flex items-center justify-center">
-            <a
+            <Link
               href="/Provider"
               className="font-montserrat text-base text-[#006B95] font-bold"
             >
               Dashboard
-            </a>
+            </Link>
           </li>
           <li className="w-44 h-14 flex items-center justify-center font-bold">
-            <a
+            <Link
               href="/Inbox"
               className="font-montserrat text-base text-[#006B95] font-bold"
             >
               Inbox
-            </a>
+            </Link>
           </li>
           <li className="w-30 h-14 flex items-center justify-center ">
-            <a
+            <Link
               className="font-montserrat text-base text-[#006B95] font-bold"
               href="/ListOfProducts"
             >
               List of Products
-            </a>
+            </Link>
           </li>
           <li className="w-fit px-4 h-14 flex items-center justify-center">
             <Link

@@ -82,20 +82,8 @@ export default function ClientNavbar() {
   const [unopenNotif, setUnopenNotif] = useState(0);
   const [userUID, setUserUID] = useState("");
   const [toMatchModal, setToMatchModal] = useState(false);
-  // const [dropdownSex, setDropdownSex] = useState(false);
-  // const [selectedSex, setSelectedSex] = useState("");
-  const [userEmail, setUserEmail] = useState("");
 
-  // const sex = [
-  //   {
-  //     key: 0,
-  //     sex: "Male",
-  //   },
-  //   {
-  //     key: 1,
-  //     sex: "Female",
-  //   },
-  // ];
+  const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -194,29 +182,29 @@ export default function ClientNavbar() {
 
       if (docSnap.empty) {
         console.log("No chats found.");
-        return;
+        router.push("/Message");
+      } else {
+        const otherUser = docSnap.docs.map((doc) => {
+          const chatData = doc.data();
+          const otherUserEmail = chatData.participants.find(
+            (email: string) => email !== userEmail
+          );
+          return otherUserEmail;
+        });
+
+        const otherUserEmail = otherUser[0];
+
+        const userRef = collection(db, "Users");
+        const userQ = query(userRef, where("User_Email", "==", otherUserEmail));
+        const userSnap = await getDocs(userQ);
+
+        let otherID: string = "";
+        if (!userSnap.empty) {
+          otherID = userSnap.docs[0].id;
+        }
+
+        router.push(`/Message/${otherID}`);
       }
-
-      const otherUser = docSnap.docs.map((doc) => {
-        const chatData = doc.data();
-        const otherUserEmail = chatData.participants.find(
-          (email: string) => email !== userEmail
-        );
-        return otherUserEmail;
-      });
-
-      const otherUserEmail = otherUser[0];
-
-      const userRef = collection(db, "Users");
-      const userQ = query(userRef, where("User_Email", "==", otherUserEmail));
-      const userSnap = await getDocs(userQ);
-
-      let otherID: string = "";
-      if (!userSnap.empty) {
-        otherID = userSnap.docs[0].id;
-      }
-
-      router.push(`/Message/${otherID}`);
     } catch (error) {
       console.error("Error fetching chats:", error);
     }
@@ -254,12 +242,12 @@ export default function ClientNavbar() {
             </a> */}
           </li>
           <li className="w-28 h-14 flex items-center justify-center ">
-            <a
+            <Link
               href="/Shopping"
               className="font-montserrat text-base text-[#006B95] font-bold"
             >
               Shopping
-            </a>
+            </Link>
           </li>
           <li className="w-28 h-14 flex items-center justify-center">
             <a
@@ -569,7 +557,7 @@ const UserNotification = () => {
           >
             <div className="m-2 h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
             <div className="grid grid-cols-12 my-2 col-span-11">
-              <a
+              <Link
                 href={`/pc/${
                   data?.appointment_ID
                     ? `schedule/${data.appointment_ID}`
@@ -589,7 +577,7 @@ const UserNotification = () => {
                   </h1>
                   <p className="text-xs text-[#797979]">{data?.createdAt}</p>
                 </div>
-              </a>
+              </Link>
               <div className="flex justify-center mt-0.5 ">
                 <FontAwesomeIcon icon={faEyeSlash} />
               </div>

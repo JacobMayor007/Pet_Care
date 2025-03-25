@@ -9,6 +9,8 @@ import {
   getDoc,
   Timestamp,
   DocumentData,
+  // setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "@/app/firebase/config";
 import ClientNavbar from "@/app/ClientNavbar/page";
@@ -45,7 +47,7 @@ export default function PlaceToOrder({ params }: ProductID) {
     null
   );
   const [confirmModal, setConfirmModal] = useState(false);
-  const [quantity, setQuantity] = useState<number | null>(0);
+  const [quantity, setQuantity] = useState(0);
   const [shippingFee, setShippingFee] = useState<number | null>(0);
   const [address, setAddress] = useState("");
   const [deliverTo, setDeliverTo] = useState("");
@@ -150,6 +152,11 @@ export default function PlaceToOrder({ params }: ProductID) {
 
       const orderRef = collection(db, "Orders");
       const docNotifRef = collection(db, "notifications");
+      const products = doc(db, "products", id);
+
+      await updateDoc(products, {
+        Seller_StockQuantity: Number(product.Seller_StockQuantity) - quantity,
+      });
 
       const docRef = await addDoc(orderRef, {
         OC_BuyerID: buyerUID,

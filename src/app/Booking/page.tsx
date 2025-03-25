@@ -13,6 +13,7 @@ import { DatePicker } from "antd";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSortDown } from "@fortawesome/free-solid-svg-icons";
 import { Dayjs } from "dayjs";
+import Link from "next/link";
 
 interface Room {
   id?: string;
@@ -294,107 +295,105 @@ export default function Booking() {
           <div></div>
         ) : (
           <div>
-            {room.map((data) => {
-              return (
-                <div
-                  key={data?.id}
-                  className="h-full grid grid-cols-8 gap-10 p-4 "
-                >
-                  <div className="col-span-2 pt-32 pl-16">
-                    <h1 className="font-hind text-base italic text-gray-400">
-                      Image of {data?.Renter_RoomName}
+            {room.map((data) => (
+              <div
+                key={data?.id}
+                className="h-full grid grid-cols-8 gap-10 p-4 "
+              >
+                <div className="col-span-2 pt-32 pl-16">
+                  <h1 className="font-hind text-base italic text-gray-400">
+                    Image of {data?.Renter_RoomName}
+                  </h1>
+                </div>
+                <div className="col-span-6 bg-[#86B2B4] py-8 px-14 rounded-3xl">
+                  <div className="flex flex-col gap-3">
+                    <h1 className="font-montserrat text-xs text-gray-100 font-bold">
+                      Room Name / Number: {data.Renter_RoomName}
                     </h1>
-                  </div>
-                  <div className="col-span-6 bg-[#86B2B4] py-8 px-14 rounded-3xl">
-                    <div className="flex flex-col gap-3">
-                      <h1 className="font-montserrat text-xs text-gray-100 font-bold">
-                        Room Name / Number: {data.Renter_RoomName}
-                      </h1>
-                      <h1 className="font-montserrat text-3xl text-white font-bold ">
-                        {data?.Renter_TypeOfRoom}
-                      </h1>
-                      <p className="font-montserrat text-base leading-7 font-medium text-white">
-                        {data?.Renter_RoomDescription
-                          ? data.Renter_RoomDescription.split(".")[0] + "."
-                          : ""}
-                      </p>
-                      <a
-                        href={`/Booking/${data?.id}`}
-                        className="text-white italic underline font-montserrat text-base"
-                      >
-                        View Room Details
-                      </a>
-                      <div className="border-b-2 border-gray-300 mb-4" />
-                      <div className="grid grid-cols-7">
-                        <div className="col-span-2">
-                          <h1 className="font-montserrat text-xl text-white font-bold">
-                            Features:
+                    <h1 className="font-montserrat text-3xl text-white font-bold ">
+                      {data?.Renter_TypeOfRoom}
+                    </h1>
+                    <p className="font-montserrat text-base leading-7 font-medium text-white">
+                      {data?.Renter_RoomDescription
+                        ? data.Renter_RoomDescription.split(".")[0] + "."
+                        : ""}
+                    </p>
+                    <Link
+                      href={`/Booking/${data?.id}`}
+                      className="text-white italic underline font-montserrat text-base"
+                    >
+                      View Room Details
+                    </Link>
+                    <div className="border-b-2 border-gray-300 mb-4" />
+                    <div className="grid grid-cols-7">
+                      <div className="col-span-2">
+                        <h1 className="font-montserrat text-xl text-white font-bold">
+                          Features:
+                        </h1>
+                        {room.map((data) => {
+                          const features = data?.Renter_RoomFeatures
+                            ? JSON.parse(data.Renter_RoomFeatures)
+                            : [];
+                          return (
+                            <ul key={data?.id} className="">
+                              {Array.isArray(features) &&
+                                features.map(
+                                  (feature: {
+                                    id: string;
+                                    name: string;
+                                    price: string;
+                                  }) => (
+                                    <li
+                                      key={feature.id}
+                                      className="font-montserrat text-white text-base font-medium "
+                                    >
+                                      {feature.name} - Php {feature.price}
+                                    </li>
+                                  )
+                                )}{" "}
+                            </ul>
+                          );
+                        })}
+                      </div>
+                      <div className="col-span-5 flex justify-end">
+                        <div>
+                          <h1 className="font-montserrat text-white font-bold text-2xl">
+                            Php {data?.Renter_RoomPrice}
                           </h1>
-                          {room.map((data) => {
-                            const features = data?.Renter_RoomFeatures
-                              ? JSON.parse(data.Renter_RoomFeatures)
-                              : [];
-                            return (
-                              <ul key={data?.id} className="">
-                                {Array.isArray(features) &&
-                                  features.map(
-                                    (feature: {
-                                      id: string;
-                                      name: string;
-                                      price: string;
-                                    }) => (
-                                      <li
-                                        key={feature.id}
-                                        className="font-montserrat text-white text-base font-medium "
-                                      >
-                                        {feature.name} - Php {feature.price}
-                                      </li>
-                                    )
-                                  )}{" "}
-                              </ul>
-                            );
-                          })}
-                        </div>
-                        <div className="col-span-5 flex justify-end">
-                          <div>
-                            <h1 className="font-montserrat text-white font-bold text-2xl">
-                              Php {data?.Renter_RoomPrice}
-                            </h1>
-                            <p className="font-montserrat text-white text-lg">
-                              Per night / day
-                            </p>
-                            <p className="font-montserrat text-white text-base">
-                              Excluding taxes, and fees
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => setBookNow(true)}
-                              className={`w-full h-10 font-montserrat text-base rounded-3xl uppercase mt-5 ${
-                                data?.Renter_RoomStatus === "occupied" ||
-                                data?.Renter_RoomStatus === "reserved"
-                                  ? `bg-slate-100 text-black font-bold`
-                                  : `bg-[#77D8DD]  text-white font-bold`
-                              }`}
-                              disabled={
-                                data?.Renter_RoomStatus === "occupied" ||
-                                data?.Renter_RoomStatus === "reserved"
-                                  ? true
-                                  : false
-                              }
-                            >
-                              {data?.Renter_RoomStatus === "occupied" ||
+                          <p className="font-montserrat text-white text-lg">
+                            Per night / day
+                          </p>
+                          <p className="font-montserrat text-white text-base">
+                            Excluding taxes, and fees
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setBookNow(true)}
+                            className={`w-full h-10 font-montserrat text-base rounded-3xl uppercase mt-5 ${
+                              data?.Renter_RoomStatus === "occupied" ||
                               data?.Renter_RoomStatus === "reserved"
-                                ? data?.Renter_RoomStatus
-                                : `Book Now`}
-                            </button>
-                          </div>
+                                ? `bg-slate-100 text-black font-bold`
+                                : `bg-[#77D8DD]  text-white font-bold`
+                            }`}
+                            disabled={
+                              data?.Renter_RoomStatus === "occupied" ||
+                              data?.Renter_RoomStatus === "reserved"
+                                ? true
+                                : false
+                            }
+                          >
+                            {data?.Renter_RoomStatus === "occupied" ||
+                            data?.Renter_RoomStatus === "reserved"
+                              ? data?.Renter_RoomStatus
+                              : `Book Now`}
+                          </button>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
       </div>

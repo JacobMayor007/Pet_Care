@@ -26,6 +26,7 @@ import {
 import { db } from "../firebase/config";
 import Loading from "../Loading/page";
 import fetchUserData from "../fetchData/fetchUserData";
+import { getMyPets } from "./mypet";
 
 // import fetchDoctor from "../fetchData/Doctor/fetchDoctor";
 // import { log } from "console";
@@ -44,12 +45,28 @@ interface Doctor {
   User_PNumber?: string;
 }
 
+interface MyPets {
+  id?: string;
+  pet_age?: {
+    month?: number;
+    year?: number;
+  };
+  pet_breed?: string;
+  pet_name?: string;
+  pet_ownerEmail?: string;
+  pet_ownerName?: string;
+  pet_ownerUID?: string;
+  pet_sex?: string;
+  pet_type?: string;
+}
+
 export default function Doctors() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [seeMore, setSeeMore] = useState(false);
   const [showAppointments, setShowAppointments] = useState(false);
+  const [myPets, setMyPets] = useState<MyPets[]>([]);
   const [doctor, setDoctor] = useState<Doctor[]>([]);
   const [showXMark, setShowXMark] = useState(false);
   const [userAppointment, setUserAppointment] = useState("");
@@ -63,6 +80,7 @@ export default function Doctors() {
   const [loading, setLoading] = useState(false);
   const [userWeek, setUserWeek] = useState(0);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [selectedPet, setSelectedPet] = useState<MyPets | null>(null);
   const [typeOfPayment, setTypeOfPayment] = useState("");
   const [petName, setPetName] = useState("");
   const [petBreed, setPetBreed] = useState("");
@@ -70,6 +88,7 @@ export default function Doctors() {
   const [petMonth, setPetMonth] = useState(0);
   const [petMM, setPetMM] = useState(0);
   const [petHg, setPetHg] = useState(0);
+  const [petTypeAnimal, setPetTypeAnimal] = useState("");
   // const [userAppointmentTime, setUserAppointmentTime] = useState<Dayjs | null>(
   //   null
   // );
@@ -168,6 +187,18 @@ export default function Doctors() {
     getUserData();
   }, []);
 
+  useEffect(() => {
+    const fetchedMyPets = async () => {
+      try {
+        const getPets = await getMyPets(userData[0]?.User_UID);
+        setMyPets(getPets);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchedMyPets();
+  }, [userData]);
+
   const searchDoctor = async () => {
     if (!userAppointmentDate || !userAppointment) {
       return alert("Please input date, time, and type of service");
@@ -252,7 +283,7 @@ export default function Doctors() {
   //   .map((user) => `${user?.User_FName} ${user?.User_LName}`)
   //   .join(",");
 
-  const onSubmit = async (id: string) => {
+  const onSubmit = async (id: string, petID: string) => {
     const fullName = userData[0]?.User_Name;
 
     try {
@@ -268,8 +299,8 @@ export default function Doctors() {
           : new Date(userAppointmentDate) // Convert to Date if it's a string
       );
 
-      const matchingDoctor = doctor.find((data) => data.User_UID === id);
-
+      const matchingDoctor = doctor.find((data) => data?.User_UID === id);
+      const selectedPet = myPets.find((data) => data?.id === petID);
       if (!matchingDoctor) {
         throw new Error("Matching doctor not found.");
       }
@@ -300,18 +331,25 @@ export default function Doctors() {
         Appointment_Location: matchingDoctor.User_Location,
         Appointment_DoctorPNumber: matchingDoctor.User_PNumber,
         Appointment_PatientPetAge: {
-          Year: petYear,
-          Month: petMonth,
+          Year: selectedPet ? selectedPet?.pet_age?.year : petYear,
+          Month: selectedPet ? selectedPet.pet_age?.month : petMonth,
         },
-        Appointment_PatientPetBreed: petBreed,
-        Appointment_PatientPetName: petName,
+        Appointment_PatientPetBreed: selectedPet
+          ? selectedPet?.pet_breed
+          : petBreed,
+        Appointment_PatientPetName: selectedPet
+          ? selectedPet.pet_name
+          : petName,
         Appointment_PatientPetBP: {
           Hg: petHg,
           mm: petMM,
         },
+        Appointment_PetTypeAnimal: selectedPet
+          ? selectedPet?.pet_type
+          : petTypeAnimal,
         Appointment_Status: "isPending",
         Appointment_PatientTypeOfPayment: typeOfPayment,
-        Appointment_IsNewPatient: isNewPatient, // Add this field to indicate if the patient is new
+        Appointment_IsNewPatient: isNewPatient,
       });
 
       const notifAppointments = await addDoc(docNotifRef, {
@@ -408,7 +446,7 @@ export default function Doctors() {
           >
             <DatePicker
               needConfirm
-              format="MMMM - DD - YYYY"
+              format="MMMM / DD / YYYY"
               className={`outline-none border-none font-montserrat text-lg w-full  ${
                 userAppointmentDate
                   ? `bg-white active:bg-white `
@@ -582,7 +620,7 @@ export default function Doctors() {
                       <h1 className="font-hind font-bold text-3xl text-white">
                         Dr. {data?.User_Name}
                       </h1>
-                      <div className="grid grid-rows-6 items-center px-4 mt-8 h-full">
+                      <div className="flex flex-col gap-2 items-center px-4 mt-8 h-full">
                         <h1 className="text-center font-hind text-lg text-white font-medium row-span-3">
                           {data?.User_Location}
                         </h1>
@@ -590,8 +628,8 @@ export default function Doctors() {
                           {data?.User_PNumber}
                         </h1>
                         <h1 className="text-center font-hind text-lg text-white font-medium row-span-5">
-                          Available Hours: <br />
-                          <span className="grid grid-cols-3 items-start">
+                          Available Days: <br />
+                          <span className="grid grid-cols-3 items-start gap-1">
                             {data?.User_AvailableHours?.Days?.length ? (
                               data.User_AvailableHours.Days.map(
                                 (day, dayIndex) => {
@@ -628,8 +666,8 @@ export default function Doctors() {
                         type="button"
                         className="text-xl font-montserrat font-bold row-span-1 h-14 bg-white mt-4 px-6 rounded-full text-[#006B95]"
                         onClick={() => {
+                          // setSelectPetModal(true);
                           setModal(true);
-
                           setSelectedDoctor(data);
                         }}
                       >
@@ -641,6 +679,7 @@ export default function Doctors() {
               })}
             </div>
           )}
+
           {selectedDoctor && (
             <div>
               <Modal
@@ -660,69 +699,123 @@ export default function Doctors() {
                   {selectedDoctor?.User_Name}
                 </p>
                 <div className="grid grid-cols-3 items-center w-fit my-5 gap-4">
-                  <label
-                    htmlFor="petID"
-                    className="font-montserrat font-bold text-lg text-[#393939]"
-                  >
-                    Pet Name
-                  </label>
-                  <input
-                    className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
-                    type="text"
-                    name="pet"
-                    id="petID"
-                    value={petName}
-                    onChange={(e) => setPetName(e.target.value)}
-                    placeholder="Enter the name of your pet"
-                  />
-                  <label
-                    htmlFor="petBreed"
-                    className="font-montserrat font-bold text-lg text-[#393939]"
-                  >
-                    Pet Breed
-                  </label>
-                  <input
-                    className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
-                    type="text"
-                    name="breed"
-                    id="petBreed"
-                    value={petBreed}
-                    onChange={(e) => setPetBreed(e.target.value)}
-                    placeholder="Enter the breed of your pet"
-                  />
-                  <h1 className="col-span-3 font-montserrat font-bold text-lg text-[#393939] mt-8">
-                    Input your pet age
-                  </h1>
-                  <label
-                    htmlFor="petYear"
-                    className="text-end font-montserrat font-bold text-base text-[#393939]"
-                  >
-                    Year
-                  </label>
-                  <input
-                    type="number"
-                    name="year"
-                    id="petYear"
-                    placeholder="Ex. 1"
-                    value={petYear == 0 ? "" : petYear}
-                    onChange={(e) => setPetYear(Number(e.target.value))}
-                    className=" h-9 w-56 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
-                  />
-                  <label
-                    htmlFor="petMonth"
-                    className="text-end font-montserrat font-bold text-base text-[#393939]"
-                  >
-                    Month
-                  </label>
-                  <input
-                    type="number"
-                    name="month"
-                    id="petMonth"
-                    placeholder="Ex. 3"
-                    value={petMonth == 0 ? "" : petMonth}
-                    onChange={(e) => setPetMonth(Number(e.target.value))}
-                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
-                  />
+                  {myPets.length > 0 ? (
+                    <div className="col-span-3 grid grid-cols-3 items-center w-fit my-5 gap-4">
+                      {myPets.map((data) => {
+                        return (
+                          <label
+                            key={data?.id}
+                            htmlFor={data?.id}
+                            className={` cursor-pointer w-fit`}
+                          >
+                            <Image
+                              src={`/${data?.pet_name?.toLowerCase()}.jpg`}
+                              height={105}
+                              width={130}
+                              alt={`${data?.pet_name} Image`}
+                              className={`${
+                                data?.id === selectedPet?.id
+                                  ? "border-8 border-blue-300"
+                                  : "border-none border-0"
+                              } object-cover rounded-lg`}
+                            />
+                            <h1 className="absolute bottom-1 left-5 font-bold font-montserrat text-2xl text-white">
+                              {data?.pet_name}
+                            </h1>
+                            <input
+                              type="radio"
+                              name="select-pet"
+                              id={data?.id}
+                              className="hidden"
+                              value={data?.id}
+                              onClick={() => setSelectedPet(data)}
+                            />
+                          </label>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="col-span-3 grid grid-cols-3 items-center w-fit my-5 gap-4">
+                      <label
+                        htmlFor="petID"
+                        className="font-montserrat font-bold text-lg text-[#393939]"
+                      >
+                        Pet Name
+                      </label>
+                      <input
+                        className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                        type="text"
+                        name="pet"
+                        id="petID"
+                        value={petName}
+                        onChange={(e) => setPetName(e.target.value)}
+                        placeholder="Enter the name of your pet"
+                      />
+                      <label
+                        htmlFor="petTypeAnimal"
+                        className="font-montserrat font-bold text-lg text-[#393939]"
+                      >
+                        Pet Animal Type
+                      </label>
+                      <input
+                        className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                        type="text"
+                        name="typeAnimal"
+                        id="petTypeAnimal"
+                        value={petTypeAnimal}
+                        onChange={(e) => setPetTypeAnimal(e.target.value)}
+                        placeholder="Ex. Dog"
+                      />
+                      <label
+                        htmlFor="petBreed"
+                        className="font-montserrat font-bold text-lg text-[#393939]"
+                      >
+                        Pet Breed
+                      </label>
+                      <input
+                        className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                        type="text"
+                        name="breed"
+                        id="petBreed"
+                        value={petBreed}
+                        onChange={(e) => setPetBreed(e.target.value)}
+                        placeholder="Enter the breed of your pet"
+                      />
+                      <h1 className="col-span-3 font-montserrat font-bold text-lg text-[#393939] mt-8">
+                        Input your pet age
+                      </h1>
+                      <label
+                        htmlFor="petYear"
+                        className="text-end font-montserrat font-bold text-base text-[#393939]"
+                      >
+                        Year
+                      </label>
+                      <input
+                        type="number"
+                        name="year"
+                        id="petYear"
+                        placeholder="Ex. 1"
+                        value={petYear == 0 ? "" : petYear}
+                        onChange={(e) => setPetYear(Number(e.target.value))}
+                        className=" h-9 w-56 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                      />
+                      <label
+                        htmlFor="petMonth"
+                        className="text-end font-montserrat font-bold text-base text-[#393939]"
+                      >
+                        Month
+                      </label>
+                      <input
+                        type="number"
+                        name="month"
+                        id="petMonth"
+                        placeholder="Ex. 3"
+                        value={petMonth == 0 ? "" : petMonth}
+                        onChange={(e) => setPetMonth(Number(e.target.value))}
+                        className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                      />
+                    </div>
+                  )}
                   <h1 className="col-span-3 font-montserrat font-bold text-lg text-[#393939] mt-6">
                     Input the blood pressure of your pet
                   </h1>
@@ -801,7 +894,10 @@ export default function Doctors() {
                 open={confirmModal}
                 onCancel={() => setConfirmModal(false)}
                 onOk={() => {
-                  onSubmit(selectedDoctor?.User_UID || "");
+                  onSubmit(
+                    selectedDoctor?.User_UID || "",
+                    selectedPet?.id || ""
+                  );
                   setConfirmModal(false);
                 }}
                 centered={true}

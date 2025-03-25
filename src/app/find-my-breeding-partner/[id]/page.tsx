@@ -19,7 +19,10 @@ import Signout from "@/app/SignedOut/page";
 import { Modal } from "antd";
 import { useRouter } from "next/navigation";
 import {
+  addDoc,
   collection,
+  // doc,
+  // getDoc,
   getDocs,
   onSnapshot,
   query,
@@ -29,7 +32,9 @@ import { db } from "@/app/firebase/config";
 import React from "react";
 import Loading from "@/app/Loading/page";
 import { handleLikedPets } from "./match";
+import "@ant-design/v5-patch-for-react-19";
 import dayjs, { Dayjs } from "dayjs";
+import { getMyPets } from "@/app/Profile/[id]/myData";
 
 interface Notifications {
   id?: string;
@@ -76,6 +81,41 @@ interface PetToMatch {
   pet_ownerName?: string;
   pet_ownerUID?: string;
   pet_sex?: string;
+  pet_breed?: string;
+  pet_type?: string;
+}
+
+interface MyPets {
+  id?: string;
+  pet_age?: {
+    month?: number;
+    year?: number;
+  };
+  pet_name?: string;
+  pet_ownerEmail?: string;
+  pet_ownerName?: string;
+  pet_ownerUID?: string;
+  pet_sex?: string;
+  pet_type?: string;
+}
+
+interface ThisPet {
+  id?: string;
+  pet_age?: {
+    month?: number;
+    year?: number;
+  };
+  pet_UID?: string;
+  pet_breed?: string;
+  pet_name?: string;
+  pet_ownerEmail?: string;
+  pet_ownerName?: string;
+  pet_ownerUID?: string;
+  pet_sex?: string;
+  pet_type?: string;
+  preferred_animal?: string;
+  preferred_breed?: string;
+  preferred_sex?: string;
 }
 
 export default function FoundMyBuddy({ params }: petId) {
@@ -91,7 +131,52 @@ export default function FoundMyBuddy({ params }: petId) {
   const [currentIndex, setCurrentIndex] = useState(3);
   const [isReject, setIsReject] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [myPets, setMyPets] = useState<MyPets[]>([]);
+  const [toMatchModal, setToMatchModal] = useState(false);
+  const [registerModal, setRegisterModal] = useState(false);
+  const [currentPet, setCurrentPet] = useState<ThisPet[]>([]);
+  // const [dropdownSex, setDropdownSex] = useState(false);
+  const [selectedSex, setSelectedSex] = useState("");
+  const [selectedBreed, setSelectedBreed] = useState("");
+  const [selectedAnimal, setSelectedAnimal] = useState("");
+  // const [excludedSex, setExcludedSex] = useState("");
+  // const [excludedBreed, setExcludedBreed] = useState("");
+  // const [excludedAnimal, setExcludedAnimal] = useState("");
+
   const router = useRouter();
+
+  // const sex = [
+  //   {
+  //     key: 0,
+  //     sex: "Male",
+  //   },
+  //   {
+  //     key: 1,
+  //     sex: "Female",
+  //   },
+  // ];
+
+  useEffect(() => {
+    const getCurrentPet = async () => {
+      try {
+        console.log("Id: ", id);
+
+        const docRef = collection(db, "pet-to-match");
+        const q = query(docRef, where("pet_UID", "==", id));
+        const docSnap = await getDocs(q);
+
+        const result = docSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setCurrentPet(result);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    getCurrentPet();
+  }, [id]);
 
   useEffect(() => {
     const getUserData = async () => {
@@ -104,6 +189,18 @@ export default function FoundMyBuddy({ params }: petId) {
     };
     getUserData();
   }, [userUID, router]);
+
+  useEffect(() => {
+    const fetchedMyPets = async () => {
+      try {
+        const getPets = await getMyPets(userUID);
+        setMyPets(getPets);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchedMyPets();
+  }, [userUID]);
 
   useEffect(() => {
     const closeUserDropdown = (e: MouseEvent) => {
@@ -123,8 +220,6 @@ export default function FoundMyBuddy({ params }: petId) {
 
   useEffect(() => {
     const getPetsToMatch = async () => {
-      let likedPETID: string = "";
-
       try {
         const matchQuery = query(
           collection(db, "matches"),
@@ -136,18 +231,19 @@ export default function FoundMyBuddy({ params }: petId) {
           (doc) => doc.data().matchedPetWith || []
         );
 
-        console.log("MY MATCHES: ", matchedPetIds);
+        const likedPetQuery = query(
+          collection(db, "matches"),
+          where("userUID", "==", currentPet[0]?.pet_ownerUID),
+          where("petId", "==", id)
+        );
 
-        const matchSnapshot = await getDocs(matchQuery);
+        const likedPetSnapshot = await getDocs(likedPetQuery);
+        const likedPetId = likedPetSnapshot.docs.map(
+          (doc) => doc.data().likedpetId
+        );
 
-        if (!matchSnapshot.empty) {
-          const matchDoc = matchSnapshot.docs[0]; // Get the first match
-          const matchData = matchDoc.data();
-          likedPETID = matchData.likedpetId;
-        } else {
-          console.log("No matching document found.");
-        }
-        console.log("LIKED PET ID FRONT END:", likedPETID);
+        console.log("My Likes: ", likedPetId[0]);
+
         const rejectsQuery = query(
           collection(db, "rejects"),
           where("userUID", "==", userUID),
@@ -158,24 +254,28 @@ export default function FoundMyBuddy({ params }: petId) {
           (doc) => doc.data().rejectedPetId
         );
 
+        console.log("My Rejects: ", rejectsPetId);
+
         const myPetsQuery = query(
           collection(db, "pet-to-match"),
           where("pet_UID", "==", id)
         );
-
         const myPetSnapshot = await getDocs(myPetsQuery);
         const myPets = myPetSnapshot.docs.map((doc) => doc.data().pet_UID);
+
+        console.log("My Pets: ", myPets);
 
         const excludedPetIds = [
           ...matchedPetIds,
           ...rejectsPetId,
           ...myPets,
-          likedPETID,
+          likedPetId[0],
         ];
 
-        console.log(excludedPetIds);
+        console.log("Excluded: ", excludedPetIds);
 
         let filteredPets = [];
+        // let myFilterPets = [];
 
         const petsQuery = collection(db, "pet-to-match");
         const petsSnapshot = await getDocs(petsQuery);
@@ -184,8 +284,17 @@ export default function FoundMyBuddy({ params }: petId) {
         );
 
         filteredPets = allPets.filter(
-          (pet) => !excludedPetIds.includes(pet.pet_UID)
+          (pet) =>
+            !excludedPetIds.includes(pet.pet_UID) &&
+            pet.pet_sex?.toLowerCase() === currentPet?.[0]?.preferred_sex &&
+            pet.pet_breed?.toLowerCase() === currentPet[0]?.preferred_breed &&
+            pet.pet_type?.toLowerCase() === currentPet[0]?.preferred_animal
         );
+
+        // myFilterPets = allPets.find((pet)=> )
+
+        console.log("Filter Pets: ", filteredPets);
+
         filteredPets = filteredPets.sort(() => Math.random() - 0.5);
 
         setPetToMatch(filteredPets);
@@ -217,12 +326,75 @@ export default function FoundMyBuddy({ params }: petId) {
     }
   };
 
-  console.log(currentIndex);
+  useEffect(() => {
+    const registerPetToMatch = async () => {
+      try {
+        const docRef = collection(db, "pet-to-match");
+        const q = query(docRef, where("pet_UID", "==", id));
+        const petSnap = await getDocs(q);
+
+        let preferredSex: string = "",
+          preferredBreed: string = "",
+          preferredAnimal: string = "";
+
+        if (petSnap.empty) {
+          setRegisterModal(true);
+        }
+
+        petSnap.docs.map((doc) => {
+          const data = doc.data();
+          preferredSex = data.preferred_sex?.[0] || "";
+          preferredBreed = data.preferred_breed?.[0] || "";
+          preferredAnimal = data.preferred_animal?.[0] || "";
+        });
+
+        if (!preferredSex || !preferredBreed || !preferredAnimal) {
+          setRegisterModal(true);
+        }
+
+        // setExcludedSex(preferredSex[0]);
+        // setExcludedBreed(preferredBreed[0]);
+        // setExcludedAnimal(preferredAnimal[0]);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    registerPetToMatch();
+  }, [id]);
+
+  const registerHandle = async () => {
+    try {
+      setRegisterModal(false);
+      setLoading(true);
+      const docRef = collection(db, "pet-to-match");
+      const result = await addDoc(docRef, {
+        pet_UID: currentPet[0]?.id,
+        pet_age: currentPet[0]?.pet_age,
+        pet_breed: currentPet[0]?.pet_breed,
+        pet_name: currentPet[0]?.pet_name,
+        pet_ownerEmail: currentPet[0]?.pet_ownerEmail,
+        pet_ownerName: currentPet[0]?.pet_ownerName,
+        pet_ownerUID: currentPet[0]?.pet_ownerUID,
+        pet_sex: currentPet[0]?.pet_sex,
+        pet_type: currentPet[0]?.pet_type,
+        preferred_animal: selectedAnimal.toLocaleLowerCase(),
+        preferred_breed: selectedBreed.toLocaleLowerCase(),
+        preferred_sex: selectedSex.toLocaleLowerCase(),
+      });
+
+      console.log(result);
+    } catch (error) {
+      console.error(error);
+      setRegisterModal(true);
+    } finally {
+      setInterval(() => {
+        setLoading(false);
+      }, 3000);
+    }
+  };
 
   return (
     <div className="h-screen relative bg-red-50">
-      <Modal></Modal>
-
       <nav className="h-16 flex flex-row items-center justify-between w-full pr-32 pl-24 fixed z-20 top-0">
         <div className="flex flex-row items-center gap-7">
           <FontAwesomeIcon
@@ -301,12 +473,12 @@ export default function FoundMyBuddy({ params }: petId) {
               >
                 My Profile
               </Link>
-              <Link
-                href={`/find-my-buddy`}
+              <h1
+                onClick={() => setToMatchModal(true)}
                 className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
               >
-                Want to find your buddy?
-              </Link>
+                Find match to breed?
+              </h1>
               <Link
                 href={`/Doctor`}
                 className="text-center font-hind  h-full w-44 flex items-center justify-center border-b-[1px] border-[#B1B1B1]"
@@ -345,69 +517,171 @@ export default function FoundMyBuddy({ params }: petId) {
             <UserNotification />
           </div>
         </div>
+
+        <Modal
+          open={toMatchModal}
+          onCancel={() => setToMatchModal(false)}
+          onClose={() => () => setToMatchModal(false)}
+          footer={null}
+        >
+          <div className="gap-2 flex flex-col">
+            <h1 className="font-montserrat font-medium text-[#393939] text-lg">
+              Choose your pet to breed.
+            </h1>
+            <div className="flex flex-row justify-evenly">
+              {myPets.length > 0 ? (
+                myPets.map((data) => {
+                  return (
+                    <div key={data?.id} className=" relative">
+                      <Link
+                        href={`/find-my-breeding-partner/${data?.id}`}
+                        className=""
+                      >
+                        <Image
+                          src={`/${data?.pet_name?.toLocaleLowerCase()}.jpg`}
+                          height={105}
+                          width={150}
+                          alt={`${data?.pet_name} Image`}
+                          className={`object-cover rounded-lg 
+                            border-4 border-[#4ABEC5] cursor-pointer`}
+                        />
+                        <h1 className="absolute bottom-5 left-2 font-bold font-montserrat text-2xl  text-white max-w-32 overflow-hidden text-ellipsis text-nowrap">
+                          {data?.pet_name}
+                        </h1>
+                      </Link>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-xl my-8 font-bold font-montserrat h-52 w-52 bg-white rounded-md drop-shadow-md flex items-center justify-center pt-4">
+                  You have no pets
+                </div>
+              )}
+            </div>
+          </div>
+        </Modal>
       </nav>
 
-      <div className="relative top-8 left-10 z-10 w-[550px] h-[94%] mx-auto rounded-lg grid grid-cols-5 ">
-        {petToMatch.length > 0 &&
-          petToMatch[currentIndex] &&
-          (loading ? (
-            <div className="h-full w-full col-span-4  justify-center items-center">
-              <Loading />
-            </div>
-          ) : (
-            <div
-              key={petToMatch[currentIndex].id}
-              className="bg-red-300 px-4 h-full w-full col-span-4 flex items-center rounded-lg"
+      <Modal
+        open={registerModal}
+        onCancel={() => window.history.back()}
+        onClose={() => window.history.back()}
+        onOk={() => {
+          registerHandle();
+        }}
+      >
+        <div className="h-40 mt-4 flex flex-col justify-evenly">
+          <h1 className="font-montserrat">Please input your preferred pets</h1>
+          <div className="grid grid-cols-2 gap-4 w-fit">
+            <label htmlFor="sex-id" className="font-montserrat font-semibold">
+              Sex:
+            </label>
+            <input
+              type="text"
+              name="sex"
+              id="sex-id"
+              placeholder="Male"
+              value={selectedSex}
+              onChange={(e) => setSelectedSex(e.target.value)}
+              className="outline-none  h-8 border-b-[1px] border-[#797979] "
+            />
+            <label
+              htmlFor="pet-type-id"
+              className="font-montserrat font-semibold"
             >
-              <Image
-                height={140}
-                width={450}
-                src={`/${petToMatch[
-                  currentIndex
-                ]?.pet_name?.toLowerCase()}.jpg`}
-                alt={`${petToMatch[currentIndex]?.pet_name} Image`}
-              />
-            </div>
-          ))}
-        <div
-          className={`justify-self-end h-full w-full flex flex-col items-center justify-center gap-5`}
-        >
-          <button
-            type="button"
-            className={`${
-              isHeart ? `border-none bg-[#B32134] ` : `border-red-200`
-            } border-2 h-11 w-11 rounded-full flex items-center justify-center cursor-pointer mt-8 mb-6`}
-            onClick={() => {
-              setIsHeart(true);
-              myHeartedPets(petToMatch[currentIndex]?.pet_UID || "");
-            }}
-          >
-            <FontAwesomeIcon
-              icon={faHeart}
-              className={`text-3xl ${
-                isHeart ? `text-white` : `text-slate-400`
-              } `}
+              Type of Animal:
+            </label>
+            <input
+              type="text"
+              name="pet-type"
+              id="pet-type-id"
+              placeholder="Dog"
+              value={selectedAnimal}
+              onChange={(e) => {
+                setSelectedAnimal(e.target.value);
+              }}
+              className="outline-none  h-8 border-b-[1px] border-[#797979] "
             />
-          </button>
-          <button
-            type="button"
-            className={`${
-              isReject ? `bg-gray-700` : `border-gray-400 border-2`
-            } h-11 w-11 rounded-full flex items-center justify-center cursor-pointer mb-6`}
-            onClick={() => {
-              setIsReject((prev) => !prev);
-            }}
-          >
-            <FontAwesomeIcon
-              icon={faXmark}
-              className={`text-3xl  ${
-                isReject ? `text-white` : `text-slate-400`
-              }`}
+            <label htmlFor="breed-id" className="font-montserrat font-semibold">
+              Breed:
+            </label>
+            <input
+              type="text"
+              name="breed"
+              id="breed-id"
+              placeholder="German Shepherd"
+              value={selectedBreed}
+              onChange={(e) => setSelectedBreed(e.target.value)}
+              className="outline-none h-8 border-b-[1px] border-[#797979] "
             />
-          </button>
+          </div>
         </div>
+      </Modal>
 
-        {/* <div className="bg-red-300 px-4 h-full w-full col-span-4 flex items-center rounded-lg">
+      {!registerModal && (
+        <div
+          className={`relative top-8 left-10 z-10 w-[550px] h-[94%] mx-auto rounded-lg grid grid-cols-5 `}
+        >
+          {petToMatch.length > 0 &&
+            petToMatch[currentIndex] &&
+            (loading ? (
+              <div className="h-full w-full col-span-4  justify-center items-center">
+                <Loading />
+              </div>
+            ) : (
+              <div
+                key={petToMatch[currentIndex].id}
+                className="bg-red-300 px-4 h-full w-full col-span-4 flex items-center rounded-lg"
+              >
+                <Image
+                  height={140}
+                  width={450}
+                  src={`/${petToMatch[
+                    currentIndex
+                  ]?.pet_name?.toLowerCase()}.jpg`}
+                  alt={`${petToMatch[currentIndex]?.pet_name} Image`}
+                />
+              </div>
+            ))}
+          <div
+            className={`justify-self-end h-full w-full flex flex-col items-center justify-center gap-5`}
+          >
+            <button
+              type="button"
+              className={`${
+                isHeart ? `border-none bg-[#B32134] ` : `border-red-200`
+              } border-2 h-11 w-11 rounded-full flex items-center justify-center cursor-pointer mt-8 mb-6`}
+              onClick={() => {
+                setIsHeart(true);
+                myHeartedPets(petToMatch[currentIndex]?.pet_UID || "");
+              }}
+            >
+              <FontAwesomeIcon
+                icon={faHeart}
+                className={`text-3xl ${
+                  isHeart ? `text-white` : `text-slate-400`
+                } `}
+              />
+            </button>
+            <button
+              type="button"
+              className={`${
+                isReject ? `bg-gray-700` : `border-gray-400 border-2`
+              } h-11 w-11 rounded-full flex items-center justify-center cursor-pointer mb-6`}
+              onClick={() => {
+                setIsReject((prev) => !prev);
+              }}
+            >
+              <FontAwesomeIcon
+                icon={faXmark}
+                className={`text-3xl  ${
+                  isReject ? `text-white` : `text-slate-400`
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* <div className="bg-red-300 px-4 h-full w-full col-span-4 flex items-center rounded-lg">
           <Image
             height={140}
             width={140}
@@ -462,7 +736,8 @@ export default function FoundMyBuddy({ params }: petId) {
             </div>
           </div>
         </div> */}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

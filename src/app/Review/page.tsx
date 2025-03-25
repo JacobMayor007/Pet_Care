@@ -23,6 +23,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "../firebase/config";
 import { useRouter } from "next/navigation";
 import Signout from "../SignedOut/page";
+import Link from "next/link";
 
 type Feature = {
   id: string;
@@ -216,36 +217,36 @@ const Review = () => {
           </div>
           <ul className="list-type-none flex items-center gap-3">
             <li className="w-28 h-14 flex items-center justify-center">
-              <a
+              <Link
                 href="/Provider"
                 className="font-montserrat text-base text-[#006B95]"
               >
                 Dashboard
-              </a>
+              </Link>
             </li>
             <li className="w-28 h-14 flex items-center justify-center">
-              <a
+              <Link
                 href="/Inbox"
                 className="font-montserrat text-base text-[#006B95]"
               >
                 Inbox
-              </a>
+              </Link>
             </li>
             <li className="w-28 h-14 flex items-center justify-center">
-              <a
+              <Link
                 className="font-montserrat text-base text-[#006B95]"
                 href="/Notifications"
               >
                 Notifications
-              </a>
+              </Link>
             </li>
             <li className="w-36 h-14 flex items-center justify-center">
-              <a
+              <Link
                 className="font-montserrat text-base text-[#006B95]"
                 href="/AddProduct"
               >
                 Add New Product
-              </a>
+              </Link>
             </li>
           </ul>
           <div className="flex items-center gap-4">

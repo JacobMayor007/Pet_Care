@@ -25,6 +25,7 @@ const handleLikedPets = async (petID: string, petOwnerUID: string, likedpetId: s
         console.log("Existing match data:", matchData);
   
         const matchedUserEmail = matchData.userEmail;
+        const matchedUserUID = matchData.userUID;
         const matchedPetID = matchData.petId;
   
         console.log(matchedUserEmail, matchedPetID);
@@ -33,7 +34,8 @@ const handleLikedPets = async (petID: string, petOwnerUID: string, likedpetId: s
         const matchedPetWith = matchData.matchedPetWith || [];
 
         await addDoc(collection(db, "matching-notifications"), {
-            receiverEmail: [...new Set([matchedUserEmail, UserEmail])], 
+            receiverEmail: [...new Set([matchedUserEmail, UserEmail])],
+            receiverUid: [...new Set([matchedUserUID, petOwnerUID])],
             senderEmail: UserEmail, 
             message: `You have a matched pet! Send them a message.`,
             status: `matched`,
@@ -60,7 +62,7 @@ const handleLikedPets = async (petID: string, petOwnerUID: string, likedpetId: s
       } else {
        const result = await addDoc(collection(db, "matches"), {
           petId: petID,
-          petOwnerId: petOwnerUID,
+          userUID: petOwnerUID,
           likedpetId: likedpetId,
           userEmail: UserEmail,
         })

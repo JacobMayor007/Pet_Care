@@ -19,6 +19,7 @@ export default function SignUp() {
   const [fName, setFName] = useState("");
   const [lName, setLName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false); // Prevent duplicate submissions
+  const [checkBox, setCheckBox] = useState(false);
 
   const [createUserWithEmailAndPassword, loading] =
     useCreateUserWithEmailAndPassword(auth);
@@ -26,7 +27,7 @@ export default function SignUp() {
   const db = getFirestore();
 
   const handleSignUp = async () => {
-    // Check if the form is already submitting
+    const regex = /^(?=.*[!@#$%^&*])(?=.*\d).{8,}$/;
     if (isSubmitting) return;
 
     setIsSubmitting(true); // Prevent further clicks
@@ -44,6 +45,15 @@ export default function SignUp() {
       return;
     }
 
+    if (!regex.test(password)) {
+      alert("Please input atleast one special character, and one number");
+    }
+
+    if (!checkBox) {
+      alert("Please check the terms and conditions");
+      return;
+    }
+
     try {
       // Create user with Firebase Authentication
       const res = await createUserWithEmailAndPassword(email, password);
@@ -57,6 +67,7 @@ export default function SignUp() {
         User_Name: fName + lName,
         User_Email: email,
         User_UID: res.user.uid,
+        TermsAndConditions: checkBox,
         CreatedAt: Timestamp.now(),
       });
 
@@ -122,6 +133,8 @@ export default function SignUp() {
       console.log(err);
     }
   };
+
+  console.log("Value of Checkbox: ", checkBox);
 
   return (
     <div className="bg-[#9FE1DB] bg-signUp h-screen">
@@ -218,6 +231,7 @@ export default function SignUp() {
                 id="password"
                 className="h-12 w-full border-[1px] border-solid border-black outline-none rounded-md font-hind text base px-2"
                 value={password}
+                minLength={8}
                 onChange={(e) => setPassword(e.target.value)}
               />
               <div className="absolute right-3 bottom-4">
@@ -227,6 +241,7 @@ export default function SignUp() {
                   width={19}
                   alt="Show Password icon"
                   className="object-contain cursor-pointer"
+                  draggable={false}
                   onClick={() => setShow((prev) => !prev)}
                 />
               </div>
@@ -252,6 +267,7 @@ export default function SignUp() {
                   height={33.53}
                   width={19}
                   alt="Show Password icon"
+                  draggable={false}
                   className="object-contain cursor-pointer"
                   onClick={() => setConfirmShow((prev) => !prev)}
                 />
@@ -263,6 +279,8 @@ export default function SignUp() {
                 name="agree"
                 id="agreeTandT"
                 className="w-6 h-6 text-base font-hind px-2"
+                checked={checkBox}
+                onClick={() => setCheckBox((prev) => !prev)}
               />
               <p>
                 I agree to the{" "}

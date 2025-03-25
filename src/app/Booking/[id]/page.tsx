@@ -8,7 +8,6 @@ import { db } from "@/app/firebase/config";
 import { format } from "date-fns";
 import dayjs, { Dayjs } from "dayjs";
 import Image from "next/image";
-
 import { DatePicker, TimePicker } from "antd";
 import {
   doc,
@@ -43,9 +42,9 @@ interface Room {
   Renter_UserEmail?: string;
 }
 
-interface myReservation {
-  BC_BoarderStatus?: string;
-}
+// interface myReservation {
+//   BC_BoarderStatus?: string;
+// }
 
 interface RoomID {
   params: Promise<{ id: string }>;
@@ -84,7 +83,7 @@ export default function Room({ params }: RoomID) {
   const [guest, setGuest] = useState<number | null>(0);
   const [days, setDays] = useState<number | null>(0);
   const [roomID, setRoomID] = useState<string | null>("");
-  const [roomStatus, setRoomStatus] = useState<myReservation[]>([]);
+  const [roomStatus, setRoomStatus] = useState("");
 
   const [typeOfPaymentArray, setTypeOfPaymentArray] = useState<string[] | null>(
     null
@@ -372,9 +371,9 @@ export default function Room({ params }: RoomID) {
         const status = result.docs.map((doc) => ({
           BC_BoarderStatus: doc.get("BC_BoarderStatus"),
         }));
-        setRoomStatus(status);
+        setRoomStatus(status[0]?.BC_BoarderStatus);
       } else {
-        setRoomStatus([]);
+        setRoomStatus("");
       }
     };
     getMyStatus();
@@ -425,6 +424,8 @@ export default function Room({ params }: RoomID) {
 
   const formattedCheckIn = formatDate(checkInDate);
   const formattedCheckOut = formatDate(checkOutDate);
+
+  console.log("Value of Room Status: ", roomStatus.valueOf());
 
   return (
     <div className={loadingPage ? `invisible` : `visible`}>
@@ -628,10 +629,10 @@ export default function Room({ params }: RoomID) {
                 type="button"
                 className="mx-4 h-12 mt-4 bg-blue-300 text-white font-montserrat text-xl font-bold rounded-lg"
                 disabled={
-                  roomStatus[0]?.BC_BoarderStatus === "Pending" ||
-                  roomStatus[0]?.BC_BoarderStatus === "Accept" ||
-                  roomStatus[0]?.BC_BoarderStatus === "Checked-In" ||
-                  roomStatus[0]?.BC_BoarderStatus === "Reserved"
+                  roomStatus === "Pending" ||
+                  roomStatus === "Accept" ||
+                  roomStatus === "Checked-In" ||
+                  roomStatus === "Reserved"
                     ? true
                     : false
                 }
@@ -639,9 +640,7 @@ export default function Room({ params }: RoomID) {
                   setConfirm(true);
                 }}
               >
-                {roomStatus[0]?.BC_BoarderStatus !== "Paid" || ""
-                  ? roomStatus[0]?.BC_BoarderStatus
-                  : `Book Now`}
+                {roomStatus !== "Paid" && roomStatus ? roomStatus : `Book Now`}
               </button>
               <Modal
                 open={confirm}

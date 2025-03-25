@@ -233,13 +233,13 @@ export default function Home() {
             <h1 className="col-span-5 font-montserrat text-3xl text-[#393939] font-bold my-4">
               Products
             </h1>
-            <a
+            <Link
               href="/Shopping"
               className="text-sm font-montserrat font-bold italic text-[#4ABEC5] flex flex-col gap-1"
             >
               View List Products
               <span className="w-full h-1 rounded-full bg-[#4ABEC5]" />
-            </a>
+            </Link>
           </div>
 
           {products.slice(0, 10).map((data) => {
@@ -273,13 +273,13 @@ export default function Home() {
             <h1 className="col-span-5 font-montserrat text-3xl text-[#393939] font-bold my-4">
               Food
             </h1>
-            <a
+            <Link
               href="/Shopping"
               className="text-sm font-montserrat font-bold italic text-[#4ABEC5] flex flex-col gap-1"
             >
               View Food Products
               <span className="w-full h-1 rounded-full bg-[#4ABEC5]" />
-            </a>
+            </Link>
           </div>
           {food.slice(0, 5).map((data) => {
             return (
@@ -312,13 +312,13 @@ export default function Home() {
             <h1 className="col-span-5 font-montserrat text-3xl text-[#393939] font-bold my-4">
               Pet Items
             </h1>
-            <a
+            <Link
               href="/Shopping"
               className="text-sm font-montserrat font-bold italic text-[#4ABEC5] flex flex-col gap-1"
             >
               View List Item
               <span className="w-full h-1 rounded-full bg-[#4ABEC5]" />
-            </a>
+            </Link>
           </div>
           {item.slice(0, 5).map((data) => {
             return (
@@ -362,7 +362,7 @@ export default function Home() {
         </div>
         {room.slice(0, 5).map((data) => {
           return (
-            <a
+            <Link
               href={`/Booking/${data?.id}`}
               key={data?.id}
               className="grid grid-rows-11 z-[1] gap-2 bg-white rounded-lg px-3 py-4 hover:border-blue-500 hover:border-[1px] drop-shadow-xl cursor-pointer h-64 w-72 transform transition-all active:scale-95 ease-out duration-50 select-none"
@@ -382,7 +382,7 @@ export default function Home() {
               <button className="row-span-2 bg-blue-500 text-white font-hind rounded-md">
                 View Room
               </button>
-            </a>
+            </Link>
           );
         })}
       </div>
@@ -402,7 +402,7 @@ export default function Home() {
         </div>
         {doctor.slice(0, 5).map((data) => {
           return (
-            <a
+            <Link
               href={`/Profile/Doctor/${data?.User_UID}`}
               key={data?.id}
               className="grid relative grid-rows-11 z-[1] gap-2 bg-[#006B95] rounded-lg px-3 py-4 drop-shadow-2xl cursor-pointer full w-72  select-none"
@@ -430,7 +430,7 @@ export default function Home() {
                   })}
                 </h1>{" "}
                 <h1 className="text-center font-hind text-white font-medium row-span-5 bg-red-500 py-2 rounded-lg">
-                  Available Hours: <br />
+                  Available Days: <br />
                   <span className="grid grid-cols-3 items-start">
                     {data?.User_AvailableHours?.Days?.length ? (
                       data.User_AvailableHours.Days.map((day, dayIndex) => {
@@ -448,14 +448,14 @@ export default function Home() {
                     )}
                   </span>
                 </h1>
-                <a
+                <Link
                   href={`/Profile/Doctor/${data?.User_UID}`}
                   className="row-span-2 bg-white font-hind rounded-md h-10 transform transition-all active:scale-95 ease-out duration-50 flex items-center justify-center"
                 >
                   View Doctor
-                </a>
+                </Link>
               </div>
-            </a>
+            </Link>
           );
         })}
       </div>

@@ -28,9 +28,10 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 // import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { DatePicker, Modal, TimePicker } from "antd";
+import { DatePicker, Modal } from "antd";
 import dayjs, { Dayjs } from "dayjs";
 import { db } from "@/app/firebase/config";
+import { getMyPets } from "@/app/Appointments/mypet";
 
 interface doctorID {
   params: Promise<{ id: string }>;
@@ -50,6 +51,21 @@ interface Doctor {
   User_UID?: string;
   User_UserType?: string;
   User_Details?: string;
+}
+
+interface MyPets {
+  id?: string;
+  pet_age?: {
+    month?: number;
+    year?: number;
+  };
+  pet_breed?: string;
+  pet_name?: string;
+  pet_ownerEmail?: string;
+  pet_ownerName?: string;
+  pet_ownerUID?: string;
+  pet_sex?: string;
+  pet_type?: string;
 }
 
 export default function ViewDoctor({ params }: doctorID) {
@@ -103,7 +119,6 @@ export default function ViewDoctor({ params }: doctorID) {
 
 function DoctorProfile(props: { id: string }) {
   const divRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const weeks = [
     {
@@ -135,53 +150,6 @@ function DoctorProfile(props: { id: string }) {
       label: "Saturday",
     },
   ];
-
-  const appointments = [
-    {
-      key: 1,
-      label: "Blood test",
-    },
-    {
-      key: 2,
-      label: "Heartworm test",
-    },
-    {
-      key: 3,
-      label: "Endoscopy",
-    },
-    {
-      key: 4,
-      label: "Magnetic Resonance Imaging",
-    },
-    {
-      key: 5,
-      label: "Urinalysis",
-    },
-    {
-      key: 6,
-      label: "X-ray",
-    },
-    {
-      key: 7,
-      label: "Biopsy",
-    },
-    {
-      key: 8,
-      label: "Vetirinary Appointment",
-    },
-    {
-      key: 9,
-      label: "Stool test",
-    },
-    {
-      key: 10,
-      label: "Ultrasound",
-    },
-    {
-      key: 11,
-      label: "Electrocardiography",
-    },
-  ];
   const options = [
     {
       id: 1,
@@ -207,21 +175,20 @@ function DoctorProfile(props: { id: string }) {
   const [petMonth, setPetMonth] = useState(0);
   const [petMM, setPetMM] = useState(0);
   const [petHg, setPetHg] = useState(0);
-
   const [dateModal, setDateModal] = useState(false);
   const [bookModal, setBookModal] = useState(false);
   const [isDoctor, setIsDoctor] = useState<boolean | null>(false);
   const [userData, setUserData] = useState<DocumentData[]>([]);
   const [doctor, setDoctor] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [time, setTime] = useState<Dayjs | null>(dayjs());
   const [date, setDate] = useState<Dayjs | null>(dayjs());
+  const [myPets, setMyPets] = useState<MyPets[]>([]);
+  const [petTypeAnimal, setPetTypeAnimal] = useState("");
   // const [typeOfPayment, setTypeOfPayment] = useState("");
   const [userAppointment, setUserAppointment] = useState("");
-  const [other, setOther] = useState(false);
   const [showAppointments, setShowAppointments] = useState(false);
-  const [seeMore, setSeeMore] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
+  const [selectedPet, setSelectedPet] = useState<MyPets | null>(null);
 
   useEffect(() => {
     const closeShowAppointments = (e: MouseEvent) => {
@@ -255,6 +222,18 @@ function DoctorProfile(props: { id: string }) {
     getUserData();
   }, []);
 
+  useEffect(() => {
+    const fetchedMyPets = async () => {
+      try {
+        const getPets = await getMyPets(userData[0]?.User_UID);
+        setMyPets(getPets);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchedMyPets();
+  }, [userData]);
+
   const userType = userData[0]?.User_UID;
 
   useEffect(() => {
@@ -276,8 +255,9 @@ function DoctorProfile(props: { id: string }) {
   }, [props.id]);
 
   const submitDateAppointment = () => {
-    if (!date || !time || !userAppointment) {
+    if (!date || !userAppointment) {
       alert("Please input fields");
+      return;
     } else {
       setBookModal(true);
     }
@@ -338,18 +318,25 @@ function DoctorProfile(props: { id: string }) {
         Appointment_Location: matchingDoctor.User_Location,
         Appointment_DoctorPNumber: matchingDoctor.User_PNumber,
         Appointment_PatientPetAge: {
-          Year: petYear,
-          Month: petMonth,
+          Year: selectedPet ? selectedPet?.pet_age?.year : petYear,
+          Month: selectedPet ? selectedPet.pet_age?.month : petMonth,
         },
-        Appointment_PatientPetBreed: petBreed,
-        Appointment_PatientPetName: petName,
+        Appointment_PatientPetBreed: selectedPet
+          ? selectedPet?.pet_breed
+          : petBreed,
+        Appointment_PatientPetName: selectedPet
+          ? selectedPet.pet_name
+          : petName,
         Appointment_PatientPetBP: {
           Hg: petHg,
           mm: petMM,
         },
+        Appointment_PetTypeAnimal: selectedPet
+          ? selectedPet?.pet_type
+          : petTypeAnimal,
         Appointment_Status: "isPending",
         Appointment_PatientTypeOfPayment: typeOfPayment,
-        Appointment_IsNewPatient: isNewPatient, // Add this field to indicate if the patient is new
+        Appointment_IsNewPatient: isNewPatient,
       });
 
       const notifAppointments = await addDoc(docNotifRef, {
@@ -529,7 +516,7 @@ function DoctorProfile(props: { id: string }) {
         className="mt-32 relative z-10"
       >
         <h1 className="text-center my-8 font-montserrat font-bold text-[#006B95] text-xl">
-          Select Date and Time
+          Select Date
         </h1>
         <div className="flex items-center justify-around">
           <DatePicker
@@ -539,91 +526,66 @@ function DoctorProfile(props: { id: string }) {
             value={date}
             onChange={(date: Dayjs | null) => setDate(date)}
           />
-          <TimePicker
-            format={"hh:mm A"}
-            needConfirm
-            className="font-hind font-medium cursor-pointer"
-            value={time}
-            onChange={(time: Dayjs | null) => setTime(time)}
-          />
         </div>
         <div>
           <div
-            className={`h-8 w-96 bg-white rounded-lg drop-shadow-md ml-9 mt-8 cursor-pointer ${
-              other ? `px-0` : `px-3`
-            }`}
+            className={`h-8 w-96 bg-white rounded-lg drop-shadow-md ml-9 mt-8 cursor-pointer `}
             onClick={() => setShowAppointments(true)}
           >
-            {other ? (
-              <input
-                ref={inputRef}
-                type="text"
-                id="userAppointment"
-                name="user-appointment"
-                placeholder="Please select your type of service"
-                onClick={() =>
-                  setShowAppointments(userAppointment ? false : false)
-                }
-                className={`h-full w-full outline-none font-hind text-black font-medium autofill:bg-white px-3 rounded-lg ${
-                  userAppointment
-                    ? `bg-white cursor-pointer`
-                    : `bg-[#D6EBEC] focus:outline-none focus:text-black`
-                }`}
-                value={userAppointment}
-                onChange={(e) => setUserAppointment(e.target.value)}
-              />
-            ) : userAppointment ? (
-              userAppointment
-            ) : (
-              `Please select your type of service`
-            )}
+            <input
+              type="text"
+              id="userAppointment"
+              name="user-appointment"
+              placeholder="Please select your type of service"
+              onClick={() =>
+                setShowAppointments(userAppointment ? false : false)
+              }
+              className={`h-full w-full outline-none font-hind text-black font-medium autofill:bg-white px-3 rounded-lg ${
+                userAppointment
+                  ? `bg-white cursor-pointer`
+                  : `bg-[#D6EBEC] focus:outline-none focus:text-black`
+              }`}
+              value={userAppointment}
+            />
           </div>
           <div
             ref={divRef}
-            className="absolute top-[220px] left-0 bg-white w-full rounded-md drop-shadow-xl z-20"
+            className={`absolute top-[220px] left-0 bg-white w-full rounded-md drop-shadow-xl z-20 `}
           >
-            {showAppointments ? (
-              <div className=" flex flex-col gap-2 py-2 px-4 rounded-md ">
-                {appointments
-                  .slice(!seeMore ? 0 : 0, !seeMore ? 5 : 11)
-                  .map((data) => {
-                    return (
-                      <div
-                        key={data?.key}
-                        className=" cursor-pointer hover:bg-slate-200 p-2 rounded-md"
+            {showAppointments && (
+              <div>
+                {doctor.map((data, index) => {
+                  return (
+                    <div key={index}>
+                      {/* <h1
+                        className="font-hind text-base font-medium flex flex-col"
+                        onClick={() => {
+                          setUserAppointment(
+                            data?.User_TypeOfAppointment?.[0] || ""
+                          );
+                          setShowAppointments(false);
+                        }}
                       >
-                        <h1
-                          className="font-hind text-base font-medium"
-                          onClick={() => {
-                            setUserAppointment(data?.label);
-                            setShowAppointments(false);
-                          }}
-                        >
-                          {data?.label}
-                        </h1>
-                      </div>
-                    );
-                  })}
-                <button
-                  className="mt-2 font-montserrat text-sm font-bold"
-                  onClick={() => setSeeMore((prev) => !prev)}
-                >
-                  {seeMore ? `See Less..` : <h1>See More...</h1>}
-                </button>
-                <button
-                  type="button"
-                  className="mt-2 font-montserrat text-sm font-bold italic"
-                  onClick={() => {
-                    setOther(true);
-                    inputRef.current?.focus();
-                    setShowAppointments(false);
-                  }}
-                >
-                  Others
-                </button>
+                        {data?.User_TypeOfAppointment?.map((data) => data)}
+                      </h1> */}
+                      {data?.User_TypeOfAppointment?.map((data, index) => {
+                        return (
+                          <h1
+                            key={index}
+                            className="font-hind font-medium flex flex-col py-2 px-4 cursor-pointer hover:bg-slate-300"
+                            onClick={() => {
+                              setUserAppointment(data);
+                              setShowAppointments(false);
+                            }}
+                          >
+                            {data}
+                          </h1>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
-            ) : (
-              <div></div>
             )}
           </div>
         </div>
@@ -641,69 +603,123 @@ function DoctorProfile(props: { id: string }) {
           Do you wish to have an appointment with {doctor[0]?.User_Name}
         </p>
         <div className="grid grid-cols-3 items-center w-fit my-5 gap-4">
-          <label
-            htmlFor="petID"
-            className="font-montserrat font-bold text-lg text-[#393939]"
-          >
-            Pet Name
-          </label>
-          <input
-            className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
-            type="text"
-            name="pet"
-            id="petID"
-            value={petName}
-            onChange={(e) => setPetName(e.target.value)}
-            placeholder="Enter the name of your pet"
-          />
-          <label
-            htmlFor="petBreed"
-            className="font-montserrat font-bold text-lg text-[#393939]"
-          >
-            Pet Breed
-          </label>
-          <input
-            className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
-            type="text"
-            name="breed"
-            id="petBreed"
-            value={petBreed}
-            onChange={(e) => setPetBreed(e.target.value)}
-            placeholder="Enter the breed of your pet"
-          />
-          <h1 className="col-span-3 font-montserrat font-bold text-lg text-[#393939] mt-8">
-            Input your pet age
-          </h1>
-          <label
-            htmlFor="petYear"
-            className="text-end font-montserrat font-bold text-base text-[#393939]"
-          >
-            Year
-          </label>
-          <input
-            type="number"
-            name="year"
-            id="petYear"
-            placeholder="Ex. 1"
-            value={petYear == 0 ? "" : petYear}
-            onChange={(e) => setPetYear(Number(e.target.value))}
-            className=" h-9 w-56 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
-          />
-          <label
-            htmlFor="petMonth"
-            className="text-end font-montserrat font-bold text-base text-[#393939]"
-          >
-            Month
-          </label>
-          <input
-            type="number"
-            name="month"
-            id="petMonth"
-            placeholder="Ex. 3"
-            value={petMonth == 0 ? "" : petMonth}
-            onChange={(e) => setPetMonth(Number(e.target.value))}
-            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
-          />
+          {myPets.length > 0 ? (
+            <div className="col-span-3 grid grid-cols-3 items-center w-fit my-5 gap-4">
+              {myPets.map((data) => {
+                return (
+                  <label
+                    key={data?.id}
+                    htmlFor={data?.id}
+                    className={` cursor-pointer w-fit`}
+                  >
+                    <Image
+                      src={`/${data?.pet_name?.toLowerCase()}.jpg`}
+                      height={105}
+                      width={130}
+                      alt={`${data?.pet_name} Image`}
+                      className={`${
+                        data?.id === selectedPet?.id
+                          ? "border-8 border-blue-300"
+                          : "border-none border-0"
+                      } object-cover rounded-lg`}
+                    />
+                    <h1 className="absolute bottom-1 left-5 font-bold font-montserrat text-2xl text-white">
+                      {data?.pet_name}
+                    </h1>
+                    <input
+                      type="radio"
+                      name="select-pet"
+                      id={data?.id}
+                      className="hidden"
+                      value={data?.id}
+                      onClick={() => setSelectedPet(data)}
+                    />
+                  </label>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="col-span-3 grid grid-cols-3 items-center w-fit my-5 gap-4">
+              <label
+                htmlFor="petID"
+                className="font-montserrat font-bold text-lg text-[#393939]"
+              >
+                Pet Name
+              </label>
+              <input
+                className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                type="text"
+                name="pet"
+                id="petID"
+                value={petName}
+                onChange={(e) => setPetName(e.target.value)}
+                placeholder="Enter the name of your pet"
+              />
+              <label
+                htmlFor="petTypeAnimal"
+                className="font-montserrat font-bold text-lg text-[#393939]"
+              >
+                Pet Animal Type
+              </label>
+              <input
+                className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                type="text"
+                name="typeAnimal"
+                id="petTypeAnimal"
+                value={petTypeAnimal}
+                onChange={(e) => setPetTypeAnimal(e.target.value)}
+                placeholder="Ex. Dog"
+              />
+              <label
+                htmlFor="petBreed"
+                className="font-montserrat font-bold text-lg text-[#393939]"
+              >
+                Pet Breed
+              </label>
+              <input
+                className="h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+                type="text"
+                name="breed"
+                id="petBreed"
+                value={petBreed}
+                onChange={(e) => setPetBreed(e.target.value)}
+                placeholder="Enter the breed of your pet"
+              />
+              <h1 className="col-span-3 font-montserrat font-bold text-lg text-[#393939] mt-8">
+                Input your pet age
+              </h1>
+              <label
+                htmlFor="petYear"
+                className="text-end font-montserrat font-bold text-base text-[#393939]"
+              >
+                Year
+              </label>
+              <input
+                type="number"
+                name="year"
+                id="petYear"
+                placeholder="Ex. 1"
+                value={petYear == 0 ? "" : petYear}
+                onChange={(e) => setPetYear(Number(e.target.value))}
+                className=" h-9 w-56 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+              />
+              <label
+                htmlFor="petMonth"
+                className="text-end font-montserrat font-bold text-base text-[#393939]"
+              >
+                Month
+              </label>
+              <input
+                type="number"
+                name="month"
+                id="petMonth"
+                placeholder="Ex. 3"
+                value={petMonth == 0 ? "" : petMonth}
+                onChange={(e) => setPetMonth(Number(e.target.value))}
+                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none h-9 w-56 rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
+              />
+            </div>
+          )}
           <h1 className="col-span-3 font-montserrat font-bold text-lg text-[#393939] mt-6">
             Input the blood pressure of your pet
           </h1>
@@ -719,7 +735,7 @@ function DoctorProfile(props: { id: string }) {
             id="mmBP"
             value={petMM == 0 ? "" : petMM}
             onChange={(e) => setPetMM(Number(e.target.value))}
-            placeholder="Ex. 120"
+            placeholder="(optional)  Ex. 120"
             className=" h-9 w-56 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none rounded-lg col-span-2 drop-shadow-md font-hind text-[#393939] bg-white outline-none px-2 placeholder:font-hind"
           />
           <label
@@ -732,7 +748,7 @@ function DoctorProfile(props: { id: string }) {
             type="number"
             name="Hg"
             id="HgBP"
-            placeholder="Ex. 90"
+            placeholder="(optional) Ex. 90"
             value={petHg == 0 ? "" : petHg}
             onChange={(e) => {
               setPetHg(Number(e.target.value));

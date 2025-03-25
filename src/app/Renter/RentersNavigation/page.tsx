@@ -115,21 +115,21 @@ const RentersNavigation = () => {
           {/* </Link> */}
           {/* <Link href="/Renter/ListOfRooms" passHref legacyBehavior> */}
           <li className="w-fit h-14 flex items-center justify-center">
-            <a
+            <Link
               href="/Renter/ListOfRooms"
               className="font-montserrat text-base text-[#006B95] font-bold"
             >
               List Of Rooms
-            </a>
+            </Link>
           </li>
           {/* </Link> */}
           <li className="w-fit h-14 flex items-center justify-center px-2">
-            <a
+            <Link
               href="/AddRoom"
               className="font-montserrat text-base text-[#006B95] font-bold"
             >
               Add New Room
-            </a>
+            </Link>
           </li>
           <Link
             className="w-28 h-14 flex items-center justify-center cursor-pointer"
