@@ -11,6 +11,7 @@ const signingIn = async (email:string, password:string) => {
 
     }catch(error){
         console.error(error);
+        return false
         
     }
 
